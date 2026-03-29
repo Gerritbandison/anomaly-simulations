@@ -1,0 +1,1851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UAP, Classified Weapons & Advanced Tech — Interactive Simulations</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#08080f;color:#d0d0d8;font-family:'Segoe UI',system-ui,sans-serif;display:flex;height:100vh;overflow:hidden}
+.sb{width:260px;min-width:260px;background:#0a0a16;border-right:1px solid #181830;overflow-y:auto;padding:8px 0;scrollbar-width:thin;scrollbar-color:#222 #0a0a16}
+.sb h2{padding:10px 14px 6px;font-size:.88rem;color:#50e8c0;letter-spacing:1.5px;text-transform:uppercase}
+.sb .ct{padding:7px 14px 2px;font-size:.62rem;color:#334;text-transform:uppercase;letter-spacing:1.5px;margin-top:6px;border-top:1px solid #121225}
+.bt{display:block;width:100%;text-align:left;background:none;border:none;color:#667;padding:5px 14px 5px 18px;font-size:.78rem;cursor:pointer;transition:all .12s;border-left:2px solid transparent;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt:hover{background:#10102a;color:#aab}
+.bt.ac{background:#10103a;color:#50e8c0;border-left-color:#0f8;font-weight:600}
+.mn{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.hd{padding:12px 20px;border-bottom:1px solid #181830;background:#0a0a14;min-height:56px}
+.hd h1{font-size:1.25rem;color:#50e8c0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hd .su{font-size:.8rem;color:#556;margin-top:1px}
+.ar{flex:1;overflow-y:auto;padding:16px 20px}
+.cw{max-width:920px;margin:0 auto}
+canvas{display:block;width:100%;border-radius:5px;border:1px solid #181830}
+.cc{display:flex;justify-content:center;gap:8px;margin:12px 0}
+.b{padding:7px 16px;border:none;border-radius:4px;font-size:.82rem;cursor:pointer;font-weight:600;transition:all .12s}
+.bp{background:#1a8a6a;color:#fff}.bp:hover{background:#15a07a}
+.br{background:#222240;color:#99a}.br:hover{background:#2a2a50}
+.ip{max-width:920px;margin:10px auto 0;display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.ic{background:#0c0c22;border:1px solid #181830;border-radius:4px;padding:8px 10px}
+.ic .l{font-size:.6rem;color:#445;text-transform:uppercase;letter-spacing:1px}
+.ic .v{font-size:.92rem;color:#bbc;margin-top:1px}
+.db{max-width:920px;margin:8px auto;font-size:.84rem;color:#778;line-height:1.55;background:#0a0a1a;padding:10px 12px;border-radius:4px;border:1px solid #141430}
+</style>
+</head>
+<body>
+<div class="sb" id="sb"></div>
+<div class="mn">
+<div class="hd"><h1 id="sT">UAP & Advanced Tech Simulations</h1><div class="su" id="sS">Select a simulation from the sidebar</div></div>
+<div class="ar"><div class="cw">
+<canvas id="C" width="920" height="520"></canvas>
+<div class="cc">
+<button class="b bp" id="pB" onclick="tog()">▶ Play</button>
+<button class="b br" onclick="rst()">↺ Reset</button>
+</div>
+<div class="ip" id="iP"></div>
+<div class="db" id="dB"></div>
+</div></div>
+</div>
+
+<script>
+const C=document.getElementById('C'),c=C.getContext('2d'),W=920,H=520;
+let on=false,t=0,cur=null,af=null,fr=0;
+// ── HELPERS ──
+function bg(a,b){const g=c.createLinearGradient(0,0,0,H);g.addColorStop(0,a);g.addColorStop(1,b);c.fillStyle=g;c.fillRect(0,0,W,H)}
+function st(n,o){c.fillStyle=`rgba(255,255,255,${o||.45})`;for(let i=0;i<n;i++){c.beginPath();c.arc((i*173+31)%W,(i*97+17)%H,.4+(i%3)*.3,0,Math.PI*2);c.fill()}}
+function tx(s,cx,cy,cl,sz,al){c.fillStyle=cl||'#667';c.font=(sz||10)+'px sans-serif';c.textAlign=al||'center';c.fillText(s,cx,cy)}
+function e(t){return t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2}
+function rg(cx,cy,r,c1,c2){const g=c.createRadialGradient(cx,cy,0,cx,cy,r);g.addColorStop(0,c1);g.addColorStop(1,c2);return g}
+function ln(x1,y1,x2,y2,cl,w){c.strokeStyle=cl;c.lineWidth=w||1;c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke()}
+function el(cx,cy,rx,ry,cl,w){c.strokeStyle=cl;c.lineWidth=w||1;c.beginPath();c.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);c.stroke()}
+function fc(cx,cy,rx,ry,cl){c.fillStyle=cl;c.beginPath();c.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);c.fill()}
+function ci(cx,cy,r,cl){c.fillStyle=cl;c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);c.fill()}
+function pl(cx,cy,a,l,w,cl){c.save();c.translate(cx,cy);c.rotate(a);const g=c.createLinearGradient(0,0,l,0);g.addColorStop(0,cl);g.addColorStop(1,cl.replace(/[\d.]+\)$/,'0)'));c.fillStyle=g;c.beginPath();c.moveTo(0,-w/2);c.quadraticCurveTo(l*.4,-w*(1+Math.random()*.3),l,0);c.quadraticCurveTo(l*.4,w*(1+Math.random()*.3),0,w/2);c.fill();c.restore()}
+function sea(y){const g=c.createLinearGradient(0,y,0,H);g.addColorStop(0,'#1a3a5a');g.addColorStop(1,'#0a1a2a');c.fillStyle=g;c.fillRect(0,y,W,H-y)}
+function gnd(y,c1,c2){const g=c.createLinearGradient(0,y,0,H);g.addColorStop(0,c1);g.addColorStop(1,c2);c.fillStyle=g;c.fillRect(0,y,W,H-y)}
+function sky(){bg('#1a2a4a','#87CEEB')}
+function nsky(){bg('#050510','#0a0a1a');st(90)}
+function grid(ox,oy,sp,cl,w){c.strokeStyle=cl||'rgba(50,200,150,.08)';c.lineWidth=w||.5;for(let x=ox%sp;x<W;x+=sp){c.beginPath();c.moveTo(x,0);c.lineTo(x,H);c.stroke()}for(let y=oy%sp;y<H;y+=sp){c.beginPath();c.moveTo(0,y);c.lineTo(W,y);c.stroke()}}
+function jet(cx,cy,w,h,cl,rot){c.save();c.translate(cx,cy);if(rot)c.rotate(rot);c.fillStyle=cl||'#445';c.beginPath();c.moveTo(w/2,0);c.lineTo(-w/2,-h/3);c.lineTo(-w/3,0);c.lineTo(-w/2,h/3);c.closePath();c.fill();c.fillStyle='rgba(255,255,255,.08)';c.fillRect(-w/4,-h/6,w/3,h/3);c.restore()}
+function ship(cx,cy,s){c.fillStyle='#556';c.fillRect(cx-s*2,cy-s*.3,s*4,s*.6);c.fillStyle='#667';c.fillRect(cx-s*.5,cy-s*.8,s,s*.5);c.fillRect(cx+s,cy-s*.5,s*.5,s*.3)}
+function ticTac(cx,cy,s,glow){c.fillStyle=`rgba(220,220,230,${glow||.9})`;c.beginPath();c.ellipse(cx,cy,s*2,s*.7,0,0,Math.PI*2);c.fill();const g=rg(cx,cy,s*2.5,'rgba(200,230,255,.15)','rgba(200,230,255,0)');c.fillStyle=g;c.beginPath();c.arc(cx,cy,s*2.5,0,Math.PI*2);c.fill()}
+function saucer(cx,cy,s,glow){c.fillStyle=`rgba(180,190,200,${glow||.8})`;c.beginPath();c.ellipse(cx,cy,s*2.5,s*.6,0,0,Math.PI*2);c.fill();c.fillStyle=`rgba(200,210,220,${glow||.8})`;c.beginPath();c.ellipse(cx,cy-s*.3,s*1.2,s*.5,0,0,Math.PI*2);c.fill();ci(cx,cy-s*.3,s*.3,`rgba(180,220,255,${(glow||.5)*.5})`)}
+function triangle(cx,cy,s,glow){c.fillStyle=`rgba(20,20,30,${glow||.9})`;c.beginPath();c.moveTo(cx,cy-s*1.5);c.lineTo(cx-s*1.5,cy+s);c.lineTo(cx+s*1.5,cy+s);c.closePath();c.fill();ci(cx,cy+s*.3,s*.2,`rgba(255,100,50,.4)`);ci(cx-s*1.2,cy+s*.8,s*.15,`rgba(255,100,50,.3)`);ci(cx+s*1.2,cy+s*.8,s*.15,`rgba(255,100,50,.3)`)}
+function dsh(x1,y1,x2,y2,cl){c.strokeStyle=cl;c.lineWidth=1;c.setLineDash([4,4]);c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();c.setLineDash([])}
+
+// ── SIMULATION DATA ──
+const S=[
+// ═══ UAP ENCOUNTERS ═══
+{cat:"UAP Encounters",id:"nimitz",nm:"USS Nimitz Tic Tac",sub:"2004 — Commander Fravor's encounter off San Diego coast",
+info:[["Date","Nov 14, 2004"],["Witnesses","Multiple fighter pilots"],["Object","~40 ft white oval"],["Behavior","Instant acceleration"]],
+desc:"On November 14, 2004, Commander David Fravor and Lt. Commander Alex Dietrich were vectored by the USS Princeton to investigate radar contacts that had been tracked for two weeks — objects descending from 80,000 ft to sea level in seconds. Fravor encountered a white, featureless, oblong object ('Tic Tac') hovering over a churning disturbance in the ocean. When he descended toward it, the object mirrored his movements, then instantly accelerated and disappeared. It reappeared 60 miles away at the CAP point seconds later — a feat requiring acceleration forces exceeding 5,000g. The encounter was captured on FLIR and later confirmed as genuine by the Pentagon.",
+d:function(t){
+  sky();sea(320);
+  tx('USS NIMITZ ENCOUNTER — Nov 14, 2004',W/2,25,'#234',13);
+  // carrier
+  ship(200,335,20);tx('USS Nimitz',200,365,'#446',8);
+  // F/A-18s
+  const fPhase=Math.min(1,t*2);
+  const fx=300+fPhase*200,fy=200-fPhase*40;
+  jet(fx,fy,30,20,'#556',-0.1);
+  if(t<.5)tx('CDR Fravor',fx+20,fy-15,'#446',8);
+  jet(fx-60,fy+30,25,18,'#556',-0.1);
+  // Tic Tac
+  const ttPhase=t<.3?1:t<.6?1:0;
+  const ttX=t<.6?550:550+((t-.6)/.4)*300;
+  const ttY=t<.3?260:t<.6?260-((t-.3)/.3)*Math.min(1,(t-.3)*5)*100*(Math.sin(t*20)*.3):100;
+  if(t<.85){
+    ticTac(ttX,ttY,12,.9);
+    // Glow trail when accelerating
+    if(t>.55){const a=(t-.55)/.3;for(let i=0;i<5;i++){ci(ttX-i*a*60,ttY+i*a*10,8-i*1.5,`rgba(200,230,255,${.15*(1-i/5)})`)}}
+  }
+  // Ocean disturbance
+  if(t<.6){const da=Math.min(1,t*3);c.strokeStyle=`rgba(255,255,255,${da*.15})`;c.lineWidth=1;for(let i=0;i<3;i++){c.beginPath();c.ellipse(550,340,20+i*15,5+i*3,0,0,Math.PI*2);c.stroke()}}
+  // FLIR overlay
+  if(t>.2){const a=Math.min(1,(t-.2)*2);c.fillStyle=`rgba(0,0,0,${a*.5})`;c.fillRect(W-200,10,190,130);c.strokeStyle=`rgba(100,255,100,${a*.4})`;c.strokeRect(W-200,10,190,130);tx('FLIR1 — ATFLIR',W-105,25,`rgba(100,255,100,${a})`,8);
+  c.fillStyle=`rgba(255,255,255,${a*.6})`;c.beginPath();c.ellipse(W-105,75,25,10,0,0,Math.PI*2);c.fill();c.strokeStyle=`rgba(100,255,100,${a*.3})`;c.beginPath();c.moveTo(W-130,75);c.lineTo(W-80,75);c.moveTo(W-105,55);c.lineTo(W-105,95);c.stroke()}
+  // Labels
+  if(t>.6){const a=Math.min(1,(t-.6)*3);tx('Object accelerated to CAP point 60 mi away in < 2 seconds',W/2,H-35,`rgba(80,230,180,${a})`,11);tx('Estimated acceleration: 5,000+ g',W/2,H-18,`rgba(200,200,220,${a})`,10)}
+}},
+
+{cat:"UAP Encounters",id:"gimbal",nm:"Gimbal UAP",sub:"2015 — Navy pilots track rotating UAP off East Coast",
+info:[["Date","Jan 2015"],["Location","East Coast, Atlantic"],["Sensor","AN/ASQ-228 ATFLIR"],["Notable","Rotation without flight surfaces"]],
+desc:"The Gimbal video, captured by Navy pilots from the USS Theodore Roosevelt carrier group in January 2015, shows an unidentified object tracked by the AN/ASQ-228 ATFLIR targeting pod. The object appears to rotate while maintaining its trajectory — a maneuver with no conventional aerodynamic explanation. Navy pilots can be heard expressing astonishment on the audio track. The object shows no visible propulsion, no wings, no exhaust, yet maintains controlled flight. Multiple sensors on multiple aircraft tracked it simultaneously, ruling out sensor artifacts. The video was officially released by the Pentagon in 2020.",
+d:function(t){
+  nsky();
+  tx('GIMBAL UAP — 2015, East Coast',W/2,25,'#50e8c0',13);
+  // FLIR view (main display)
+  c.fillStyle='rgba(10,10,15,.9)';c.fillRect(100,50,W-200,H-110);
+  c.strokeStyle='rgba(100,255,100,.3)';c.lineWidth=2;c.strokeRect(100,50,W-200,H-110);
+  // FLIR grid
+  grid(100,50,40,'rgba(100,255,100,.04)',.5);
+  // Crosshairs
+  const ccx=W/2,ccy=260;
+  c.strokeStyle='rgba(100,255,100,.3)';c.lineWidth=1;ln(ccx-50,ccy,ccx+50,ccy,'rgba(100,255,100,.3)');ln(ccx,ccy-50,ccx,ccy+50,'rgba(100,255,100,.3)');
+  // UAP object (rotating)
+  const rot=t*Math.PI*4;
+  const objX=ccx+Math.sin(t*3)*30,objY=ccy+Math.cos(t*2)*15;
+  c.save();c.translate(objX,objY);c.rotate(rot);
+  c.fillStyle='rgba(255,255,255,.8)';c.beginPath();c.ellipse(0,0,25,10,0,0,Math.PI*2);c.fill();
+  c.fillStyle='rgba(255,255,255,.4)';c.beginPath();c.ellipse(0,-5,12,8,0,0,Math.PI*2);c.fill();
+  c.restore();
+  // Heat signature glow
+  ci(objX,objY,35,`rgba(255,255,255,.08)`);
+  // HUD text
+  tx('GIMBAL',W/2,70,'rgba(100,255,100,.6)',11);
+  tx('IR — WHT',140,70,'rgba(100,255,100,.5)',8,'left');
+  tx('NAR',W-140,70,'rgba(100,255,100,.5)',8);
+  tx(`NARO □ ${Math.round(t*100)}`,140,H-75,'rgba(100,255,100,.5)',8,'left');
+  // Audio transcript
+  if(t>.3){const a=Math.min(1,(t-.3)*2);tx('"There\'s a whole fleet of them — look on the SA"',W/2,H-40,`rgba(100,255,100,${a})`,10)}
+  if(t>.6){const a=Math.min(1,(t-.6)*2);tx('"My gosh... it\'s rotating!"',W/2,H-22,`rgba(100,255,100,${a})`,10)}
+}},
+
+{cat:"UAP Encounters",id:"gofast",nm:"Go Fast UAP",sub:"2015 — Object skimming ocean at extreme speed, no propulsion",
+info:[["Date","2015"],["Speed","Calculated ~300 mph"],["Altitude","~13,000 ft (debated)"],["Key","No thermal exhaust signature"]],
+desc:"The Go Fast video shows a small, dark object tracked by Navy ATFLIR as it races across the ocean surface at high speed. The pilots can be heard expressing shock at the object's velocity. Analysis of the FLIR metadata shows the object had no infrared exhaust plume — ruling out any conventional jet, rocket, or propeller propulsion. Skeptics have noted the apparent speed may partly be parallax from the fighter jet's own motion, estimating the object at ~300 mph at ~13,000 ft altitude. Proponents counter that even at those parameters, the lack of any thermal signature or visible propulsion remains unexplained.",
+d:function(t){
+  sky();sea(300);
+  tx('GO FAST UAP — 2015',W/2,25,'#234',13);
+  // FLIR overlay
+  c.fillStyle='rgba(5,5,10,.85)';c.fillRect(150,60,W-300,H-130);c.strokeStyle='rgba(100,255,100,.25)';c.strokeRect(150,60,W-300,H-130);
+  // Ocean texture in FLIR (grayscale)
+  for(let i=0;i<40;i++){c.fillStyle=`rgba(80,80,80,${.05+Math.random()*.05})`;c.fillRect(150+Math.random()*(W-300),200+Math.random()*150,Math.random()*80+20,2)}
+  // Tracking box following object
+  const ox=250+t*350,oy=240+Math.sin(t*8)*10;
+  c.strokeStyle='rgba(100,255,100,.6)';c.lineWidth=1.5;c.strokeRect(ox-15,oy-15,30,30);
+  // Object (small dark sphere)
+  ci(ox,oy,5,'rgba(40,40,40,.9)');ci(ox,oy,3,'rgba(20,20,20,.9)');
+  // No heat signature emphasis
+  if(t>.4){const a=Math.min(1,(t-.4)*2);dsh(ox+20,oy-20,ox+80,oy-50,'rgba(100,255,100,.3)');tx('No thermal exhaust',ox+85,oy-50,`rgba(100,255,100,${a})`,9,'left')}
+  // HUD
+  tx('IR — BLK',170,78,'rgba(100,255,100,.5)',8,'left');
+  tx(`RNG ${Math.round(5+t*10)} NM`,W-170,78,'rgba(100,255,100,.5)',8);
+  // Pilot audio
+  if(t>.2){tx('"Wooohooo! Got it!"',W/2,H-40,`rgba(100,255,100,${Math.min(1,(t-.2)*2)})`,10)}
+  if(t>.5){tx('"What the f*** is that thing?!"',W/2,H-22,`rgba(100,255,100,${Math.min(1,(t-.5)*2)})`,10)}
+}},
+
+{cat:"UAP Encounters",id:"phoenix",nm:"Phoenix Lights",sub:"1997 — Massive V-shaped craft over Arizona, thousands of witnesses",
+info:[["Date","March 13, 1997"],["Witnesses","10,000+ people"],["Shape","V-shaped, 1+ mile wide"],["Speed","Silent, ~30 mph"]],
+desc:"On March 13, 1997, thousands of people across Nevada, Arizona, and northern Mexico reported a massive V-shaped formation of lights silently drifting overhead. Witnesses described a solid craft so large it blocked out the stars — estimated at over a mile wide. The object moved silently at approximately 30 mph from north to south over Phoenix. Then-governor Fife Symington initially mocked the reports at a press conference, but years later admitted he had seen the craft himself and called it 'otherworldly.' The Air Force claimed the lights were flares dropped during exercises at the Barry Goldwater Range, but witnesses insist the initial V-formation was a solid object, distinct from later flare drops.",
+d:function(t){
+  bg('#0a0a20','#141430');st(120);
+  // City lights (Phoenix)
+  gnd(380,'#1a1a2a','#0a0a15');
+  for(let i=0;i<60;i++){ci(30+i*15,385+((i*17)%35),1,`rgba(255,200,100,${.2+Math.random()*.3})`)}
+  tx('PHOENIX LIGHTS — March 13, 1997',W/2,25,'#f0e68c',13);
+  // V-shaped craft
+  const vx=150+t*600,vy=200+Math.sin(t*2)*20;
+  const vs=80;
+  // Block out stars behind craft
+  c.fillStyle='rgba(10,10,20,.95)';c.beginPath();c.moveTo(vx,vy-vs);c.lineTo(vx-vs*2,vy+vs*.5);c.lineTo(vx+vs*2,vy+vs*.5);c.closePath();c.fill();
+  // Lights on V
+  const lights=7;
+  for(let i=0;i<lights;i++){
+    const frac=i/(lights-1);
+    const lx=vx-vs*2+frac*vs*4;
+    const ly=vy+vs*.5-Math.abs(frac-.5)*2*vs*1.5;
+    const pulse=.6+Math.sin(t*5+i*.5)*.2;
+    ci(lx,ly,6,`rgba(255,200,80,${pulse})`);ci(lx,ly,12,`rgba(255,200,80,${pulse*.2})`);
+  }
+  // Witnesses on ground
+  if(t>.2){for(let i=0;i<8;i++){const px=200+i*70;c.fillStyle='rgba(200,200,200,.3)';c.fillRect(px,390,4,10)}}
+  // Governor quote
+  if(t>.6){const a=Math.min(1,(t-.6)*2.5);tx('"It was enormous... otherworldly" — Gov. Fife Symington',W/2,H-25,`rgba(240,230,140,${a})`,11)}
+}},
+
+{cat:"UAP Encounters",id:"transmedium",nm:"Transmedium UAP (USS Omaha)",sub:"2019 — Sphere enters ocean without deceleration or splash",
+info:[["Date","July 15, 2019"],["Ship","USS Omaha (LCS-12)"],["Object","~6 ft sphere"],["Key","Air-to-water transition"]],
+desc:"In July 2019, crew aboard the USS Omaha filmed a spherical object on night vision as it flew over the ocean and then entered the water without slowing down, without a splash, and without any apparent damage or disruption. The footage, confirmed authentic by the Pentagon, shows what UAP researchers call 'transmedium travel' — the ability to operate in air, water, and potentially space with equal ease. Submarine searches of the area where the sphere entered found no wreckage on the ocean floor. Multiple similar sphere-type UAPs were tracked by Navy ships in the same timeframe.",
+d:function(t){
+  bg('#0a1520','#051015');st(40);sea(320);
+  tx('TRANSMEDIUM UAP — USS Omaha, July 2019',W/2,25,'#50e8c0',13);
+  // Night vision overlay
+  c.fillStyle='rgba(0,20,0,.1)';c.fillRect(0,0,W,H);
+  // Ship
+  ship(180,330,15);tx('USS Omaha',180,355,'#3a5a4a',8);
+  // Sphere trajectory
+  const sphere_t=e(t);
+  let sx2,sy2;
+  if(t<.5){sx2=400+t*200;sy2=180+t*200}
+  else if(t<.7){sx2=500;sy2=280+((t-.5)/.2)*60}
+  else{sx2=500;sy2=340+((t-.7)/.3)*100}
+  // Sphere
+  if(t<.95){
+    const glow=t>.5?.5+Math.sin(t*20)*.2:.7;
+    ci(sx2,sy2,8,`rgba(200,255,200,${glow})`);ci(sx2,sy2,15,`rgba(200,255,200,${glow*.2})`);
+  }
+  // Water entry — NO splash
+  if(t>.55&&t<.8){const a=(t-.55)/.25;tx('NO splash',520,310,`rgba(80,255,150,${a})`,10,'left');tx('NO deceleration',520,325,`rgba(80,255,150,${a*.8})`,9,'left')}
+  // Ripples (very subtle)
+  if(t>.6){const a=Math.min(1,(t-.6)*3);c.strokeStyle=`rgba(100,200,200,${a*.15})`;c.lineWidth=1;for(let i=0;i<2;i++){c.beginPath();c.ellipse(500,322,10+i*15+(t-.6)*40,3+i*2,0,0,Math.PI*2);c.stroke()}}
+  // Underwater (continues without stopping)
+  if(t>.65){const uw=(t-.65)/.35;ci(500,340+uw*80,6,`rgba(150,255,200,${.5*(1-uw)})`)}
+  if(t>.7){const a=Math.min(1,(t-.7)*3);tx('Submarine found no wreckage on ocean floor',W/2,H-20,`rgba(100,220,180,${a})`,10)}
+}},
+
+{cat:"UAP Encounters",id:"observables",nm:"The Five Observables",sub:"Pentagon-defined characteristics of UAP technology",
+info:[["Source","AATIP / AARO"],["Defined by","Luis Elizondo / DoD"],["Count","5 key observables"],["Status","No conventional explanation"]],
+desc:"The Pentagon's Advanced Aerospace Threat Identification Program (AATIP) identified five observable characteristics of UAP that defy conventional physics: (1) Instantaneous acceleration — moving from stationary to hypersonic with no visible acceleration phase; (2) Hypersonic velocity — speeds exceeding Mach 5 with no sonic boom; (3) Low observability — partial or total invisibility to radar, infrared, and visual detection; (4) Transmedium travel — seamless transition between air, water, and potentially space; (5) Anti-gravity lift — hovering without any visible propulsion, rotors, wings, or exhaust. No known human technology exhibits all five simultaneously.",
+d:function(t){
+  nsky();
+  tx('THE FIVE OBSERVABLES — UAP Characteristics',W/2,25,'#50e8c0',14);
+  const obs=[
+    {nm:'Instantaneous Acceleration',desc:'0 to Mach 20+ instantly',ico:function(cx,cy,p){
+      ci(cx-20*p,cy,4,'rgba(200,230,255,.8)');for(let i=0;i<5;i++)ci(cx-20*p-i*p*15,cy,3-i*.5,`rgba(200,230,255,${.3-i*.05})`)}},
+    {nm:'Hypersonic — No Sonic Boom',desc:'Mach 5+ with no shockwave',ico:function(cx,cy,p){
+      ci(cx,cy,5,'rgba(200,230,255,.8)');c.strokeStyle=`rgba(200,230,255,${.2*(1-p)})`;c.lineWidth=1;for(let i=1;i<4;i++){c.beginPath();c.arc(cx,cy,10+i*10*p,0,Math.PI*2);c.stroke()}}},
+    {nm:'Low Observability',desc:'Invisible to radar/IR/visual',ico:function(cx,cy,p){
+      const a=.8-p*.6;c.fillStyle=`rgba(200,230,255,${a})`;c.beginPath();c.ellipse(cx,cy,15,6,0,0,Math.PI*2);c.fill()}},
+    {nm:'Transmedium Travel',desc:'Air → Water → Space seamlessly',ico:function(cx,cy,p){
+      c.fillStyle='rgba(50,100,200,.2)';c.fillRect(cx-25,cy,50,20);ci(cx,cy-10+p*25,5,'rgba(200,255,230,.7)')}},
+    {nm:'Anti-Gravity Lift',desc:'Hover with no propulsion',ico:function(cx,cy,p){
+      ci(cx,cy-Math.sin(p*Math.PI*2)*5,6,'rgba(200,230,255,.8)');c.strokeStyle='rgba(200,230,255,.15)';c.setLineDash([2,2]);c.beginPath();c.moveTo(cx,cy+10);c.lineTo(cx,cy+25);c.stroke();c.setLineDash([])}}
+  ];
+  obs.forEach((o,i)=>{
+    const show=t>(i*.15);
+    if(!show)return;
+    const a=Math.min(1,(t-i*.15)*3);
+    const bx=100,by=80+i*85;
+    // Box
+    c.fillStyle=`rgba(15,15,40,${a*.8})`;c.fillRect(bx,by,W-200,70);c.strokeStyle=`rgba(80,230,180,${a*.3})`;c.lineWidth=1;c.strokeRect(bx,by,W-200,70);
+    // Number
+    tx(`${i+1}`,bx+25,by+42,`rgba(80,230,180,${a})`,22);
+    // Name + desc
+    tx(o.nm,bx+60,by+25,`rgba(220,220,230,${a})`,12,'left');
+    tx(o.desc,bx+60,by+48,`rgba(130,130,160,${a})`,10,'left');
+    // Animated icon
+    const icx=W-160,icy=by+35;
+    o.ico(icx,icy,((t-i*.15)*2)%1);
+  });
+}},
+
+{cat:"UAP Encounters",id:"rendlesham",nm:"Rendlesham Forest",sub:"1980 — UK military personnel encounter craft in Suffolk woods",
+info:[["Date","Dec 26-28, 1980"],["Location","RAF Woodbridge, UK"],["Witnesses","USAF personnel"],["Evidence","Radiation traces, landing marks"]],
+desc:"Over two nights in December 1980, US Air Force personnel stationed at RAF Woodbridge in Suffolk, England, reported encountering a glowing, metallic, triangular craft in Rendlesham Forest. Staff Sergeant Jim Penniston claims he touched the craft and observed hieroglyphic-like symbols on its surface. Lieutenant Colonel Charles Halt led a follow-up investigation and recorded his observations on audio tape as he witnessed anomalous lights in the forest. Radiation readings at the alleged landing site were 10× higher than background. Three depressions in the ground formed a perfect equilateral triangle. The incident, sometimes called 'Britain's Roswell,' remains unexplained by the UK Ministry of Defence.",
+d:function(t){
+  bg('#050510','#0a1008');
+  // Forest
+  for(let i=0;i<40;i++){const tx2=i*24,th=100+((i*37)%80);c.fillStyle=`rgba(15,${30+i%20},10,${.8+Math.random()*.2})`;c.beginPath();c.moveTo(tx2,H);c.lineTo(tx2+12,H-th);c.lineTo(tx2+24,H);c.fill()}
+  tx('RENDLESHAM FOREST INCIDENT — Dec 1980',W/2,25,'#8aaa6a',13);
+  // Glowing craft
+  const craftY=250+Math.sin(t*4)*15;
+  if(t>.1){
+    const a=Math.min(1,(t-.1)*2);
+    // Glow
+    ci(W/2,craftY,80,`rgba(100,200,255,${a*.1})`);ci(W/2,craftY,50,`rgba(150,220,255,${a*.15})`);
+    // Triangle craft
+    c.fillStyle=`rgba(120,140,160,${a*.9})`;c.beginPath();c.moveTo(W/2,craftY-30);c.lineTo(W/2-35,craftY+20);c.lineTo(W/2+35,craftY+20);c.closePath();c.fill();
+    // Hieroglyphs
+    if(t>.4){const ha=Math.min(1,(t-.4)*3);c.fillStyle=`rgba(100,200,255,${ha*.5})`;c.font='8px monospace';c.textAlign='center';c.fillText('⟟ ⏃ ⏁ ⟠ ⏂',W/2,craftY+5)}
+    // Light beam down
+    if(t>.3){const ba=Math.min(1,(t-.3)*2);c.fillStyle=`rgba(150,220,255,${ba*.1})`;c.beginPath();c.moveTo(W/2-10,craftY+20);c.lineTo(W/2-30,H-30);c.lineTo(W/2+30,H-30);c.lineTo(W/2+10,craftY+20);c.fill()}
+    // Landing marks
+    if(t>.5){const la=Math.min(1,(t-.5)*3);c.strokeStyle=`rgba(255,200,100,${la*.5})`;c.lineWidth=1;[[-20,0],[20,0],[0,-25]].forEach(([dx,dy])=>{c.beginPath();c.arc(W/2+dx,H-35+dy,4,0,Math.PI*2);c.stroke()});tx('Landing marks (equilateral triangle)',W/2,H-10,`rgba(200,180,100,${la})`,9)}
+  }
+  // Soldiers
+  if(t>.2){for(let i=0;i<3;i++){c.fillStyle='rgba(80,100,80,.4)';c.fillRect(300+i*30,H-55,5,15);c.fillStyle='rgba(255,255,150,.2)';c.beginPath();c.moveTo(302+i*30,H-55);c.lineTo(290+i*30,H-70);c.lineTo(315+i*30,H-70);c.fill()}}
+  if(t>.7){tx('Radiation readings: 10× background levels',W/2,H-55,`rgba(100,200,100,${Math.min(1,(t-.7)*3)})`,10)}
+}},
+
+{cat:"UAP Encounters",id:"tehran",nm:"Tehran UFO Incident",sub:"1976 — Iranian F-4 weapons systems jammed during intercept",
+info:[["Date","Sept 19, 1976"],["Location","Tehran, Iran"],["Aircraft","F-4 Phantom II"],["Effect","Weapons systems disabled"]],
+desc:"On September 19, 1976, the Iranian Air Force scrambled two F-4 Phantom II fighters to intercept a brilliant UFO reported over Tehran. The first F-4 lost all instrumentation and communications as it approached and had to return to base. The second F-4 achieved radar lock — the object showed a return comparable to a Boeing 707. When the pilot attempted to fire an AIM-9 sidewinder missile, his weapons panel went dead. A smaller object detached from the main UFO and appeared to chase the F-4 before returning. The incident was documented in a classified US Defense Intelligence Agency report that called it 'a classic case which meets all the criteria necessary for a valid study of the UFO phenomenon.'",
+d:function(t){
+  bg('#0a0a20','#1a1020');st(70);
+  // Tehran city lights
+  gnd(400,'#1a1520','#0a0810');
+  for(let i=0;i<50;i++){ci(50+i*18,405+((i*13)%30),1,`rgba(255,180,80,${.15+Math.random()*.2})`)}
+  tx('TEHRAN UFO INCIDENT — Sept 19, 1976',W/2,25,'#f0e68c',13);
+  // Main UFO
+  const ufo_glow=.5+Math.sin(t*8)*.3;
+  ci(550,180,15,`rgba(255,200,100,${ufo_glow})`);ci(550,180,35,`rgba(255,200,100,${ufo_glow*.2})`);ci(550,180,60,`rgba(255,150,50,${ufo_glow*.05})`);
+  // F-4 Phantom
+  const f4x=200+t*250,f4y=300-t*80;
+  jet(f4x,f4y,35,22,'#446',-.2);
+  tx('F-4 Phantom II',f4x-10,f4y+20,'#668',8);
+  // Radar lock attempt
+  if(t>.3&&t<.6){const a=Math.min(1,(t-.3)*3);dsh(f4x+20,f4y-10,540,185,`rgba(100,255,100,${a*.4})`);tx('RADAR LOCK',f4x+60,f4y-25,`rgba(100,255,100,${a})`,9)}
+  // Weapons jam
+  if(t>.5){const a=Math.min(1,(t-.5)*3);tx('⚠ WEAPONS SYSTEMS OFFLINE',f4x+30,f4y-40,`rgba(255,80,80,${a})`,10);
+  // Red X over weapons
+  c.strokeStyle=`rgba(255,50,50,${a})`;c.lineWidth=2;c.beginPath();c.moveTo(f4x+10,f4y-8);c.lineTo(f4x+30,f4y+8);c.moveTo(f4x+30,f4y-8);c.lineTo(f4x+10,f4y+8);c.stroke()}
+  // Smaller object detaching
+  if(t>.6){const sp=(t-.6)/.4;const sox=550-sp*100,soy=180+sp*80;ci(sox,soy,5,`rgba(255,150,50,${.7*(1-sp)})`);ci(sox,soy,12,`rgba(255,150,50,${.15*(1-sp)})`)}
+  if(t>.7){tx('DIA report: "classic case... meets all criteria for valid study"',W/2,H-20,`rgba(240,230,140,${Math.min(1,(t-.7)*3)})`,10)}
+}},
+
+// ═══ CLASSIFIED AIRCRAFT ═══
+{cat:"Classified Aircraft",id:"sr71",nm:"SR-71 Blackbird",sub:"Mach 3.3 reconnaissance aircraft — still the fastest air-breathing jet",
+info:[["Speed","Mach 3.32 (2,193 mph)"],["Altitude","85,000 ft"],["Program","1964–1998"],["Built","Lockheed Skunk Works"]],
+desc:"The SR-71 Blackbird remains the fastest air-breathing crewed aircraft ever built, reaching Mach 3.32 at altitudes above 85,000 feet. Designed by Kelly Johnson at Lockheed's Skunk Works, it was built from titanium (much of it secretly sourced from the Soviet Union) because aluminum would melt at its operating temperatures. The aircraft's skin reached 600°F during flight and actually expanded several inches — it was designed to be slightly loose on the ground and only sealed properly at speed. No SR-71 was ever shot down despite over 4,000 SAM launches against it — the standard evasion procedure was simply to accelerate. The aircraft outran every missile fired at it.",
+d:function(t){
+  bg('#1a2a4a','#87CEEB');
+  // High altitude effect
+  c.fillStyle='rgba(0,0,30,.3)';c.fillRect(0,0,W,100);
+  tx('SR-71 BLACKBIRD — Mach 3.32',W/2,25,'#223',13);
+  // Aircraft
+  const ax=100+t*650,ay=200+Math.sin(t*3)*10;
+  c.save();c.translate(ax,ay);
+  // Body
+  c.fillStyle='#1a1a2a';c.beginPath();c.moveTo(50,0);c.lineTo(-40,-8);c.lineTo(-50,-5);c.lineTo(-50,5);c.lineTo(-40,8);c.closePath();c.fill();
+  // Nacelles
+  c.fillStyle='#1a1a2a';c.fillRect(-30,-25,40,8);c.fillRect(-30,17,40,8);
+  // Wings (delta)
+  c.fillStyle='#1a1a2a';c.beginPath();c.moveTo(0,0);c.lineTo(-30,-30);c.lineTo(-45,-28);c.lineTo(-25,0);c.closePath();c.fill();
+  c.beginPath();c.moveTo(0,0);c.lineTo(-30,30);c.lineTo(-45,28);c.lineTo(-25,0);c.closePath();c.fill();
+  // Engine glow
+  if(t>.1){ci(-50,-21,5,`rgba(255,150,50,${.4+Math.random()*.2})`);ci(-50,21,5,`rgba(255,150,50,${.4+Math.random()*.2})`);
+  pl(-55,-21,Math.PI,30+Math.random()*20,8,'rgba(255,150,50,.4)');pl(-55,21,Math.PI,30+Math.random()*20,8,'rgba(255,150,50,.4)')}
+  c.restore();
+  // Heat shimmer
+  if(t>.2){for(let i=0;i<10;i++){c.strokeStyle=`rgba(255,200,100,${.05})`;c.lineWidth=1;c.beginPath();c.moveTo(ax-60-i*20,ay+Math.sin(t*10+i)*5);c.lineTo(ax-80-i*20,ay+Math.sin(t*10+i+1)*5);c.stroke()}}
+  // Speed indicator
+  if(t>.3){const a=Math.min(1,(t-.3)*2);tx(`MACH ${(1+t*2.32).toFixed(1)} — ${Math.round(660+t*1533)} mph`,W/2,H-35,`rgba(50,50,80,${a})`,12);tx('Standard missile evasion: just accelerate',W/2,H-18,`rgba(80,80,120,${a})`,10)}
+}},
+
+{cat:"Classified Aircraft",id:"f117",nm:"F-117 Nighthawk",sub:"First operational stealth aircraft — 1983 (revealed 1988)",
+info:[["RCS","~0.001 m² (golf ball)"],["Speed","Mach 0.92"],["Secret","5 years operational before reveal"],["Missions","1,271 combat sorties"]],
+desc:"The F-117 was the first operational aircraft designed from the ground up around stealth technology. Its faceted shape scattered radar waves away from receivers — reducing its radar cross-section to roughly that of a golf ball. The aircraft was operational in secret from 1983 to 1988, flying only at night from the remote Tonopah Test Range. Even the pilots' families didn't know what they flew. It was finally revealed to the public in 1988. The F-117 flew 1,271 combat sorties in the Gulf War, striking the most heavily defended targets in Baghdad without a single loss. Its angular shape, dictated by 1970s computing limitations for radar modeling, became iconic despite being aerodynamically unstable — it required constant computer-assisted flight control.",
+d:function(t){
+  nsky();
+  tx('F-117 NIGHTHAWK — First Stealth Aircraft',W/2,25,'#50e8c0',13);
+  // Radar waves
+  if(t>.1){for(let i=0;i<6;i++){const rx=100+i*20+t*100,ry=250;c.strokeStyle=`rgba(50,255,100,${.15*(1-t)})`;c.lineWidth=1;c.beginPath();c.arc(rx,ry,20+i*5,-.5,.5);c.stroke()}}
+  // Aircraft
+  const ax=W/2,ay=260;
+  c.save();c.translate(ax,ay);
+  // Faceted body
+  c.fillStyle='#151520';c.beginPath();c.moveTo(60,0);c.lineTo(20,-8);c.lineTo(-40,-10);c.lineTo(-50,-8);c.lineTo(-50,8);c.lineTo(-40,10);c.lineTo(20,8);c.closePath();c.fill();
+  // Wings (swept, faceted)
+  c.fillStyle='#12121a';c.beginPath();c.moveTo(-10,0);c.lineTo(-45,-45);c.lineTo(-55,-40);c.lineTo(-30,0);c.closePath();c.fill();
+  c.beginPath();c.moveTo(-10,0);c.lineTo(-45,45);c.lineTo(-55,40);c.lineTo(-30,0);c.closePath();c.fill();
+  // V-tail
+  c.fillStyle='#181825';c.beginPath();c.moveTo(-40,-10);c.lineTo(-55,-25);c.lineTo(-60,-22);c.lineTo(-50,-8);c.closePath();c.fill();
+  c.beginPath();c.moveTo(-40,10);c.lineTo(-55,25);c.lineTo(-60,22);c.lineTo(-50,8);c.closePath();c.fill();
+  c.restore();
+  // Radar scatter visualization
+  if(t>.3){const a=Math.min(1,(t-.3)*2);
+  tx('Radar waves scatter away from receiver',W/2,340,`rgba(50,255,100,${a*.6})`,10);
+  for(let i=0;i<8;i++){const angle=(i/8)*Math.PI*2;const d=40+t*60;c.strokeStyle=`rgba(50,255,100,${.1*(1-t)})`;c.lineWidth=1;c.beginPath();c.moveTo(ax+Math.cos(angle)*30,ay+Math.sin(angle)*15);c.lineTo(ax+Math.cos(angle)*d,ay+Math.sin(angle)*d*.5);c.stroke()}}
+  // RCS comparison
+  if(t>.5){const a=Math.min(1,(t-.5)*2);
+  tx('Radar Cross Section Comparison:',W/2,390,`rgba(200,200,220,${a})`,10);
+  tx('B-52: 100 m²',300,410,`rgba(200,200,220,${a*.7})`,9);tx('●',270,407,`rgba(255,100,100,${a})`,20);
+  tx('F-15: 25 m²',450,410,`rgba(200,200,220,${a*.7})`,9);tx('●',420,408,`rgba(255,150,50,${a})`,14);
+  tx('F-117: 0.001 m²',620,410,`rgba(200,200,220,${a*.7})`,9);tx('·',600,408,`rgba(50,255,100,${a})`,14)}
+}},
+
+{cat:"Classified Aircraft",id:"b2",nm:"B-2 Spirit",sub:"Flying wing stealth bomber — $2.1 billion each",
+info:[["RCS","~0.0001 m² (insect)"],["Range","6,000 nmi (unrefueled)"],["Cost","$2.1 billion each"],["Built","21 aircraft"]],
+desc:"The B-2 Spirit is a flying wing strategic bomber with a radar cross-section reportedly smaller than a bird. Its curved surfaces (unlike the F-117's facets) represent a generational leap in stealth — made possible by advances in computational radar modeling. The B-2 can penetrate the most sophisticated air defenses and deliver both conventional and nuclear weapons. Each aircraft costs approximately $2.1 billion, making it the most expensive aircraft ever built. Only 21 were constructed. The flying wing design, inspired by Jack Northrop's 1940s concepts, is inherently unstable and requires fly-by-wire systems to maintain controlled flight.",
+d:function(t){
+  nsky();
+  tx('B-2 SPIRIT — Stealth Strategic Bomber',W/2,25,'#50e8c0',13);
+  // B-2 flying wing
+  const ax=W/2,ay=250;
+  const s=e(Math.min(1,t*2));
+  c.save();c.translate(ax,ay);
+  // Wing shape (curved, smooth)
+  c.fillStyle='#18182a';c.beginPath();c.moveTo(40*s,0);c.quadraticCurveTo(0,-8*s,-80*s,-80*s);c.lineTo(-90*s,-75*s);c.quadraticCurveTo(-30*s,0,-90*s,75*s);c.lineTo(-80*s,80*s);c.quadraticCurveTo(0,8*s,40*s,0);c.fill();
+  // Cockpit window
+  c.fillStyle='rgba(80,120,180,.2)';c.beginPath();c.ellipse(10*s,0,8*s,3*s,0,0,Math.PI*2);c.fill();
+  // Engine intakes (blended)
+  c.fillStyle='rgba(10,10,20,.8)';c.beginPath();c.ellipse(-20*s,-15*s,10*s,3*s,0,0,Math.PI*2);c.fill();
+  c.beginPath();c.ellipse(-20*s,15*s,10*s,3*s,0,0,Math.PI*2);c.fill();
+  c.restore();
+  // Stealth features callouts
+  if(t>.4){const a=Math.min(1,(t-.4)*2);
+  dsh(ax-60,ay-60,200,120,`rgba(80,230,180,${a*.3})`);tx('Curved surfaces scatter',135,115,`rgba(80,230,180,${a})`,9,'left');tx('radar in all directions',135,128,`rgba(80,230,180,${a*.7})`,8,'left');
+  dsh(ax-40,ay+60,200,380,`rgba(80,230,180,${a*.3})`);tx('Sawtooth trailing edge',135,375,`rgba(80,230,180,${a})`,9,'left');tx('breaks up radar return',135,388,`rgba(80,230,180,${a*.7})`,8,'left');
+  dsh(ax-20,ay-15,680,150,`rgba(80,230,180,${a*.3})`);tx('Buried engines hide',690,145,`rgba(80,230,180,${a})`,9,'left');tx('IR and radar signature',690,158,`rgba(80,230,180,${a*.7})`,8,'left')}
+  if(t>.7){tx('RCS of an insect — effectively invisible to radar',W/2,H-20,`rgba(80,230,180,${Math.min(1,(t-.7)*3)})`,11)}
+}},
+
+{cat:"Classified Aircraft",id:"b21",nm:"B-21 Raider",sub:"Next-gen stealth bomber — first flight 2023, nuclear-capable",
+info:[["First flight","Nov 10, 2023"],["Cost","~$700M each"],["Builder","Northrop Grumman"],["Fleet","100 planned"]],
+desc:"The B-21 Raider is the US Air Force's next-generation stealth bomber, first flown on November 10, 2023. It represents a generational leap beyond the B-2, incorporating advances in stealth materials, sensor fusion, and open-systems architecture. The aircraft can operate as both a crewed and autonomous platform. Its stealth is reportedly so advanced it can penetrate the most modern integrated air defense systems, including those developed by China and Russia. The Air Force plans to build at least 100 B-21s at approximately $700 million each — significantly cheaper than the B-2. Much of its capability remains highly classified.",
+d:function(t){
+  nsky();
+  tx('B-21 RAIDER — Next-Gen Stealth Bomber',W/2,25,'#50e8c0',13);
+  const ax=W/2,ay=250,s=e(Math.min(1,t*2));
+  c.save();c.translate(ax,ay);
+  c.fillStyle='#141425';c.beginPath();c.moveTo(45*s,0);c.quadraticCurveTo(10,-6*s,-70*s,-70*s);c.lineTo(-80*s,-65*s);c.lineTo(-60*s,0);c.lineTo(-80*s,65*s);c.lineTo(-70*s,70*s);c.quadraticCurveTo(10,6*s,45*s,0);c.fill();
+  c.fillStyle='rgba(60,100,160,.15)';c.beginPath();c.ellipse(15*s,0,7*s,3*s,0,0,Math.PI*2);c.fill();
+  c.restore();
+  if(t>.5){const a=Math.min(1,(t-.5)*2);
+  tx('[CLASSIFIED]',W/2,340,`rgba(255,80,80,${a*.5})`,11);
+  tx('Advanced stealth materials + sensor fusion + autonomous capability',W/2,360,`rgba(150,150,180,${a})`,10);
+  tx('Can penetrate next-gen Chinese/Russian air defenses',W/2,380,`rgba(150,150,180,${a*.7})`,9);
+  tx('100 planned — replacing B-1 and B-2 fleets',W/2,H-20,`rgba(80,230,180,${a})`,10)}
+}},
+
+{cat:"Classified Aircraft",id:"aurora",nm:"Aurora / SR-72 (Rumored)",sub:"Alleged Mach 6+ hypersonic reconnaissance — unconfirmed",
+info:[["Speed","Mach 6+ (rumored)"],["Status","Unconfirmed"],["Evidence","Sonic booms, budget lines"],["Successor to","SR-71 Blackbird"]],
+desc:"'Aurora' is the name given to a rumored hypersonic reconnaissance aircraft allegedly developed in the late 1980s and 1990s as a successor to the SR-71. Evidence includes unexplained 'donuts on a rope' contrails photographed over the American Southwest, mysterious sonic booms detected by seismometers near Edwards AFB, and a line item in the 1985 Pentagon budget for 'Aurora' with $455 million allocated. Lockheed Martin has publicly discussed the SR-72 — a Mach 6 hypersonic strike/reconnaissance aircraft using a combined-cycle turbine/scramjet engine. Whether Aurora exists, existed, or has evolved into the SR-72 program remains one of aviation's biggest open questions.",
+d:function(t){
+  bg('#1a2a4a','#4a6a9a');
+  c.fillStyle='rgba(0,0,30,.4)';c.fillRect(0,0,W,80);
+  tx('AURORA / SR-72 — Alleged Hypersonic (Mach 6+)',W/2,25,'#dde',13);
+  // Aircraft (speculative)
+  const ax=150+t*600,ay=220;
+  c.save();c.translate(ax,ay);c.fillStyle='#1a1a30';
+  c.beginPath();c.moveTo(55,0);c.lineTo(10,-6);c.lineTo(-50,-35);c.lineTo(-60,-30);c.lineTo(-35,0);c.lineTo(-60,30);c.lineTo(-50,35);c.lineTo(10,6);c.closePath();c.fill();
+  c.restore();
+  // Scramjet exhaust
+  if(t>.1){
+    pl(ax-35,ay,Math.PI,60+t*150,15+t*15,'rgba(100,150,255,.3)');
+    pl(ax-35,ay,Math.PI,40+t*100,8,'rgba(200,220,255,.2)');
+  }
+  // "Donuts on a rope" contrail
+  if(t>.15){for(let i=0;i<15;i++){const cx2=ax-50-i*30,cy2=ay;const r=8+Math.sin(i*.8)*4;c.strokeStyle=`rgba(200,200,220,${.1*(1-i/15)})`;c.lineWidth=1;c.beginPath();c.arc(cx2,cy2,r,0,Math.PI*2);c.stroke()}}
+  if(t>.5){const a=Math.min(1,(t-.5)*2);tx('"Donuts on a rope" contrail pattern',W/2,310,`rgba(200,200,220,${a})`,10);tx('Consistent with pulse detonation engine',W/2,328,`rgba(150,150,180,${a*.7})`,9)}
+  if(t>.7){tx('Lockheed confirms SR-72 development — "Son of Blackbird"',W/2,H-20,`rgba(80,230,180,${Math.min(1,(t-.7)*3)})`,10)}
+}},
+
+{cat:"Classified Aircraft",id:"tr3b",nm:"TR-3B (Alleged)",sub:"Rumored triangular antigravity craft — unverified",
+info:[["Shape","Triangle, 3 lights"],["Propulsion","MFD (alleged)"],["Status","Unverified"],["Sightings","Global"]],
+desc:"The TR-3B is an alleged classified aircraft reportedly using a 'Magnetic Field Disruptor' that reduces the vehicle's mass by 89% using a rotating mercury-based plasma pressurized to 250,000 atm and heated to 150 million K. This supposedly generates a magnetic vortex field that disrupts gravity. The aircraft is described as a large triangle with lights at each corner and a central red/orange light. While no verified evidence exists, persistent sightings of large, silent, triangular craft with unusual light configurations continue worldwide. Skeptics attribute these sightings to the B-2, F-117, or other classified platforms. Proponents argue the flight characteristics (silent hovering, instant acceleration) exceed any known technology.",
+d:function(t){
+  nsky();
+  tx('TR-3B — Alleged Anti-Gravity Triangle (Unverified)',W/2,25,'#f0e68c',13);
+  // Triangle craft
+  const cx2=W/2,cy2=260,s=60;
+  const hover=Math.sin(t*4)*8;
+  // Glow field underneath
+  if(t>.1){const a=Math.min(1,(t-.1)*2);fc(cx2,cy2+hover+20,s*1.5,s*.4,`rgba(100,50,200,${a*.1})`);fc(cx2,cy2+hover+10,s*1.2,s*.3,`rgba(150,80,255,${a*.08})`)}
+  // Main body
+  c.fillStyle='rgba(20,20,35,.95)';c.beginPath();c.moveTo(cx2,cy2-s*1.5+hover);c.lineTo(cx2-s*1.5,cy2+s+hover);c.lineTo(cx2+s*1.5,cy2+s+hover);c.closePath();c.fill();
+  // Corner lights
+  const pulse=.5+Math.sin(t*8)*.3;
+  ci(cx2,cy2-s*1.5+hover,5,`rgba(255,200,80,${pulse})`);ci(cx2,cy2-s*1.5+hover,12,`rgba(255,200,80,${pulse*.2})`);
+  ci(cx2-s*1.5,cy2+s+hover,5,`rgba(255,200,80,${pulse})`);ci(cx2-s*1.5,cy2+s+hover,12,`rgba(255,200,80,${pulse*.2})`);
+  ci(cx2+s*1.5,cy2+s+hover,5,`rgba(255,200,80,${pulse})`);ci(cx2+s*1.5,cy2+s+hover,12,`rgba(255,200,80,${pulse*.2})`);
+  // Center light (red/orange)
+  const cp2=.4+Math.sin(t*6)*.3;
+  ci(cx2,cy2+s*.3+hover,8,`rgba(255,80,30,${cp2})`);ci(cx2,cy2+s*.3+hover,20,`rgba(255,80,30,${cp2*.15})`);
+  // Alleged MFD ring
+  if(t>.3){const a=Math.min(1,(t-.3)*2);c.strokeStyle=`rgba(150,100,255,${a*.3})`;c.lineWidth=1.5;c.beginPath();c.arc(cx2,cy2+s*.3+hover,35,t*5,t*5+Math.PI*1.5);c.stroke();
+  tx('Rotating plasma ring (alleged)',cx2+100,cy2+s*.3+hover,`rgba(150,100,255,${a*.6})`,9,'left')}
+  tx('⚠ UNVERIFIED — no confirmed evidence of this program',W/2,H-20,'rgba(255,200,100,.6)',10);
+}},
+
+{cat:"Classified Aircraft",id:"x37b",nm:"X-37B Space Plane",sub:"USAF autonomous orbital vehicle — years-long secret missions",
+info:[["Operator","US Space Force"],["Longest mission","908 days (OTV-6)"],["Builder","Boeing"],["Payload","[CLASSIFIED]"]],
+desc:"The X-37B (also called the Orbital Test Vehicle) is an autonomous reusable space plane operated by the US Space Force. It looks like a miniature Space Shuttle and has conducted six missions since 2010, spending increasingly longer periods in orbit — the sixth mission lasted 908 days. Its payload and exact mission objectives are classified. Speculation includes testing advanced sensors, deploying small satellites, testing space-based weapons concepts, and conducting materials science experiments. China has developed its own equivalent, the Shenlong. The X-37B's ability to autonomously maneuver in orbit and change its trajectory makes it effectively impossible to track its activities.",
+d:function(t){
+  bg('#000008','#060618');st(100);
+  // Earth curve
+  c.fillStyle='#1a3a6a';c.beginPath();c.ellipse(W/2,H+300,500,350,0,Math.PI,0);c.fill();c.fillStyle='#2a5a3a';c.beginPath();c.ellipse(400,H+300,300,340,.2,Math.PI+.3,Math.PI+1.5);c.fill();
+  c.strokeStyle='rgba(100,150,255,.15)';c.lineWidth=2;c.beginPath();c.ellipse(W/2,H+300,500,352,0,Math.PI,0);c.stroke();
+  tx('X-37B ORBITAL TEST VEHICLE — Autonomous Space Plane',W/2,25,'#50e8c0',13);
+  // X-37B
+  const ox=300+t*300,oy=180-Math.sin(t*Math.PI)*.50*50;
+  c.save();c.translate(ox,oy);c.rotate(-.1);
+  c.fillStyle='#ddd';c.beginPath();c.moveTo(25,0);c.lineTo(10,-5);c.lineTo(-20,-5);c.lineTo(-25,-3);c.lineTo(-25,3);c.lineTo(-20,5);c.lineTo(10,5);c.closePath();c.fill();
+  // Wings
+  c.fillStyle='#bbb';c.beginPath();c.moveTo(-10,0);c.lineTo(-22,-15);c.lineTo(-27,-13);c.lineTo(-18,0);c.closePath();c.fill();
+  c.beginPath();c.moveTo(-10,0);c.lineTo(-22,15);c.lineTo(-27,13);c.lineTo(-18,0);c.closePath();c.fill();
+  c.restore();
+  // Orbit path
+  c.strokeStyle='rgba(100,200,255,.1)';c.lineWidth=1;c.setLineDash([5,5]);c.beginPath();c.ellipse(W/2,H+300,460,200,-.05,Math.PI+.5,Math.PI+2.5);c.stroke();c.setLineDash([]);
+  if(t>.4){const a=Math.min(1,(t-.4)*2);tx('Mission payload: [CLASSIFIED]',W/2,320,`rgba(255,80,80,${a*.6})`,11);tx(`908 days in orbit — what was it doing?`,W/2,340,`rgba(200,200,220,${a})`,10)}
+}},
+
+// ═══ HYPERSONIC WEAPONS ═══
+{cat:"Hypersonic Weapons",id:"scramjet",nm:"Scramjet Engine",sub:"Air-breathing engine that operates above Mach 5",
+info:[["Speed","Mach 5–15+"],["Type","Air-breathing"],["Key","No moving parts"],["Challenge","Lighting a match in a hurricane"]],
+desc:"A scramjet (supersonic combustion ramjet) is an engine with no moving parts that operates at hypersonic speeds (above Mach 5). Incoming air is compressed by the vehicle's own speed, fuel is injected and burned in a supersonic airflow, and the expanding exhaust provides thrust. The engineering challenge is extreme: mixing and igniting fuel in air flowing at thousands of mph has been compared to 'lighting a match in a hurricane and keeping it lit.' The air passes through the engine in milliseconds. NASA's X-43A reached Mach 9.6 in 2004 — the fastest air-breathing flight ever. Scramjets are the key technology behind hypersonic missiles and aircraft.",
+d:function(t){
+  nsky();grid(0,0,60);
+  tx('SCRAMJET ENGINE — Supersonic Combustion',W/2,25,'#50e8c0',14);
+  const ex=200,ey=270,ew=500,eh=100;
+  // Engine cross-section
+  c.fillStyle='rgba(40,40,60,.8)';c.beginPath();c.moveTo(ex,ey-eh/2);c.lineTo(ex+ew*.2,ey-eh/4);c.lineTo(ex+ew*.6,ey-eh/4);c.lineTo(ex+ew,ey-eh/3);c.lineTo(ex+ew,ey+eh/3);c.lineTo(ex+ew*.6,ey+eh/4);c.lineTo(ex+ew*.2,ey+eh/4);c.lineTo(ex,ey+eh/2);c.closePath();c.fill();c.strokeStyle='#556';c.lineWidth=1.5;c.stroke();
+  // Inlet wedge
+  c.fillStyle='#445';c.beginPath();c.moveTo(ex,ey);c.lineTo(ex+ew*.2,ey-eh/4);c.lineTo(ex+ew*.2,ey);c.closePath();c.fill();
+  tx('Inlet',ex+ew*.1,ey-eh/2-10,'#8ab',9);
+  // Combustion zone
+  if(t>.15){const a=Math.min(1,(t-.15)*2);c.fillStyle=`rgba(255,150,50,${a*.3})`;c.fillRect(ex+ew*.35,ey-eh/4+5,ew*.25,eh/2-10);
+  // Flame
+  for(let i=0;i<8;i++){ci(ex+ew*.4+i*15,ey+(Math.random()-.5)*20,3+Math.random()*4,`rgba(255,${150+Math.random()*100},50,${a*(.3+Math.random()*.2)})`)}
+  tx('Combustion',ex+ew*.47,ey-eh/4-5,`rgba(255,180,80,${a})`,9)}
+  // Air flow arrows
+  c.strokeStyle='rgba(100,200,255,.3)';c.lineWidth=1.5;
+  for(let i=0;i<4;i++){const fy=ey-15+i*10;c.beginPath();c.moveTo(ex-40,fy);c.lineTo(ex+30,fy);c.stroke();c.beginPath();c.moveTo(ex+25,fy-3);c.lineTo(ex+30,fy);c.lineTo(ex+25,fy+3);c.fill()}
+  tx('Mach 5+ airflow →',ex-60,ey-eh/2-10,'#5ab',9);
+  // Exhaust
+  if(t>.2){const p=(t-.2)/.8;pl(ex+ew,ey,0,80+p*200,30+p*30,'rgba(255,150,50,.3)');pl(ex+ew,ey,0,50+p*130,12,'rgba(255,220,150,.2)')}
+  tx('Nozzle',ex+ew-20,ey+eh/2+15,'#8ab',9);
+  if(t>.6){tx('"Lighting a match in a hurricane" — fuel ignites in microseconds',W/2,H-20,`rgba(200,200,220,${Math.min(1,(t-.6)*3)})`,10)}
+}},
+
+{cat:"Hypersonic Weapons",id:"hgv",nm:"Hypersonic Glide Vehicle",sub:"Mach 5-20 maneuvering warhead — nearly impossible to intercept",
+info:[["Speed","Mach 5–20"],["Trajectory","Depressed, maneuvering"],["Key","Evades missile defense"],["Programs","Avangard, DF-ZF, LRHW"]],
+desc:"Hypersonic Glide Vehicles (HGVs) are boosted to high speed by a rocket, then released at the edge of space to glide at Mach 5-20 on a flat, maneuvering trajectory. Unlike ballistic missiles (which follow a predictable arc), HGVs can pull lateral maneuvers of 10+ g, making their flight path unpredictable and their interception nearly impossible with current missile defense systems. Russia's Avangard reportedly reaches Mach 20. China's DF-ZF has been tested numerous times. The US is developing the Long-Range Hypersonic Weapon (LRHW). The key threat: an HGV reduces warning time from 30 minutes (ICBM) to as little as 5-6 minutes.",
+d:function(t){
+  bg('#0a0a20','#1a1a30');st(40);
+  // Earth surface
+  gnd(420,'#2a2a3a','#1a1a2a');
+  tx('HYPERSONIC GLIDE VEHICLE — Mach 5-20 Maneuvering',W/2,25,'#50e8c0',13);
+  // Ballistic trajectory (dotted, for comparison)
+  c.strokeStyle='rgba(255,100,100,.2)';c.lineWidth=1;c.setLineDash([4,4]);c.beginPath();c.moveTo(100,420);c.quadraticCurveTo(W/2,20,W-100,420);c.stroke();c.setLineDash([]);
+  tx('Ballistic (predictable)',W/2,80,'rgba(255,100,100,.4)',8);
+  // HGV trajectory (maneuvering)
+  const hgvPath=[];
+  for(let i=0;i<=50;i++){const f=i/50;hgvPath.push({x:100+f*(W-200),y:200+Math.sin(f*6)*40+f*200})}
+  c.strokeStyle='rgba(80,230,180,.4)';c.lineWidth=2;c.setLineDash([]);c.beginPath();
+  hgvPath.forEach((p,i)=>{if(i===0)c.moveTo(p.x,p.y);else c.lineTo(p.x,p.y)});c.stroke();
+  // HGV position
+  const idx=Math.floor(t*49);
+  const hp=hgvPath[Math.min(idx,49)];
+  // Vehicle
+  c.save();c.translate(hp.x,hp.y);c.rotate(Math.atan2(hgvPath[Math.min(idx+1,49)].y-hp.y,hgvPath[Math.min(idx+1,49)].x-hp.x));
+  c.fillStyle='#aab';c.beginPath();c.moveTo(12,0);c.lineTo(-8,-5);c.lineTo(-8,5);c.closePath();c.fill();c.restore();
+  // Plasma trail
+  for(let i=1;i<6;i++){const pi2=hgvPath[Math.max(0,idx-i*2)];ci(pi2.x,pi2.y,4-i*.6,`rgba(255,150,50,${.3-i*.05})`)}
+  // Maneuver indicators
+  if(t>.3){const a=Math.min(1,(t-.3)*2);
+  tx('← Unpredictable lateral maneuvers →',W/2,hp.y-30,`rgba(80,230,180,${a})`,9);
+  tx('HGV (maneuvering)',W/2,hp.y+35,`rgba(80,230,180,${a*.7})`,8)}
+  if(t>.7){tx('Warning time: 30 min (ICBM) → 5 min (HGV)',W/2,H-20,`rgba(255,200,100,${Math.min(1,(t-.7)*3)})`,11)}
+}},
+
+// ═══ DIRECTED ENERGY ═══
+{cat:"Directed Energy",id:"laser",nm:"Navy HELIOS Laser Weapon",sub:"60+ kW solid-state laser — shooting down drones and missiles at speed of light",
+info:[["Power","60+ kW"],["Speed","186,000 mi/s (light)"],["Cost/shot","~$1"],["Platform","USS Preble (DDG-88)"]],
+desc:"The HELIOS (High Energy Laser with Integrated Optical-dazzler and Surveillance) system is a 60+ kW solid-state laser weapon deployed on the USS Preble. It can engage drones, small boats, missiles, and aircraft at the speed of light — no lead calculation, no bullet drop, essentially zero travel time. The cost per shot is roughly one dollar (electricity), compared to millions for a missile interceptor. The system can also blind enemy sensors at lower power settings. The Navy's earlier prototype, the AN/SEQ-3 Laser Weapon System (LaWS), was deployed on the USS Ponce in 2014 and successfully destroyed drones in combat conditions in the Persian Gulf.",
+d:function(t){
+  sky();sea(350);
+  tx('NAVY HELIOS — Speed-of-Light Weapon System',W/2,25,'#234',13);
+  // Ship
+  c.fillStyle='#667';c.fillRect(100,340,120,20);c.fillRect(130,325,60,18);c.fillRect(155,310,25,18);
+  // Laser turret
+  c.fillStyle='#889';c.beginPath();c.arc(168,308,8,0,Math.PI*2);c.fill();
+  tx('USS Preble',160,370,'#445',8);
+  // Target drone
+  const dx=600+Math.sin(t*5)*50,dy=180+Math.cos(t*3)*30;
+  c.fillStyle='#555';c.fillRect(dx-10,dy-3,20,6);c.fillRect(dx-5,dy-10,10,7);
+  // Laser beam
+  if(t>.2){
+    const fire=((t-.2)*5)%1<.7;
+    if(fire){
+      c.strokeStyle='rgba(255,50,50,.6)';c.lineWidth=3;c.beginPath();c.moveTo(175,308);c.lineTo(dx,dy);c.stroke();
+      c.strokeStyle='rgba(255,100,100,.2)';c.lineWidth=8;c.beginPath();c.moveTo(175,308);c.lineTo(dx,dy);c.stroke();
+      // Impact glow
+      ci(dx,dy,10,'rgba(255,200,100,.4)');
+    }
+    // Drone destruction
+    if(t>.6){const a=Math.min(1,(t-.6)*3);
+    ci(dx,dy,15*a,'rgba(255,150,50,.5)');
+    for(let i=0;i<5;i++){ci(dx+(Math.random()-.5)*30*a,dy+(Math.random()-.5)*30*a,2,'rgba(255,200,100,.3)')}}
+  }
+  // Cost comparison
+  if(t>.5){const a=Math.min(1,(t-.5)*2);
+  tx('Interceptor missile: $2,000,000/shot',680,400,`rgba(255,100,100,${a})`,9,'left');
+  tx('HELIOS laser: ~$1/shot',680,418,`rgba(80,255,150,${a})`,9,'left')}
+}},
+
+{cat:"Directed Energy",id:"ads",nm:"Active Denial System",sub:"95 GHz millimeter wave — makes targets feel like they're on fire",
+info:[["Frequency","95 GHz"],["Effect","Intense burning sensation"],["Penetration","1/64 inch of skin"],["Range","500+ meters"]],
+desc:"The Active Denial System (ADS) is a directed-energy crowd control weapon that fires a focused 95 GHz millimeter wave beam. The energy penetrates only 1/64th of an inch into the skin — just enough to excite water molecules in the epidermis, creating an instantaneous and overwhelming sensation of intense heat. Targets reflexively flee within seconds. The pain stops immediately when you leave the beam. Over 11,000 test exposures have produced no lasting injuries. The system was deployed to Afghanistan in 2010 but never used in combat — commanders feared the optics of using a 'ray gun' on civilians. It remains one of the few genuinely non-lethal directed-energy weapons.",
+d:function(t){
+  bg('#e8d8c0','#d0c0a0');
+  gnd(380,'#c8b090','#b0a080');
+  tx('ACTIVE DENIAL SYSTEM — "Heat Ray"',W/2,25,'#443',13);
+  // Vehicle with ADS
+  c.fillStyle='#6a6a5a';c.fillRect(100,350,100,35);c.fillRect(120,340,60,15);
+  // Dish
+  c.fillStyle='#889';c.fillRect(145,310,30,35);c.fillStyle='#aab';c.beginPath();c.ellipse(160,310,20,25,0,Math.PI,0);c.fill();
+  tx('95 GHz emitter',160,295,'#556',8);
+  // Beam
+  if(t>.15){
+    const bw=20+t*150;
+    c.fillStyle='rgba(255,200,100,.06)';c.beginPath();c.moveTo(165,310);c.lineTo(600,280-bw/2);c.lineTo(600,280+bw/2);c.closePath();c.fill();
+    c.fillStyle='rgba(255,150,50,.04)';c.beginPath();c.moveTo(165,310);c.lineTo(600,280-bw/3);c.lineTo(600,280+bw/3);c.closePath();c.fill();
+    // Wave pattern
+    c.strokeStyle='rgba(255,180,50,.15)';c.lineWidth=1;
+    for(let i=0;i<8;i++){const wx=200+i*50;c.beginPath();c.arc(wx,290,5+i*3,0,Math.PI*2);c.stroke()}
+  }
+  // Target figures
+  if(t>.3){
+    const flee=Math.min(1,(t-.3)*2);
+    for(let i=0;i<3;i++){
+      const fx=550+i*30+flee*40,fy=365;
+      c.fillStyle='rgba(150,100,50,.5)';c.fillRect(fx,fy-15,5,15);c.beginPath();c.arc(fx+2,fy-18,4,0,Math.PI*2);c.fill();
+      // Pain indicators
+      if(flee>.2){tx('!',fx+2,fy-30,`rgba(255,50,50,${flee})`,12)}
+    }
+    if(flee>.5){tx('← targets flee within seconds',650,350,`rgba(150,80,30,${flee})`,9,'left')}
+  }
+  if(t>.6){tx('Penetrates 1/64" of skin — intense pain but zero lasting injury',W/2,H-20,`rgba(100,80,40,${Math.min(1,(t-.6)*3)})`,10)}
+}},
+
+{cat:"Directed Energy",id:"champ",nm:"CHAMP Microwave Missile",sub:"Cruise missile that fries electronics without explosions",
+info:[["Type","HPM (High-Power Microwave)"],["Platform","JASSM cruise missile"],["Effect","Destroys electronics"],["Blast","None — non-kinetic"]],
+desc:"CHAMP (Counter-electronics High-power Microwave Advanced Missile Project) is a cruise missile that replaces its warhead with a high-power microwave emitter. As it flies over a target area, it pulses directed microwave energy downward, frying electronic systems — computers, communications, power grids, air defenses — without any explosion or physical destruction. In a 2012 test at the Utah Test and Training Range, a CHAMP missile successfully disabled seven target buildings in a single flight. The electronics were permanently destroyed while the buildings themselves were untouched. It's essentially a reusable, targetable EMP weapon that can selectively disable infrastructure.",
+d:function(t){
+  nsky();
+  gnd(400,'#2a2a3a','#1a1a2a');
+  tx('CHAMP — Counter-Electronics Microwave Missile',W/2,25,'#50e8c0',13);
+  // Buildings
+  for(let i=0;i<7;i++){
+    const bx=130+i*100,bh=30+((i*17)%20);
+    c.fillStyle='#3a3a4a';c.fillRect(bx,400-bh,50,bh);
+    // Windows (lit or dark)
+    const hit=t>.2&&(bx-100)<t*600;
+    for(let j=0;j<3;j++){c.fillStyle=hit?'rgba(50,50,50,.5)':'rgba(255,220,100,.3)';c.fillRect(bx+5+j*15,400-bh+5,10,8)}
+    if(hit){tx('✗',bx+25,400-bh-8,'rgba(255,80,80,.6)',10)}
+  }
+  // Cruise missile
+  const mx=100+t*700,my=250+Math.sin(t*5)*15;
+  jet(mx,my,25,15,'#778',0);
+  // Microwave pulse downward
+  if(t>.15){
+    const pulse=((t-.15)*8)%1;
+    if(pulse<.5){
+      c.fillStyle='rgba(150,100,255,.08)';c.beginPath();c.moveTo(mx-15,my+5);c.lineTo(mx-40,400);c.lineTo(mx+40,400);c.lineTo(mx+15,my+5);c.fill();
+      // Wave pattern
+      for(let i=0;i<4;i++){const wy=my+20+i*40;c.strokeStyle=`rgba(150,100,255,${.1*(1-i/4)})`;c.lineWidth=1;c.beginPath();c.arc(mx,wy,15+i*10,0,Math.PI);c.stroke()}
+    }
+  }
+  if(t>.6){tx('7 buildings disabled in one flight — zero physical damage',W/2,H-20,`rgba(80,230,180,${Math.min(1,(t-.6)*3)})`,11)}
+}},
+
+// ═══ SPACE WEAPONS ═══
+{cat:"Space Weapons",id:"rods",nm:"Rods from God",sub:"Kinetic bombardment from orbit — tungsten rods at Mach 10",
+info:[["Concept","Kinetic energy weapon"],["Material","Tungsten rods, 20 ft × 1 ft"],["Impact speed","Mach 10"],["Force","Small nuclear weapon"]],
+desc:"'Rods from God' (officially 'Project Thor') is a concept for a space-based kinetic bombardment weapon. A satellite in orbit drops telephone-pole-sized tungsten rods (20 feet long, 1 foot diameter) onto targets. With no warhead and no explosives, the rods rely entirely on kinetic energy — hitting the ground at Mach 10 after free-falling from orbit. The impact would deliver energy equivalent to a small nuclear weapon, with no radioactive fallout. The tungsten would penetrate deep underground, making it effective against hardened bunkers. The Outer Space Treaty bans nuclear weapons in space but does not explicitly prohibit kinetic weapons. Whether any nation has actually deployed such a system is unknown.",
+d:function(t){
+  bg('#000008','#060618');st(80);
+  // Earth
+  c.fillStyle='#1a3a2a';c.beginPath();c.ellipse(W/2,H+250,500,300,0,Math.PI,0);c.fill();
+  c.strokeStyle='rgba(100,150,255,.1)';c.lineWidth=2;c.beginPath();c.ellipse(W/2,H+250,500,302,0,Math.PI,0);c.stroke();
+  tx('RODS FROM GOD — Kinetic Orbital Bombardment',W/2,25,'#50e8c0',13);
+  // Satellite
+  c.fillStyle='#556';c.fillRect(W/2-15,80,30,15);c.fillStyle='#448';c.fillRect(W/2-40,83,25,8);c.fillRect(W/2+15,83,25,8);
+  tx('Weapons platform',W/2,72,'#668',8);
+  // Rod dropping
+  if(t>.1){
+    const p=(t-.1)/.9;
+    const ry=95+p*350,rx=W/2+p*50;
+    // Rod
+    c.save();c.translate(rx,ry);c.rotate(Math.PI*.55);c.fillStyle='#aab';c.fillRect(-1,-10,2,20);c.restore();
+    // Plasma trail
+    if(p>.3){for(let i=0;i<8;i++){const tr=p-.05*i;ci(W/2+tr*50,95+tr*350,2-i*.2,`rgba(255,150,50,${.2-i*.02})`)}}
+    // Impact
+    if(p>.9){const ip=(p-.9)/.1;const ix=rx,iy=ry;ci(ix,iy,20*ip,'rgba(255,200,100,.5)');ci(ix,iy,40*ip,'rgba(255,150,50,.2)');
+    // Crater
+    c.fillStyle=`rgba(80,60,40,${ip*.5})`;c.beginPath();c.ellipse(ix,iy+5,25*ip,8*ip,0,0,Math.PI*2);c.fill()}
+  }
+  if(t>.5){const a=Math.min(1,(t-.5)*2);
+  tx('20 ft tungsten rod — no explosives, pure kinetic energy',W/2,H-38,`rgba(200,200,220,${a})`,10);
+  tx('Impact force: equivalent to small nuclear weapon, zero fallout',W/2,H-20,`rgba(80,230,180,${a})`,10)}
+}},
+
+{cat:"Space Weapons",id:"asat",nm:"Anti-Satellite Weapons (ASAT)",sub:"Destroying satellites from ground, air, or space",
+info:[["US test","2008 (SM-3 hit USA-193)"],["China test","2007 (SC-19)"],["Russia test","2021 (Nudol)"],["Problem","Space debris"]],
+desc:"Anti-satellite weapons (ASAT) can destroy or disable satellites from the ground, aircraft, or other spacecraft. The US demonstrated direct-ascent ASAT capability in 2008, destroying the defunct USA-193 spy satellite with a modified SM-3 missile. China's 2007 ASAT test destroyed a weather satellite at 865 km altitude, creating over 3,500 trackable pieces of debris that still threaten other spacecraft. Russia tested its Nudol system in 2021, destroying Cosmos 1408 and creating 1,500+ debris fragments that forced ISS astronauts to shelter. India also tested an ASAT weapon in 2019. The proliferation of ASAT weapons threatens the space infrastructure that modern military and civilian life depends on.",
+d:function(t){
+  bg('#000008','#060618');st(100);
+  // Earth
+  c.fillStyle='#1a3a5a';c.beginPath();c.ellipse(W/2,H+350,550,400,0,Math.PI,0);c.fill();
+  tx('ANTI-SATELLITE WEAPONS (ASAT)',W/2,25,'#50e8c0',13);
+  // Satellite
+  const satX=550,satY=140;
+  c.fillStyle='#889';c.fillRect(satX-8,satY-5,16,10);c.fillStyle='#448';c.fillRect(satX-25,satY-3,17,6);c.fillRect(satX+8,satY-3,17,6);
+  // Orbit line
+  el(W/2,H+350,400,150,'rgba(100,200,255,.08)',1);
+  // Kill vehicle ascending
+  if(t>.1){
+    const p=(t-.1)/.5;
+    const kvx=200+Math.min(1,p)*350,kvy=H-50-Math.min(1,p)*(H-195);
+    if(p<1){
+      ci(kvx,kvy,3,'rgba(255,100,50,.8)');
+      // Trail
+      for(let i=0;i<6;i++){ci(kvx-i*20*(1-i/6),kvy+i*30*(1-i/6),2-i*.3,`rgba(255,150,50,${.3-i*.05})`)}
+      pl(kvx-5,kvy+5,Math.PI*.7,30+p*20,6,'rgba(255,150,50,.4)');
+    }
+  }
+  // Impact
+  if(t>.6){const ip=(t-.6)/.4;
+  ci(satX,satY,15*ip,'rgba(255,200,100,.5)');
+  // Debris field expanding
+  for(let i=0;i<30*ip;i++){
+    const a2=i/30*Math.PI*2;const d=ip*80*((i*37%100)/100);
+    ci(satX+Math.cos(a2)*d,satY+Math.sin(a2)*d*.5,1,'rgba(200,200,220,.4)')
+  }
+  if(ip>.3){tx(`${Math.round(ip*3500)} debris fragments`,satX+80,satY-20,`rgba(255,150,100,${ip})`,9,'left');tx('Threatening all spacecraft in orbit',satX+80,satY-5,`rgba(200,200,220,${ip*.7})`,8,'left')}}
+}},
+
+// ═══ AUTONOMOUS SYSTEMS ═══
+{cat:"Autonomous Systems",id:"swarm",nm:"Drone Swarm Warfare",sub:"Hundreds of coordinated autonomous drones overwhelming defenses",
+info:[["Concept","Distributed autonomous attack"],["Size","100–1,000+ drones"],["AI","Collective decision-making"],["Defense","Extremely difficult"]],
+desc:"Military drone swarms use AI-coordinated groups of hundreds or thousands of small, cheap drones that operate as a collective intelligence. Each drone communicates with its neighbors, and the swarm autonomously adapts to threats — if one is shot down, others fill the gap. The swarm can overwhelm air defenses through sheer numbers (a $10M air defense system firing $1M missiles at $1,000 drones), conduct ISR, deliver munitions, or jam electronics. DARPA's OFFSET program demonstrated 250-drone swarms in urban environments. China has demonstrated 3,000-drone synchronized swarms. The Ukraine-Russia war has proven small-drone warfare at scale, previewing the swarm future.",
+d:function(t){
+  sky();gnd(380,'#6a8a5a','#4a6a3a');
+  tx('DRONE SWARM WARFARE',W/2,25,'#234',13);
+  // Swarm
+  const swarmCx=200+t*400,swarmCy=200;
+  const numDrones=Math.floor(30+t*80);
+  for(let i=0;i<numDrones;i++){
+    const angle=i/numDrones*Math.PI*2+Math.sin(t*3+i*.1)*.5;
+    const dist=30+((i*37)%60)+Math.sin(t*5+i)*10;
+    const dx=swarmCx+Math.cos(angle)*dist;
+    const dy=swarmCy+Math.sin(angle)*dist*.5+Math.sin(t*4+i*.3)*8;
+    c.fillStyle=`rgba(60,60,70,${.5+Math.random()*.2})`;
+    c.fillRect(dx-3,dy-1,6,2);c.fillRect(dx-1,dy-3,2,6);
+  }
+  // Communication lines
+  if(t>.2){c.strokeStyle='rgba(100,200,255,.03)';c.lineWidth=.5;
+  for(let i=0;i<10;i++){const a1=i/10*Math.PI*2+t,a2=(i+3)/10*Math.PI*2+t;c.beginPath();c.moveTo(swarmCx+Math.cos(a1)*40,swarmCy+Math.sin(a1)*20);c.lineTo(swarmCx+Math.cos(a2)*50,swarmCy+Math.sin(a2)*25);c.stroke()}}
+  // Target
+  c.fillStyle='rgba(80,80,80,.5)';c.fillRect(700,365,40,18);c.fillRect(710,355,20,12);
+  // Air defense trying to engage
+  if(t>.4){
+    const fire=((t-.4)*3)%1;
+    if(fire<.3){c.strokeStyle='rgba(255,100,50,.3)';c.lineWidth=1;c.beginPath();c.moveTo(720,355);
+    const ti=Math.floor(Math.random()*numDrones);const ta=ti/numDrones*Math.PI*2;
+    c.lineTo(swarmCx+Math.cos(ta)*40,swarmCy+Math.sin(ta)*20);c.stroke()}
+    tx('⚠ Defenses overwhelmed',720,340,`rgba(255,100,100,${Math.min(1,(t-.4)*2)})`,9);
+  }
+  if(t>.6){tx('$10M air defense vs. 1,000 × $1,000 drones — the math always wins',W/2,H-20,`rgba(50,180,130,${Math.min(1,(t-.6)*3)})`,10)}
+}},
+
+{cat:"Autonomous Systems",id:"wingman",nm:"Loyal Wingman / CCA",sub:"AI-piloted fighter jets flying alongside human pilots",
+info:[["US program","CCA (Collaborative Combat Aircraft)"],["Cost","~$20M each (vs $80M F-35)"],["Role","AI wingman to crewed jets"],["Status","Multiple prototypes flying"]],
+desc:"Collaborative Combat Aircraft (CCA) are autonomous or semi-autonomous fighter-sized drones designed to fly alongside crewed aircraft as 'loyal wingmen.' A single human pilot might control 2-5 CCAs, each carrying sensors, weapons, or electronic warfare payloads. The CCAs can be sent into dangerous airspace ahead of the crewed jet, absorb enemy missiles, jam radars, or launch their own attacks — all while the human pilot stays at safer range. The USAF plans to acquire 1,000+ CCAs from multiple vendors. Australia's Boeing MQ-28 Ghost Bat, Kratos XQ-58 Valkyrie, and Anduril's Fury are leading contenders. At ~$20M each vs. $80M+ for an F-35, they're designed to be 'attritable' — acceptable losses.",
+d:function(t){
+  sky();
+  tx('LOYAL WINGMAN / CCA — AI Combat Drones',W/2,25,'#234',13);
+  // F-35 (crewed lead)
+  const lx=200+t*100,ly=220;
+  jet(lx,ly,40,25,'#556',-.05);
+  tx('F-35 (human pilot)',lx,ly+25,'#446',8);
+  // CCAs flanking
+  const ccas=[[lx+80,ly-50],[lx+80,ly+50],[lx+140,ly-80],[lx+140,ly+80]];
+  ccas.forEach(([cx2,cy2],i)=>{
+    const dx=cx2+Math.sin(t*4+i)*8,dy=cy2+Math.cos(t*3+i)*5;
+    jet(dx,dy,30,18,'#668',-.05);
+    // AI indicator
+    ci(dx-5,dy,3,'rgba(80,200,255,.5)');
+  });
+  // Data links
+  if(t>.2){ccas.forEach(([cx2,cy2])=>{dsh(lx+15,ly,cx2-10,cy2,'rgba(80,200,255,.15)')})}
+  // Command arrows
+  if(t>.4){const a=Math.min(1,(t-.4)*2);tx('AI processes sensor data',lx+200,ly-100,`rgba(80,200,255,${a})`,9);tx('Human makes kill decisions',lx+200,ly-85,`rgba(200,200,220,${a*.7})`,8)}
+  // Enemy (far right)
+  if(t>.5){jet(750,180,30,20,'rgba(180,50,50,.5)',.1);tx('Threat',770,200,'rgba(255,100,100,.4)',8);
+  // CCAs engaging ahead of human
+  const a=Math.min(1,(t-.5)*2);tx('CCAs engage first — absorb risk',W/2,H-20,`rgba(50,180,130,${a})`,10)}
+}},
+
+// ═══ STEALTH TECH ═══
+{cat:"Stealth Technology",id:"rcs",nm:"Radar Cross Section",sub:"How stealth works — shaping, materials, and physics of invisibility",
+info:[["B-52","~100 m²"],["F-15","~25 m²"],["F-35","~0.005 m²"],["B-2","~0.0001 m²"]],
+desc:"Radar cross-section (RCS) is the measure of how detectable an object is to radar. A larger RCS means a bigger 'blip' on the radar screen. Stealth aircraft reduce RCS through three main techniques: (1) Shaping — angling surfaces to deflect radar waves away from the transmitter; (2) Radar-absorbing materials (RAM) — coatings that convert radar energy into heat; (3) Edge alignment — aligning all edges to a few specific angles so reflections concentrate into narrow spikes that are unlikely to hit a receiver. The result: a B-2 bomber with a 172-foot wingspan has a radar signature smaller than a marble.",
+d:function(t){
+  nsky();grid(0,0,50,'rgba(50,200,150,.03)');
+  tx('RADAR CROSS SECTION — The Physics of Stealth',W/2,25,'#50e8c0',13);
+  // Radar waves from left
+  if(t>.05){for(let i=0;i<8;i++){const wx=80+((t*200+i*30)%300),wy=260;c.strokeStyle=`rgba(50,255,100,${.15*(1-(wx-80)/300)})`;c.lineWidth=1;c.beginPath();c.arc(wx,wy,15,-.5,.5);c.stroke()}}
+  tx('Radar →',40,255,'rgba(50,255,100,.5)',9);
+  // Aircraft comparison
+  const aircraft=[
+    {nm:'F-15',x:350,rcs:25,size:35,shape:function(cx2,cy2){jet(cx2,cy2,35,25,'#556')}},
+    {nm:'F-35',x:550,rcs:.005,size:30,shape:function(cx2,cy2){c.fillStyle='#334';c.beginPath();c.moveTo(cx2+15,cy2);c.lineTo(cx2-15,cy2-12);c.lineTo(cx2-18,cy2);c.lineTo(cx2-15,cy2+12);c.closePath();c.fill()}},
+    {nm:'B-2',x:750,rcs:.0001,size:40,shape:function(cx2,cy2){c.fillStyle='#1a1a2a';c.beginPath();c.moveTo(cx2+20,cy2);c.quadraticCurveTo(cx2,cy2-3,cx2-30,cy2-25);c.lineTo(cx2-25,cy2);c.lineTo(cx2-30,cy2+25);c.quadraticCurveTo(cx2,cy2+3,cx2+20,cy2);c.fill()}}
+  ];
+  const show=Math.min(3,Math.floor(t*6)+1);
+  aircraft.forEach((a2,i)=>{
+    if(i>=show)return;
+    const ap=Math.min(1,(t-i*.15)*3);
+    a2.shape(a2.x,260);
+    // RCS circle (proportional)
+    const rcsR=Math.sqrt(a2.rcs)*10;
+    c.strokeStyle=`rgba(50,255,100,${ap*.4})`;c.lineWidth=1;c.beginPath();c.arc(a2.x,350,Math.max(2,rcsR),0,Math.PI*2);c.stroke();
+    tx(a2.nm,a2.x,220,`rgba(200,200,220,${ap})`,10);
+    tx(`${a2.rcs} m²`,a2.x,370,`rgba(50,255,100,${ap})`,9);
+    // Scatter pattern
+    if(t>.3){const sa=Math.min(1,(t-.3)*2);for(let j=0;j<6;j++){const ra=j/6*Math.PI*2;const rd=20+a2.rcs*.5;c.strokeStyle=`rgba(50,255,100,${sa*.1*(a2.rcs/25)})`;c.beginPath();c.moveTo(a2.x,260);c.lineTo(a2.x+Math.cos(ra)*rd,260+Math.sin(ra)*rd);c.stroke()}}
+  });
+}},
+
+{cat:"Stealth Technology",id:"metamat",nm:"Metamaterial Cloaking",sub:"Bending electromagnetic waves around an object — real invisibility",
+info:[["Concept","Negative refractive index"],["First demo","Duke University, 2006"],["Limitation","Narrow frequency band"],["Goal","Broadband visual cloaking"]],
+desc:"Metamaterials are artificially structured materials with properties not found in nature — including negative refractive indices that can bend electromagnetic waves around an object, making it effectively invisible. Duke University demonstrated microwave cloaking in 2006 using concentric rings of copper split-ring resonators. Since then, researchers have extended cloaking to infrared and even narrow visible light bands. The fundamental challenge: cloaking works well at one frequency but is extremely difficult across the broad spectrum of visible light. Military applications focus on radar-frequency cloaking (easier) and thermal signature masking. True visual-light invisibility remains a laboratory phenomenon, but the physics is proven.",
+d:function(t){
+  nsky();
+  tx('METAMATERIAL CLOAKING — Bending Light Around Objects',W/2,25,'#50e8c0',13);
+  const cx2=W/2,cy2=270;
+  // Object to cloak
+  c.fillStyle='rgba(100,100,120,.3)';c.beginPath();c.arc(cx2,cy2,30,0,Math.PI*2);c.fill();
+  tx('Object',cx2,cy2+45,'#668',8);
+  // Metamaterial shell
+  const cloakStrength=e(Math.min(1,t*2));
+  c.strokeStyle=`rgba(100,200,255,${.3*cloakStrength})`;c.lineWidth=2;
+  for(let i=0;i<3;i++){c.beginPath();c.arc(cx2,cy2,35+i*8,0,Math.PI*2);c.stroke()}
+  // Incoming waves
+  for(let i=0;i<10;i++){
+    const wy=cy2-80+i*16;
+    const wx=-50+((t*300+i*40)%400);
+    // Wave bending around object
+    c.strokeStyle=`rgba(80,200,255,${.2})`;c.lineWidth=1;
+    c.beginPath();c.moveTo(cx2-200,wy);
+    if(cloakStrength>.3){
+      const bend=cloakStrength*20*(1-Math.abs(i-5)/5);
+      c.quadraticCurveTo(cx2,wy+(i<5?-bend:bend),cx2+200,wy);
+    } else {
+      c.lineTo(cx2+200,wy);
+    }
+    c.stroke();
+  }
+  tx('EM waves →',cx2-230,cy2-5,'rgba(80,200,255,.5)',9);
+  tx('→ waves reunite',cx2+180,cy2-5,'rgba(80,200,255,.5)',9);
+  // Object fading
+  if(cloakStrength>.5){const fade=1-(cloakStrength-.5)*1.8;c.fillStyle=`rgba(100,100,120,${Math.max(0,fade*.3)})`;c.beginPath();c.arc(cx2,cy2,30,0,Math.PI*2);c.fill()}
+  if(t>.6){tx('Waves bend around object and reunite — observer sees nothing',W/2,H-20,`rgba(80,230,180,${Math.min(1,(t-.6)*3)})`,10)}
+}},
+
+// ═══ SURVEILLANCE ═══
+{cat:"Surveillance Tech",id:"argus",nm:"ARGUS-IS (1.8 Gigapixel)",sub:"Camera that watches an entire city at once in high resolution",
+info:[["Resolution","1.8 billion pixels"],["Coverage","25 sq miles"],["Detail","6-inch objects"],["Platform","High-altitude drone"]],
+desc:"ARGUS-IS (Autonomous Real-time Ground Ubiquitous Surveillance Imaging System) is a 1.8-gigapixel camera developed by DARPA that can image an area of 25 square miles in enough resolution to track every person and vehicle simultaneously. Mounted on a high-altitude drone, it can distinguish 6-inch objects from 20,000 feet. The system captures 1 million terabytes of data per day and uses AI to automatically track thousands of moving objects. Think of it as Google Earth — but in real time, all the time, at a resolution where you can see individual people. The technology was developed for military surveillance in Afghanistan and Iraq but raises profound questions about domestic surveillance capability.",
+d:function(t){
+  sky();
+  gnd(300,'#7a8a6a','#6a7a5a');
+  tx('ARGUS-IS — 1.8 Gigapixel Surveillance',W/2,25,'#234',13);
+  // Drone (high altitude)
+  c.fillStyle='#777';c.fillRect(W/2-15,50,30,5);c.fillRect(W/2-3,48,6,8);
+  tx('20,000 ft',W/2+30,55,'#889',8,'left');
+  // Coverage cone
+  c.fillStyle='rgba(255,200,50,.03)';c.beginPath();c.moveTo(W/2,55);c.lineTo(100,300);c.lineTo(W-100,300);c.closePath();c.fill();
+  c.strokeStyle='rgba(255,200,50,.1)';c.lineWidth=1;c.beginPath();c.moveTo(W/2,55);c.lineTo(100,300);c.moveTo(W/2,55);c.lineTo(W-100,300);c.stroke();
+  // City grid
+  for(let i=0;i<15;i++){for(let j=0;j<6;j++){
+    const bx=120+i*48,by=310+j*30,bh=5+((i*7+j*3)%10);
+    c.fillStyle='rgba(100,100,110,.3)';c.fillRect(bx,by-bh,20,bh)}}
+  // Streets
+  c.strokeStyle='rgba(80,80,80,.2)';c.lineWidth=1;
+  for(let i=0;i<4;i++){ln(120,320+i*35,W-120,320+i*35,'rgba(100,100,100,.15)',1)}
+  for(let i=0;i<8;i++){ln(130+i*95,305,130+i*95,H,'rgba(100,100,100,.15)',1)}
+  // Tracking dots (people/vehicles)
+  if(t>.2){const a=Math.min(1,(t-.2)*2);
+  for(let i=0;i<25;i++){
+    const px=150+((i*73+Math.floor(t*50))%600);
+    const py=315+((i*47)%150);
+    ci(px,py,2,`rgba(255,50,50,${a*.5})`);
+    // Tracking box
+    c.strokeStyle=`rgba(255,50,50,${a*.3})`;c.lineWidth=.5;c.strokeRect(px-5,py-5,10,10)}}
+  // Zoom inset
+  if(t>.4){const a=Math.min(1,(t-.4)*2);
+  c.fillStyle=`rgba(0,0,0,${a*.7})`;c.fillRect(W-230,60,220,120);c.strokeStyle=`rgba(255,200,50,${a*.5})`;c.strokeRect(W-230,60,220,120);
+  tx('ZOOM: 6" resolution',W-120,78,`rgba(255,200,50,${a})`,9);
+  // Detailed view
+  for(let i=0;i<6;i++){c.fillStyle=`rgba(200,200,200,${a*.3})`;c.fillRect(W-210+i*30,100,3,8);ci(W-209+i*30,95,2,`rgba(200,200,200,${a*.4})`)}}
+  tx('25 sq mi — every person, every vehicle, tracked simultaneously',W/2,H-20,`rgba(50,180,130,${Math.min(1,t*2)})`,10);
+}},
+
+{cat:"Surveillance Tech",id:"echelon",nm:"ECHELON / Five Eyes SIGINT",sub:"Global signals intelligence network — monitoring all communications",
+info:[["Alliance","US, UK, CA, AU, NZ"],["Scope","Global communications"],["Revealed","Snowden leaks (2013)"],["Stations","Pine Gap, Menwith Hill, etc."]],
+desc:"ECHELON is the code name for a global signals intelligence (SIGINT) collection network operated by the Five Eyes alliance (US, UK, Canada, Australia, New Zealand). The system intercepts satellite communications, phone calls, faxes, emails, and internet traffic worldwide using a network of ground stations, satellites, and undersea cable taps. The NSA's PRISM program, revealed by Edward Snowden in 2013, showed the system had direct access to servers of major tech companies. XKeyscore allows analysts to search virtually all internet traffic in real time. The system processes billions of communications daily using AI keyword filtering. Its existence was long denied until evidence became overwhelming.",
+d:function(t){
+  bg('#050510','#0a0a1a');
+  // World map (simplified)
+  c.fillStyle='rgba(30,60,40,.3)';
+  // North America
+  c.beginPath();c.moveTo(100,200);c.quadraticCurveTo(200,150,280,180);c.quadraticCurveTo(300,220,250,280);c.quadraticCurveTo(150,300,100,260);c.closePath();c.fill();
+  // Europe
+  c.beginPath();c.moveTo(400,160);c.quadraticCurveTo(450,140,500,160);c.quadraticCurveTo(510,200,470,220);c.quadraticCurveTo(420,210,400,180);c.closePath();c.fill();
+  // Asia/Australia
+  c.beginPath();c.ellipse(700,350,50,30,0,0,Math.PI*2);c.fill();
+  tx('ECHELON / FIVE EYES — Global SIGINT Network',W/2,25,'#50e8c0',13);
+  // Five Eyes stations
+  const stations=[
+    {x:180,y:220,nm:'NSA (US)',cl:'#4af'},
+    {x:440,y:170,nm:'GCHQ (UK)',cl:'#f44'},
+    {x:250,y:190,nm:'CSE (CA)',cl:'#f44'},
+    {x:700,y:340,nm:'ASD (AU)',cl:'#ff4'},
+    {x:740,y:370,nm:'GCSB (NZ)',cl:'#4f4'}
+  ];
+  const showN=Math.min(5,Math.floor(t*10)+1);
+  stations.forEach((s2,i)=>{
+    if(i>=showN)return;
+    const a=Math.min(1,(t-i*.1)*3);
+    ci(s2.x,s2.y,4,s2.cl);ci(s2.x,s2.y,10+Math.sin(t*4+i)*3,`rgba(100,200,255,${a*.1})`);
+    tx(s2.nm,s2.x,s2.y+15,`rgba(200,200,220,${a})`,7);
+  });
+  // Connection lines
+  if(t>.3){const a=Math.min(1,(t-.3)*2);stations.forEach((s2,i)=>{stations.forEach((s3,j)=>{if(j>i&&i<showN&&j<showN){ln(s2.x,s2.y,s3.x,s3.y,`rgba(100,200,255,${a*.08})`,1)}})})}
+  // Data intercept indicators
+  if(t>.5){const a=Math.min(1,(t-.5)*2);
+  for(let i=0;i<12;i++){const dx=100+Math.random()*700,dy=100+Math.random()*300;tx('•',dx,dy,`rgba(255,200,50,${a*.2*Math.random()})`,6)}
+  tx('Billions of communications intercepted daily',W/2,H-20,`rgba(200,200,220,${a})`,10)}
+}},
+
+// ═══ ADVANCED TECH ═══
+{cat:"Advanced Technology",id:"darparobot",nm:"DARPA Robotics",sub:"Atlas, Spot, and the future of military robotics",
+info:[["Atlas","Human-sized bipedal"],["Spot","Quadruped patrol robot"],["BigDog","Pack mule robot"],["Future","Autonomous combat"]],
+desc:"DARPA has funded the development of increasingly capable military robots. Boston Dynamics' Atlas robot can perform parkour, backflips, and navigate complex terrain — funded initially by DARPA for disaster response. Spot is deployed by military and police for reconnaissance and bomb disposal. Ghost Robotics' armed quadruped (with a rifle mount) has been demonstrated for perimeter security. The trajectory is clear: from remote-controlled bomb disposal robots to autonomous systems that can navigate, decide, and potentially engage targets without human input. The ethical and strategic implications of lethal autonomous weapons systems (LAWS) remain one of the most contentious issues in defense technology.",
+d:function(t){
+  nsky();gnd(400,'#2a2a3a','#1a1a2a');
+  tx('DARPA ROBOTICS — Military Autonomous Systems',W/2,25,'#50e8c0',13);
+  // Atlas robot (bipedal)
+  const ax2=200,ay2=340;
+  const walk=Math.sin(t*8)*5;
+  // Body
+  c.fillStyle='#556';c.fillRect(ax2-8,ay2-40,16,30);
+  // Head
+  ci(ax2,ay2-48,7,'#667');ci(ax2+2,ay2-49,2,'rgba(80,200,255,.5)');
+  // Legs
+  c.strokeStyle='#556';c.lineWidth=3;c.beginPath();c.moveTo(ax2-4,ay2-10);c.lineTo(ax2-6+walk,ay2+15);c.lineTo(ax2-4+walk,ay2+25);c.stroke();
+  c.beginPath();c.moveTo(ax2+4,ay2-10);c.lineTo(ax2+6-walk,ay2+15);c.lineTo(ax2+4-walk,ay2+25);c.stroke();
+  // Arms
+  c.beginPath();c.moveTo(ax2-8,ay2-35);c.lineTo(ax2-15-walk,ay2-20);c.stroke();
+  c.beginPath();c.moveTo(ax2+8,ay2-35);c.lineTo(ax2+15+walk,ay2-20);c.stroke();
+  tx('Atlas',ax2,ay2+40,'#889',8);
+
+  // Spot (quadruped)
+  const sx2=450,sy2=385;
+  c.fillStyle='#aa8800';c.fillRect(sx2-20,sy2-10,40,8);
+  // Legs
+  c.strokeStyle='#aa8800';c.lineWidth=2;
+  const sWalk=Math.sin(t*10)*3;
+  [[-15,0],[15,0],[-10,0],[10,0]].forEach(([dx],i)=>{c.beginPath();c.moveTo(sx2+dx,sy2-2);c.lineTo(sx2+dx+(i%2?sWalk:-sWalk),sy2+12);c.stroke()});
+  // Head
+  c.fillRect(sx2+20,sy2-14,10,6);ci(sx2+32,sy2-12,2,'rgba(80,200,255,.5)');
+  tx('Spot',sx2,sy2+25,'#889',8);
+
+  // Armed quadruped
+  const gx=680,gy=380;
+  c.fillStyle='#445';c.fillRect(gx-18,gy-8,36,7);
+  c.strokeStyle='#445';c.lineWidth=2;[[-12,0],[12,0],[-8,0],[8,0]].forEach(([dx])=>{c.beginPath();c.moveTo(gx+dx,gy-1);c.lineTo(gx+dx,gy+10);c.stroke()});
+  // Weapon mount
+  c.fillStyle='#333';c.fillRect(gx-2,gy-18,4,12);c.fillRect(gx-1,gy-22,15,3);
+  tx('Armed quadruped',gx,gy+22,'#889',8);
+
+  if(t>.5){tx('From bomb disposal → autonomous patrol → lethal autonomous systems?',W/2,H-20,`rgba(200,200,220,${Math.min(1,(t-.5)*2)})`,10)}
+}},
+
+{cat:"Advanced Technology",id:"quantum",nm:"Quantum Radar / Sensing",sub:"Using quantum entanglement to detect stealth aircraft",
+info:[["Concept","Entangled photon detection"],["Advantage","Defeats stealth shaping"],["Status","Lab-demonstrated"],["Developer","Multiple nations"]],
+desc:"Quantum radar uses entangled pairs of photons — sending one toward a target while keeping the other. By measuring correlations between the retained and reflected photons, the system can detect objects with far greater sensitivity than classical radar and potentially defeat stealth technology entirely. Because it detects the quantum signature of reflected photons rather than the amplitude of returned radio waves, the geometric shaping that makes stealth aircraft 'invisible' to conventional radar is irrelevant. China has claimed demonstrations of quantum radar prototypes, though verification is difficult. If perfected, quantum radar could render the entire $trillions invested in stealth technology obsolete overnight.",
+d:function(t){
+  nsky();grid(0,0,60,'rgba(100,50,200,.03)');
+  tx('QUANTUM RADAR — Defeating Stealth with Entangled Photons',W/2,25,'#50e8c0',13);
+  // Transmitter
+  c.fillStyle='#334';c.fillRect(80,240,60,40);ci(140,260,8,'#448');
+  tx('Quantum',110,235,'#668',8);tx('transmitter',110,290,'#668',8);
+  // Entangled pair visualization
+  if(t>.1){
+    const p=(t-.1)/.9;
+    // Signal photon (going to target)
+    const spx=150+p*400,spy=260+Math.sin(p*10)*15;
+    ci(spx,spy,3,'rgba(100,50,255,.7)');
+    // Wave function
+    c.strokeStyle='rgba(100,50,255,.2)';c.lineWidth=1;c.beginPath();
+    for(let i=0;i<20;i++){const wx=150+i*20;c.lineTo(wx,260+Math.sin(i*.5+t*5)*10)}c.stroke();
+    // Idler photon (retained)
+    ci(110,260+Math.sin(t*5)*8,3,'rgba(255,50,100,.7)');
+    // Entanglement line
+    dsh(110,260,spx,spy,'rgba(200,100,255,.1)');
+    // Target (stealth aircraft)
+    if(p>.4){
+      const ta=Math.min(1,(p-.4)*2);
+      c.fillStyle=`rgba(30,30,50,${ta})`;c.beginPath();c.moveTo(650,250);c.lineTo(620,240);c.lineTo(590,220);c.lineTo(595,250);c.lineTo(590,280);c.lineTo(620,260);c.closePath();c.fill();
+      tx('Stealth aircraft',650,210,`rgba(200,200,220,${ta})`,9);
+      // Reflected quantum photon
+      if(p>.6){const rp=(p-.6)/.4;ci(650-rp*300,260-Math.sin(rp*8)*10,2,'rgba(100,50,255,.5)')}
+    }
+  }
+  // Correlation detector
+  c.fillStyle='#334';c.fillRect(80,310,60,25);tx('Correlator',110,326,'#668',7);
+  if(t>.7){tx('Stealth shaping irrelevant — detects quantum signature, not amplitude',W/2,H-20,`rgba(80,230,180,${Math.min(1,(t-.7)*3)})`,10)}
+}},
+
+{cat:"Advanced Technology",id:"railgun",nm:"Electromagnetic Railgun",sub:"Mach 6 projectiles using magnetic force — no explosives needed",
+info:[["Speed","Mach 6 (4,600 mph)"],["Range","100+ nautical miles"],["Cost/shot","~$25,000"],["Energy","32 megajoules"]],
+desc:"An electromagnetic railgun uses two parallel conducting rails and enormous electric current to accelerate a projectile to Mach 6 — fast enough that the kinetic energy alone (no explosive warhead) can destroy targets. The US Navy tested a 32-megajoule prototype that fired 23-pound projectiles over 100 nautical miles at 4,600 mph. At that speed, the projectile arrives faster than the speed of sound — the target is hit before it hears the shot. Cost per shot is ~$25,000 vs. $1-2 million for a missile. The program was shelved in 2021 partly because hypersonic missiles achieved similar effects more practically, but the technology may return for future applications including missile defense.",
+d:function(t){
+  nsky();
+  tx('ELECTROMAGNETIC RAILGUN — Mach 6 Kinetic Weapon',W/2,25,'#50e8c0',13);
+  // Rails
+  const rx=150,ry=280,rl=300;
+  c.fillStyle='#889';c.fillRect(rx,ry-15,rl,4);c.fillRect(rx,ry+11,rl,4);
+  // Rail gap
+  c.fillStyle='rgba(100,150,255,.1)';c.fillRect(rx,ry-11,rl,22);
+  // Current flow indicators
+  c.strokeStyle='rgba(100,200,255,.3)';c.lineWidth=1;
+  for(let i=0;i<8;i++){const cx2=rx+20+i*35;c.beginPath();c.moveTo(cx2,ry-15);c.lineTo(cx2+5,ry-8);c.moveTo(cx2+5,ry+8);c.lineTo(cx2,ry+15);c.stroke()}
+  tx('← Current flow',rx-10,ry-20,'rgba(100,200,255,.5)',8);
+  tx('Current flow →',rx-10,ry+25,'rgba(100,200,255,.5)',8);
+  // Projectile
+  if(t>.1){
+    const p=e(Math.min(1,(t-.1)/.3));
+    const px=rx+10+p*rl;
+    if(t<.4){c.fillStyle='#ddd';c.fillRect(px-4,ry-6,8,12);
+    // Plasma arc
+    ci(px,ry,8,`rgba(100,200,255,${.3+Math.sin(t*30)*.2})`);}
+    // Launched projectile
+    if(t>=.4){const fp=(t-.4)/.6;const fpx=rx+rl+20+fp*400;ci(fpx,ry-fp*40,3,'rgba(200,200,220,.8)');
+    // Plasma trail
+    for(let i=0;i<6;i++){ci(fpx-i*fp*60,ry-fp*40+i*fp*6,2-i*.3,`rgba(255,150,50,${.3-i*.05})`);}
+    // Mach indicator
+    tx(`Mach ${(1+fp*5).toFixed(1)}`,fpx+15,ry-fp*40-10,'rgba(255,200,100,.6)',9,'left')}
+  }
+  // Power supply
+  c.fillStyle='#334';c.fillRect(rx-80,ry-20,60,40);tx('Capacitor',rx-50,ry-25,'#668',7);tx('bank',rx-50,ry+30,'#668',7);
+  ln(rx-20,ry,rx,ry,'rgba(255,200,50,.3)',2);
+  if(t>.6){tx('Projectile arrives before the sound — target never hears it coming',W/2,H-20,`rgba(80,230,180,${Math.min(1,(t-.6)*3)})`,10)}
+}},
+
+{cat:"Advanced Technology",id:"havana",nm:"Havana Syndrome",sub:"Mysterious directed-energy attacks on US diplomats — still unexplained",
+info:[["First reported","2016, Havana Cuba"],["Symptoms","Brain injury, hearing loss"],["Victims","200+ US personnel"],["Cause","Suspected RF weapon"]],
+desc:"Beginning in late 2016, US diplomats and intelligence officers in Havana, Cuba reported sudden onset of intense pressure or vibration in the head, accompanied by a loud piercing sound, followed by lasting symptoms: cognitive impairment, vertigo, headaches, and brain injuries visible on MRI. Over 200 US government personnel worldwide have since reported similar incidents — known as 'Anomalous Health Incidents.' A National Academy of Sciences panel concluded the most plausible cause was 'directed, pulsed radio frequency energy.' Russia's GRU has a documented history of developing such weapons. Despite multiple investigations, no definitive attribution has been made and the exact mechanism remains debated.",
+d:function(t){
+  bg('#1a1520','#0a0a10');
+  tx('HAVANA SYNDROME — Anomalous Health Incidents',W/2,25,'#f0e68c',13);
+  // Building (embassy)
+  c.fillStyle='#3a3a4a';c.fillRect(350,200,200,180);
+  for(let i=0;i<4;i++){for(let j=0;j<5;j++){c.fillStyle='rgba(255,220,100,.15)';c.fillRect(365+j*35,215+i*40,20,25)}}
+  tx('US Embassy',450,195,'#668',9);
+  // RF weapon source (hidden)
+  ci(150,300,5,'rgba(255,50,50,.3)');tx('?',150,303,'rgba(255,50,50,.5)',10);
+  // Directed RF beam
+  if(t>.15){const p=(t-.15)/.85;
+  // Invisible beam
+  c.fillStyle='rgba(150,50,50,.02)';c.beginPath();c.moveTo(155,300);c.lineTo(380,250);c.lineTo(380,310);c.closePath();c.fill();
+  // RF wave pattern
+  for(let i=0;i<6;i++){const wx=170+i*35;c.strokeStyle=`rgba(255,100,100,${.08*(1-i/6)})`;c.lineWidth=1;c.beginPath();c.arc(wx,280+i*3,8+i*3,-.5,.5);c.stroke()}}
+  // Target (person in room)
+  if(t>.3){const a=Math.min(1,(t-.3)*2);
+  c.fillStyle=`rgba(200,180,150,${a*.3})`;c.fillRect(393,270,5,15);ci(395,267,3,`rgba(200,180,150,${a*.3})`);
+  // Pain indicators
+  if(t>.4){const pa=Math.sin(t*12)*.3+.3;ci(395,265,10+pa*5,`rgba(255,100,100,${pa*.15})`);tx('Intense pressure / sound',430,260,`rgba(255,150,100,${Math.min(1,(t-.4)*2)})`,9,'left')}}
+  // Symptoms list
+  if(t>.5){const a=Math.min(1,(t-.5)*2);
+  tx('Symptoms: cognitive impairment, vertigo, brain injury visible on MRI',W/2,H-38,`rgba(200,200,220,${a})`,10);
+  tx('NAS conclusion: "directed, pulsed radio frequency energy"',W/2,H-20,`rgba(240,230,140,${a})`,10)}
+}},
+
+{cat:"Advanced Technology",id:"gravwave",nm:"Gravity Manipulation (Navy Patents)",sub:"US Navy patents for 'inertial mass reduction device' — craft that defies physics",
+info:[["Patent","US10144532B2"],["Inventor","Salvatore Pais (Navy)"],["Claims","Inertial mass reduction"],["Status","Patents granted, unverified"]],
+desc:"Between 2016-2019, the US Navy filed and was granted several extraordinary patents by inventor Salvatore Pais, including a 'Craft Using an Inertial Mass Reduction Device,' a 'High Frequency Gravitational Wave Generator,' and a room-temperature superconductor. The patents describe a craft that generates a quantum vacuum plasma around itself, dramatically reducing its inertial mass and enabling the kind of physics-defying maneuvers reported in UAP encounters. The Navy confirmed it paid to keep the patents active and that the Chief Technology Officer intervened to get them approved. Whether these patents represent real breakthrough technology, strategic disinformation, or speculative physics remains fiercely debated.",
+d:function(t){
+  nsky();grid(0,0,50,'rgba(100,50,200,.03)');
+  tx('NAVY PATENTS — Inertial Mass Reduction Device',W/2,25,'#50e8c0',13);
+  // Craft
+  const cx2=W/2,cy2=260;
+  const hover=Math.sin(t*4)*8;
+  // Quantum vacuum field
+  const fieldR=60+Math.sin(t*6)*10;
+  c.strokeStyle=`rgba(100,200,255,${.2+Math.sin(t*8)*.1})`;c.lineWidth=1;
+  for(let i=0;i<5;i++){c.beginPath();c.arc(cx2,cy2+hover,fieldR+i*12,t*2+i*.3,t*2+i*.3+Math.PI*1.5);c.stroke()}
+  // Craft body
+  c.fillStyle='rgba(150,160,180,.8)';c.beginPath();c.ellipse(cx2,cy2+hover,40,15,0,0,Math.PI*2);c.fill();
+  c.fillStyle='rgba(180,190,200,.7)';c.beginPath();c.ellipse(cx2,cy2-8+hover,20,12,0,0,Math.PI*2);c.fill();
+  // Plasma envelope
+  const pg=rg(cx2,cy2+hover,fieldR+20,'rgba(100,150,255,.05)','rgba(100,150,255,0)');
+  c.fillStyle=pg;c.beginPath();c.arc(cx2,cy2+hover,fieldR+20,0,Math.PI*2);c.fill();
+  // Patent citation
+  if(t>.2){const a=Math.min(1,(t-.2)*2);
+  tx('US Patent 10,144,532 B2',cx2+120,cy2-50,`rgba(200,200,220,${a})`,10,'left');
+  tx('"Craft Using an Inertial Mass',cx2+120,cy2-35,`rgba(150,150,180,${a})`,9,'left');
+  tx('Reduction Device"',cx2+120,cy2-22,`rgba(150,150,180,${a})`,9,'left');
+  tx('Inventor: Salvatore Cezar Pais',cx2+120,cy2-5,`rgba(130,130,160,${a})`,8,'left');
+  tx('Assignee: US Navy',cx2+120,cy2+8,`rgba(130,130,160,${a})`,8,'left')}
+  if(t>.6){tx('Real breakthrough, strategic deception, or speculative physics?',W/2,H-20,`rgba(240,230,140,${Math.min(1,(t-.6)*3)})`,10)}
+}},
+
+// ═══ MORE UAP ENCOUNTERS ═══
+{cat:"UAP Encounters",id:"belgian",nm:"Belgian Wave (1989-90)",sub:"Triangular craft tracked by NATO F-16s over Belgium",
+info:[["Date","Nov 1989 – Apr 1990"],["Witnesses","13,500+ reports"],["Radar","NATO F-16 radar lock"],["Shape","Large black triangle"]],
+desc:"Between November 1989 and April 1990, thousands of Belgians reported seeing large, silent, black triangular craft with bright lights at each corner. The Belgian Air Force scrambled two F-16 fighters on March 30, 1990, which achieved radar lock on the objects multiple times. The craft demonstrated acceleration from 150 mph to over 1,100 mph in seconds, dropping from 9,000 to 500 feet almost instantly — maneuvers generating forces of 40g that would destroy any known aircraft. The Belgian military cooperated openly with civilian investigators, releasing radar data. No explanation has ever been provided.",
+d:function(t){
+  nsky();
+  tx('BELGIAN UFO WAVE — 1989-1990',W/2,25,'#50e8c0',13);
+  // Belgian cityscape
+  gnd(380,'#1a1a2a','#0a0a15');
+  for(let i=0;i<12;i++){const bx=50+i*75,bh=40+Math.sin(i*2.3)*25;c.fillStyle='#151525';c.fillRect(bx,380-bh,45,bh);for(let j=0;j<3;j++)for(let k=0;k<Math.floor(bh/15);k++){c.fillStyle=Math.random()>.5?'rgba(255,200,80,.3)':'rgba(100,100,120,.1)';c.fillRect(bx+8+j*14,380-bh+8+k*15,8,8)}}
+  // Triangle craft
+  const ttx=t<.4?150+t*600:t<.7?390:390+(t-.7)/.3*500;
+  const tty=t<.4?200:t<.7?200+Math.sin((t-.4)*20)*30:200-((t-.7)/.3)*180;
+  if(t<.95){triangle(ttx,tty,30,.85);
+  // Corner lights
+  const blink=Math.sin(t*15)*.3+.7;
+  ci(ttx,tty-30*1.5,5,`rgba(255,255,255,${blink})`);ci(ttx-30*1.5,tty+30,4,`rgba(255,100,100,${blink})`);ci(ttx+30*1.5,tty+30,4,`rgba(100,255,100,${blink})`)}
+  // F-16s chasing
+  if(t>.25&&t<.85){const fa=(t-.25)/.6;jet(ttx-120-fa*30,tty+50,25,18,'#445',-.05);jet(ttx-160-fa*20,tty+80,22,16,'#445',-.03);
+  tx('BAF F-16s',ttx-140,tty+110,'rgba(150,150,180,.5)',8)}
+  // Radar lock indicator
+  if(t>.35&&t<.7){const ra=Math.sin(t*12)*.5+.5;c.strokeStyle=`rgba(100,255,100,${ra*.4})`;c.lineWidth=1;c.strokeRect(ttx-40,tty-50,80,80);tx('RADAR LOCK',ttx+50,tty-55,`rgba(100,255,100,${ra*.6})`,9,'left')}
+  if(t>.8){tx('Acceleration: 150 → 1,100 mph in seconds (~40g)',W/2,H-20,`rgba(240,230,140,${Math.min(1,(t-.8)*4)})`,10)}
+}},
+
+{cat:"UAP Encounters",id:"jal1628",nm:"JAL Flight 1628 (1986)",sub:"Japanese cargo pilot encounters massive craft over Alaska",
+info:[["Date","Nov 17, 1986"],["Pilot","Capt. Kenju Terauchi"],["Location","Over Alaska"],["Object","Walnut-shaped, carrier-sized"]],
+desc:"On November 17, 1986, Japan Air Lines cargo flight 1628 was flying over eastern Alaska when Captain Kenju Terauchi and his crew observed two small craft with glowing nozzles, followed by a massive walnut-shaped object that Terauchi estimated to be the size of an aircraft carrier. FAA radar confirmed an unidentified return near the aircraft. The encounter lasted over 30 minutes. The FAA's John Callahan later revealed that the CIA confiscated all radar data and recordings, telling participants 'this event never happened.'",
+d:function(t){
+  nsky();
+  tx('JAL FLIGHT 1628 — Nov 17, 1986 — Over Alaska',W/2,25,'#50e8c0',13);
+  // Aurora borealis
+  for(let i=0;i<8;i++){c.fillStyle=`rgba(50,200,100,${.03+Math.sin(t*3+i)*.02})`;c.beginPath();c.ellipse(100+i*110,80+Math.sin(t*2+i)*30,60,120,Math.sin(t+i)*.3,0,Math.PI*2);c.fill()}
+  // JAL 747
+  const jx=200+t*100,jy=280;
+  c.fillStyle='#bbb';c.beginPath();c.ellipse(jx,jy,40,8,0,0,Math.PI*2);c.fill();
+  c.fillStyle='#aaa';c.fillRect(jx-8,jy-5,16,5);c.fillStyle='#ccc';c.beginPath();c.moveTo(jx+40,jy);c.lineTo(jx+35,jy-3);c.lineTo(jx+30,jy);c.fill();
+  tx('JAL 1628',jx,jy+20,'#668',8);
+  // Small escort craft
+  if(t>.1&&t<.8){const ea=Math.min(1,(t-.1)*3);
+  for(let i=0;i<2;i++){const ex=jx+120+i*50,ey=jy-60-i*20+Math.sin(t*8+i)*10;
+  ci(ex,ey,8,`rgba(255,180,80,${ea*.6})`);ci(ex,ey,15,`rgba(255,150,50,${ea*.15})`)}}
+  // Massive walnut-shaped craft
+  if(t>.3){const ma=Math.min(1,(t-.3)*2);
+  const mx=620,my=230+Math.sin(t*3)*10;
+  c.fillStyle=`rgba(60,60,80,${ma*.8})`;c.beginPath();c.ellipse(mx,my,90,50,0,0,Math.PI*2);c.fill();
+  c.fillStyle=`rgba(80,80,100,${ma*.6})`;c.beginPath();c.ellipse(mx,my,70,35,0,0,Math.PI);c.fill();
+  const glow2=rg(mx,my,110,`rgba(200,150,80,${ma*.1})`,'rgba(200,150,80,0)');c.fillStyle=glow2;c.beginPath();c.arc(mx,my,110,0,Math.PI*2);c.fill();
+  tx('"Size of aircraft carrier"',mx,my+70,`rgba(240,200,120,${ma})`,9)}
+  if(t>.7){tx('FAA radar confirmed — CIA confiscated all data',W/2,H-20,`rgba(240,230,140,${Math.min(1,(t-.7)*3)})`,10)}
+}},
+
+{cat:"UAP Encounters",id:"stephenville",nm:"Stephenville, Texas (2008)",sub:"Multiple witnesses see mile-wide craft pursued by F-16s",
+info:[["Date","Jan 8, 2008"],["Location","Stephenville, TX"],["Size","~1 mile wide"],["Military","F-16s confirmed by USAF"]],
+desc:"On January 8, 2008, dozens of residents in Stephenville, Texas, including a constable and a pilot, reported seeing an enormous silent craft with brilliant lights spanning an estimated mile in length. Witnesses reported it moved at incredible speed. The USAF initially denied any aircraft in the area, then reversed course weeks later, admitting 10 F-16s were conducting training in the area. MUFON's investigation and FAA radar data obtained through FOIA showed unknown radar returns heading toward President Bush's Crawford Ranch, protected by a no-fly zone.",
+d:function(t){
+  nsky();st(70);
+  tx('STEPHENVILLE, TEXAS — January 8, 2008',W/2,25,'#50e8c0',13);
+  // Texas landscape
+  gnd(370,'#1a2a1a','#0a150a');
+  // Ranch buildings
+  c.fillStyle='#1a1a15';c.fillRect(100,340,50,30);c.fillRect(500,345,40,25);c.fillRect(700,350,35,20);
+  // The craft — mile-wide with lights
+  if(t>.05){const ca=Math.min(1,t*3);
+  const craftY=180+Math.sin(t*4)*8;
+  const craftX=t<.5?-100+t*800:300+(t-.5)*600;
+  const craftW2=200;
+  // Dark body
+  c.fillStyle=`rgba(15,15,25,${ca*.9})`;c.beginPath();c.ellipse(craftX,craftY,craftW2,15,0,0,Math.PI*2);c.fill();
+  // Bright lights
+  const nLights=7;for(let i=0;i<nLights;i++){const lx=craftX-craftW2+i*(craftW2*2/(nLights-1));const blink2=Math.sin(t*10+i*1.5)*.3+.7;
+  ci(lx,craftY,4,`rgba(255,255,255,${ca*blink2})`);ci(lx,craftY,12,`rgba(255,255,220,${ca*blink2*.15})`)}
+  tx('"Estimated 1 mile wide"',craftX,craftY+40,`rgba(200,200,220,${ca*.6})`,9)}
+  // F-16s
+  if(t>.4){const fa2=Math.min(1,(t-.4)*3);
+  for(let i=0;i<3;i++){jet(200+i*80+t*300,310-i*15,22,15,`rgba(80,80,100,${fa2})`,.1)}
+  tx('USAF F-16s (initially denied)',350+t*200,340,`rgba(150,150,180,${fa2*.5})`,8)}
+  if(t>.7){tx('FAA radar data showed returns heading toward Crawford Ranch (no-fly zone)',W/2,H-20,`rgba(240,230,140,${Math.min(1,(t-.7)*3)})`,10)}
+}},
+
+// ═══ MORE CLASSIFIED AIRCRAFT ═══
+{cat:"Classified Aircraft",id:"u2",nm:"U-2 Dragon Lady",sub:"1955 — CIA spy plane that flew higher than anything else",
+info:[["First Flight","Aug 1, 1955"],["Ceiling","70,000+ ft"],["Builder","Lockheed Skunk Works"],["Status","Still in service"]],
+desc:"Designed by Clarence 'Kelly' Johnson at Lockheed's Skunk Works, the U-2 was the CIA's first dedicated reconnaissance aircraft. Flying at 70,000+ feet — above the reach of Soviet fighters and missiles (initially) — it could photograph a golf ball from 13 miles up. The U-2 program was so secret that sightings by airline pilots became a major source of UFO reports in the 1950s, as no civilian aircraft flew anywhere near that altitude. The 2013 CIA declassification admitted that U-2 flights accounted for over half of all UFO reports in the late 1950s and 1960s.",
+d:function(t){
+  sky();
+  const altG=c.createLinearGradient(0,0,0,H);altG.addColorStop(0,'#0a0a30');altG.addColorStop(.3,'#2a3a7a');altG.addColorStop(.7,'#87CEEB');altG.addColorStop(1,'#aaddee');c.fillStyle=altG;c.fillRect(0,0,W,H);
+  tx('U-2 DRAGON LADY — CIA Reconnaissance',W/2,25,'#dde',13);
+  // Altitude scale
+  for(let i=0;i<5;i++){const ay=80+i*90;tx(`${70-i*15},000 ft`,60,ay,'rgba(200,200,220,.3)',8);dsh(90,ay,W-30,ay,'rgba(200,200,220,.05)')}
+  // U-2 at altitude
+  const ux=200+t*500,uy=110+Math.sin(t*6)*3;
+  // Long wings
+  c.fillStyle='#1a1a2a';c.fillRect(ux-50,uy-1,100,3);
+  // Fuselage
+  c.fillStyle='#2a2a3a';c.beginPath();c.ellipse(ux,uy,18,4,0,0,Math.PI*2);c.fill();
+  // Camera lens glow
+  ci(ux+5,uy+3,2,'rgba(100,200,255,.5)');
+  // Commercial airliner below
+  const ax=600-t*200,ay2=330;
+  c.fillStyle='#fff';c.beginPath();c.ellipse(ax,ay2,22,5,0,0,Math.PI*2);c.fill();c.fillRect(ax-12,ay2-3,8,3);
+  tx('Commercial jet ~35,000 ft',ax,ay2+18,'rgba(100,100,140,.5)',8);
+  // Pilot looking up
+  if(t>.3){const qa=Math.min(1,(t-.3)*3);tx('?  UFO REPORT FILED',ax+30,ay2-20,`rgba(255,200,100,${qa*.6})`,9)}
+  // CIA admission text
+  if(t>.6){const ta=Math.min(1,(t-.6)*3);
+  tx('CIA admitted in 2013: U-2 flights caused >50% of UFO reports in 1950s-60s',W/2,H-20,`rgba(240,230,140,${ta})`,10)}
+}},
+
+{cat:"Classified Aircraft",id:"haveblue",nm:"Have Blue (Stealth Prototype)",sub:"1977 — The original stealth demonstrator that started it all",
+info:[["First Flight","Dec 1, 1977"],["Builder","Lockheed Skunk Works"],["RCS","~Marble-sized"],["Result","Led to F-117"]],
+desc:"Have Blue was the proof-of-concept stealth aircraft built by Lockheed's Skunk Works under engineer Ben Rich. Two prototypes were built in total secrecy at Area 51. The aircraft used faceted surfaces computed by mathematician Denys Overholser using Pyotr Ufimtsev's diffraction theory — ironically a Soviet scientist whose work was freely published because the Soviets didn't realize its significance. Both prototypes crashed during testing, but the concept proved that an aircraft could have a radar cross-section the size of a ball bearing, leading directly to the F-117 Nighthawk.",
+d:function(t){
+  nsky();grid(0,0,60,'rgba(0,255,100,.02)');
+  tx('HAVE BLUE — Stealth Proof-of-Concept (1977)',W/2,25,'#50e8c0',13);
+  // Faceted aircraft
+  const hx=250+t*400,hy=240+Math.sin(t*5)*10;
+  c.save();c.translate(hx,hy);
+  // Body - faceted diamond shape
+  c.fillStyle='#1a1a2a';c.beginPath();c.moveTo(50,0);c.lineTo(10,-12);c.lineTo(-50,-8);c.lineTo(-40,0);c.lineTo(-50,8);c.lineTo(10,12);c.closePath();c.fill();
+  // V-tail
+  c.fillStyle='#151525';c.beginPath();c.moveTo(-35,-7);c.lineTo(-55,-22);c.lineTo(-45,-7);c.fill();
+  c.beginPath();c.moveTo(-35,7);c.lineTo(-55,22);c.lineTo(-45,7);c.fill();
+  // Facet highlights
+  c.strokeStyle='rgba(100,200,255,.1)';c.lineWidth=.5;
+  c.beginPath();c.moveTo(50,0);c.lineTo(10,-12);c.lineTo(-50,-8);c.stroke();
+  c.beginPath();c.moveTo(50,0);c.lineTo(10,12);c.lineTo(-50,8);c.stroke();
+  c.restore();
+  // RCS comparison
+  if(t>.3){const ra2=Math.min(1,(t-.3)*2);
+  tx('Radar Cross Section Comparison:',180,400,`rgba(200,200,220,${ra2})`,10);
+  // Normal jet RCS
+  ci(320,420,25,`rgba(255,100,100,${ra2*.3})`);tx('F-15: ~25 m²',320,455,`rgba(200,150,150,${ra2})`,8);
+  // Have Blue RCS
+  ci(500,420,2,`rgba(100,255,100,${ra2*.5})`);tx('Have Blue: ~0.001 m²',500,455,`rgba(150,200,150,${ra2})`,8)}
+  if(t>.7){tx('Both prototypes crashed — but the concept changed warfare forever',W/2,H-20,`rgba(240,230,140,${Math.min(1,(t-.7)*3)})`,10)}
+}},
+
+{cat:"Classified Aircraft",id:"rq170",nm:"RQ-170 Sentinel",sub:"Stealth drone used in Bin Laden raid — 'Beast of Kandahar'",
+info:[["Revealed","2009 photos"],["Builder","Lockheed Martin"],["Role","Stealth ISR drone"],["Notable","Bin Laden raid overwatch"]],
+desc:"The RQ-170 Sentinel was a classified stealth unmanned aerial vehicle operated by the USAF's 30th Reconnaissance Squadron at Tonopah Test Range. Dubbed the 'Beast of Kandahar' after being photographed at Kandahar Airfield in 2009, it features a flying-wing design optimized for low-observable operations. The RQ-170 provided critical real-time surveillance during the May 2011 raid on Osama bin Laden's compound in Abbottabad, Pakistan. In December 2011, Iran captured a largely intact RQ-170 after it reportedly lost its control link — a significant intelligence compromise.",
+d:function(t){
+  nsky();
+  tx('RQ-170 SENTINEL — "Beast of Kandahar"',W/2,25,'#50e8c0',13);
+  // Afghanistan terrain
+  gnd(360,'#2a2518','#1a1510');
+  // Mountains
+  c.fillStyle='#1a1812';c.beginPath();c.moveTo(0,360);c.lineTo(100,280);c.lineTo(200,320);c.lineTo(350,260);c.lineTo(500,310);c.lineTo(650,270);c.lineTo(800,300);c.lineTo(920,360);c.fill();
+  // RQ-170 flying wing
+  const dx=150+t*600,dy=180+Math.sin(t*4)*12;
+  c.save();c.translate(dx,dy);
+  c.fillStyle='#3a3a4a';c.beginPath();c.moveTo(35,0);c.lineTo(-10,-30);c.lineTo(-25,-32);c.lineTo(-30,0);c.lineTo(-25,32);c.lineTo(-10,30);c.closePath();c.fill();
+  // Sensor pod
+  ci(10,3,3,'rgba(100,200,255,.4)');
+  c.restore();
+  // Surveillance cone
+  if(t>.2){const sa=Math.min(1,(t-.2)*2);
+  c.fillStyle=`rgba(100,255,200,${sa*.05})`;c.beginPath();c.moveTo(dx,dy+8);c.lineTo(dx-60,380);c.lineTo(dx+60,380);c.fill();
+  c.strokeStyle=`rgba(100,255,200,${sa*.15})`;c.lineWidth=.5;c.beginPath();c.moveTo(dx,dy+8);c.lineTo(dx-60,380);c.moveTo(dx,dy+8);c.lineTo(dx+60,380);c.stroke()}
+  // Bin Laden compound
+  if(t>.4){const ba=Math.min(1,(t-.4)*2);
+  c.fillStyle=`rgba(200,190,160,${ba*.4})`;c.fillRect(dx-15,370,30,10);c.strokeStyle=`rgba(200,190,160,${ba*.3})`;c.strokeRect(dx-20,365,40,18);
+  tx('Abbottabad compound',dx,395,`rgba(200,200,180,${ba*.5})`,8)}
+  if(t>.7){tx('Provided real-time ISR during Operation Neptune Spear (May 2, 2011)',W/2,H-20,`rgba(240,230,140,${Math.min(1,(t-.7)*3)})`,10)}
+}},
+
+{cat:"Classified Aircraft",id:"darkstar",nm:"Darkstar / RQ-3 (Canceled)",sub:"1996 — Stealthy high-altitude drone ahead of its time",
+info:[["First Flight","Mar 29, 1996"],["Builder","Lockheed/Boeing"],["Ceiling","45,000 ft"],["Fate","Crashed, program canceled"]],
+desc:"The RQ-3 DarkStar was a high-altitude endurance UAV designed for reconnaissance in heavily defended airspace. Its saucer-like fuselage and blended wing design gave it an extremely low radar signature. The first prototype crashed on its second flight in April 1996 due to a software error. The program was officially canceled in 1999 as 'too expensive,' but many in the intelligence community believe a classified successor was developed in secret. The name resurfaced when the 2022 film 'Top Gun: Maverick' featured a fictional 'Darkstar' hypersonic aircraft — Lockheed's Skunk Works actually helped design the movie prop.",
+d:function(t){
+  const skyG=c.createLinearGradient(0,0,0,H);skyG.addColorStop(0,'#0a0a30');skyG.addColorStop(.5,'#1a2a6a');skyG.addColorStop(1,'#4a6aaa');c.fillStyle=skyG;c.fillRect(0,0,W,H);
+  tx('RQ-3 DARKSTAR — Stealth UAV (1996)',W/2,25,'#50e8c0',13);
+  // DarkStar — saucer body with wings
+  const dkx=200+t*500,dky=250+Math.sin(t*3)*15;
+  c.save();c.translate(dkx,dky);
+  // Wings
+  c.fillStyle='#3a3a50';c.beginPath();c.moveTo(20,0);c.lineTo(-10,-45);c.lineTo(-30,-48);c.lineTo(-25,0);c.lineTo(-30,48);c.lineTo(-10,45);c.closePath();c.fill();
+  // Saucer fuselage
+  c.fillStyle='#4a4a60';c.beginPath();c.ellipse(0,0,25,10,0,0,Math.PI*2);c.fill();
+  c.fillStyle='#555570';c.beginPath();c.ellipse(0,-3,18,7,0,0,Math.PI*2);c.fill();
+  c.restore();
+  // "CLASSIFIED" stamp
+  if(t>.5){const sa2=Math.min(1,(t-.5)*2);
+  c.save();c.translate(W/2,H/2+80);c.rotate(-.15);
+  c.strokeStyle=`rgba(255,80,80,${sa2*.4})`;c.lineWidth=3;c.strokeRect(-100,-18,200,36);
+  tx('PROGRAM CANCELED — OR WAS IT?',0,5,`rgba(255,80,80,${sa2*.5})`,14);
+  c.restore()}
+  if(t>.7){tx('Officially too expensive — but classified successors may exist',W/2,H-20,`rgba(240,230,140,${Math.min(1,(t-.7)*3)})`,10)}
+}},
+
+// ═══ HYPERSONIC WEAPONS (MORE) ═══
+{cat:"Hypersonic Weapons",id:"arrw",nm:"AGM-183A ARRW",sub:"USAF air-launched hypersonic boost-glide missile",
+info:[["Speed","Mach 6.5-8"],["Type","Boost-Glide"],["Platform","B-52H"],["Status","Testing phase"]],
+desc:"The Air-Launched Rapid Response Weapon (ARRW, pronounced 'arrow') is the US Air Force's first operational hypersonic weapon. A solid rocket booster accelerates the payload to hypersonic speeds, then a maneuvering glide vehicle separates and flies to its target at Mach 6.5-8 while performing unpredictable maneuvers to evade missile defenses. After several failed tests, ARRW achieved a successful booster flight in May 2022 and a complete end-to-end test in March 2023. The weapon can be carried by B-52H bombers.",
+d:function(t){
+  sky();
+  tx('AGM-183A ARRW — Air-Launched Rapid Response Weapon',W/2,25,'#234',13);
+  // B-52 bomber
+  const bx=100+t*200,by=160;
+  c.fillStyle='#667';c.beginPath();c.ellipse(bx,by,45,7,0,0,Math.PI*2);c.fill();
+  c.fillRect(bx-35,by-2,12,4);c.fillRect(bx+20,by-2,12,4);
+  c.fillStyle='#556';c.fillRect(bx-12,by-20,24,18);
+  tx('B-52H',bx,by+20,'#446',8);
+  // ARRW missile release
+  if(t>.2){const mp=Math.min(1,(t-.2)/.3);
+  const mx=bx+30+mp*200,my=by+10+mp*40;
+  if(t<.5){
+  c.fillStyle='#888';c.save();c.translate(mx,my);c.rotate(.2);c.fillRect(-12,-2,24,4);c.beginPath();c.moveTo(12,0);c.lineTo(8,-4);c.lineTo(8,4);c.closePath();c.fill();c.restore()}}
+  // Boost phase
+  if(t>.5){const bp=(t-.5)/.2;const bst=Math.min(1,bp);
+  const boostX=350+bst*100,boostY=230-bst*30;
+  if(t<.7){c.fillStyle='#888';c.save();c.translate(boostX,boostY);c.rotate(-.3);c.fillRect(-15,-3,30,6);c.restore();
+  // Rocket flame
+  for(let i=0;i<5;i++){pl(boostX-15,boostY,Math.PI+(.3)+Math.random()*.4,20+Math.random()*20,8,'rgba(255,180,50,.4)')}}}
+  // Glide phase
+  if(t>.7){const gp=(t-.7)/.3;
+  const glX=470+gp*380,glY=180-gp*20+Math.sin(gp*12)*15;
+  // Glide vehicle
+  c.fillStyle='#aaa';c.save();c.translate(glX,glY);c.rotate(-.1+Math.sin(gp*8)*.1);
+  c.beginPath();c.moveTo(15,0);c.lineTo(-10,-6);c.lineTo(-12,0);c.lineTo(-10,6);c.closePath();c.fill();c.restore();
+  // Hypersonic heating
+  ci(glX+15,glY,8,`rgba(255,150,50,${.2+Math.sin(t*12)*.1})`);
+  // Speed indicator
+  tx(`Mach ${(6.5+gp*1.5).toFixed(1)}`,glX,glY-20,'rgba(255,200,100,.6)',9);
+  // Maneuvering trail
+  for(let i=0;i<8;i++){ci(glX-i*40,glY+Math.sin(gp*12-i*.5)*15+i*2,3-i*.3,`rgba(255,200,100,${.15*(1-i/8)})`)}}
+  if(t>.9){tx('Unpredictable maneuvers make interception nearly impossible',W/2,H-20,`rgba(240,230,140,${Math.min(1,(t-.9)*8)})`,10)}
+}},
+
+{cat:"Hypersonic Weapons",id:"avangard",nm:"Avangard (Russian HGV)",sub:"Russia's Mach 20-27 hypersonic glide vehicle on ICBMs",
+info:[["Speed","Mach 20-27"],["Range","Intercontinental"],["Carrier","RS-28 Sarmat ICBM"],["Status","Deployed 2019"]],
+desc:"Russia's Avangard is a hypersonic glide vehicle mounted atop intercontinental ballistic missiles. After ICBM boost phase, the glide vehicle separates and skips along the upper atmosphere at speeds reportedly up to Mach 27 (20,000+ mph) while executing lateral maneuvers that make it virtually impossible to intercept with current missile defense systems. Russia claims the weapon is nuclear-capable and entered combat duty in December 2019. The US was allowed to inspect the system under the New START treaty.",
+d:function(t){
+  nsky();st(50);
+  tx('AVANGARD — Russian Hypersonic Glide Vehicle',W/2,25,'#50e8c0',13);
+  // Earth curvature
+  c.fillStyle='rgba(30,60,120,.3)';c.beginPath();c.arc(W/2,H+300,400,Math.PI,Math.PI*2);c.fill();
+  c.strokeStyle='rgba(80,150,255,.15)';c.lineWidth=1;c.beginPath();c.arc(W/2,H+300,400,Math.PI,Math.PI*2);c.stroke();
+  // Atmosphere layer
+  c.fillStyle='rgba(50,100,200,.05)';c.beginPath();c.arc(W/2,H+300,440,Math.PI,Math.PI*2);c.fill();
+  // ICBM launch
+  if(t<.3){const lp=t/.3;
+  const lx=100,ly=H-50-lp*300;
+  c.fillStyle='#aaa';c.save();c.translate(lx,ly);c.rotate(-lp*.3);c.fillRect(-3,-15,6,30);c.restore();
+  for(let i=0;i<4;i++){pl(lx,ly+15,Math.PI/2+.3+Math.random()*.4,25+Math.random()*15,12,'rgba(255,150,50,.3)')}}
+  // Glide phase
+  if(t>.3){const gp2=(t-.3)/.7;
+  const gpx=120+gp2*750;
+  const gpy=120+Math.sin(gp2*Math.PI*3)*40+gp2*80;
+  // Glide vehicle
+  c.fillStyle='#ccc';c.save();c.translate(gpx,gpy);const ang=Math.cos(gp2*Math.PI*3)*.3;c.rotate(ang);
+  c.beginPath();c.moveTo(12,0);c.lineTo(-8,-5);c.lineTo(-10,0);c.lineTo(-8,5);c.closePath();c.fill();c.restore();
+  // Heating plasma
+  ci(gpx+12,gpy,10,`rgba(255,100,50,${.15+Math.sin(t*10)*.1})`);ci(gpx+12,gpy,18,`rgba(255,80,30,${.05})`);
+  // Skip trajectory visualization
+  c.strokeStyle='rgba(255,150,80,.2)';c.lineWidth=1;c.beginPath();c.moveTo(120,120);
+  for(let i=0;i<=20;i++){const sx=120+i*38;const sy=120+Math.sin(i/20*Math.PI*3)*40+i*4;if(i===0)c.moveTo(sx,sy);else c.lineTo(sx,sy)}c.stroke();
+  tx(`Mach ${(20+gp2*7).toFixed(0)}`,gpx,gpy-25,'rgba(255,200,100,.5)',10)}
+  if(t>.8){tx('Skips along atmosphere edge — virtually impossible to intercept',W/2,H-20,`rgba(240,230,140,${Math.min(1,(t-.8)*4)})`,10)}
+}},
+
+// ═══ ELECTRONIC WARFARE ═══
+{cat:"Electronic Warfare",id:"growler",nm:"EA-18G Growler",sub:"US Navy electronic attack aircraft — disabling enemy radar",
+info:[["Platform","F/A-18F based"],["Role","Electronic warfare"],["Jammers","ALQ-99 / NGJ"],["Service","USN / RAAF"]],
+desc:"The EA-18G Growler is the US Navy's primary electronic warfare aircraft, replacing the EA-6B Prowler. Based on the F/A-18F Super Hornet airframe, it carries the ALQ-99 Tactical Jamming System (being replaced by the Next Generation Jammer) and AGM-88 HARM anti-radiation missiles. The Growler can locate, jam, and destroy enemy radar and communications systems, creating corridors of electronic silence for strike packages. It's one of the most secretive tactical aircraft — its full electronic warfare capabilities remain highly classified.",
+d:function(t){
+  nsky();
+  tx('EA-18G GROWLER — Electronic Attack',W/2,25,'#50e8c0',13);
+  // Enemy radar installation
+  const radX=720,radY=350;
+  gnd(380,'#1a2a1a','#0a150a');
+  c.fillStyle='#445';c.fillRect(radX-5,radY,10,30);
+  // Radar dish rotating
+  c.save();c.translate(radX,radY);c.rotate(t*4);
+  c.fillStyle='#556';c.beginPath();c.moveTo(0,0);c.lineTo(-15,-5);c.lineTo(-15,5);c.closePath();c.fill();c.restore();
+  tx('SA-20 Radar',radX,radY+45,'rgba(255,100,100,.4)',8);
+  // Radar waves (before jam)
+  if(t<.4){for(let i=0;i<5;i++){const wr=30+i*40+t*60;
+  c.strokeStyle=`rgba(255,100,100,${.15*(1-i/5)})`;c.lineWidth=1;c.beginPath();c.arc(radX,radY,wr,Math.PI+.5,Math.PI*2-.5);c.stroke()}}
+  // Growler approaching
+  const gx=100+t*400,gy=220+Math.sin(t*5)*10;
+  jet(gx,gy,35,22,'#556',-.05);
+  // Jamming pods
+  c.fillStyle='rgba(100,100,120,.6)';c.fillRect(gx-20,gy+8,8,12);c.fillRect(gx+12,gy+8,8,12);
+  tx('EA-18G',gx,gy-20,'rgba(150,200,150,.5)',8);
+  // Jamming activation
+  if(t>.35){const ja=Math.min(1,(t-.35)*3);
+  // Jamming waves
+  for(let i=0;i<8;i++){const jr=20+i*30;
+  c.strokeStyle=`rgba(100,255,150,${ja*.12*(1-i/8)})`;c.lineWidth=2;c.beginPath();c.arc(gx+20,gy,jr,-.3,.3);c.stroke()}
+  // Disrupted radar
+  if(t>.5){for(let i=0;i<5;i++){const wr2=30+i*40;const jitter=Math.random()*20-10;
+  c.strokeStyle=`rgba(255,100,100,${.05})`;c.lineWidth=1;c.beginPath();c.arc(radX+jitter,radY+jitter,wr2,Math.PI+.5,Math.PI*2-.5);c.stroke()}
+  tx('JAMMED',radX,radY-20,`rgba(255,80,80,${Math.sin(t*8)*.3+.5})`,11)}}
+  // HARM missile
+  if(t>.65){const hp=(t-.65)/.35;
+  const hmx=gx+30+hp*300,hmy=gy-10+hp*100;
+  c.fillStyle='#aaa';c.save();c.translate(hmx,hmy);c.rotate(.3);c.fillRect(-8,-1.5,16,3);c.restore();
+  ci(hmx+8,hmy,3,'rgba(255,200,100,.3)');
+  if(hp>.8){ci(radX,radY,15+hp*20,`rgba(255,150,50,${(1-hp)*2})`)}}
+  if(t>.85){tx('Jam → Destroy: suppressing enemy air defenses (SEAD)',W/2,H-20,`rgba(240,230,140,${Math.min(1,(t-.85)*6)})`,10)}
+}},
+
+{cat:"Electronic Warfare",id:"emp",nm:"Nuclear EMP Weapon",sub:"High-altitude detonation that fries electronics across a continent",
+info:[["Type","HEMP (High-altitude EMP)"],["Range","1,500+ mile radius"],["Effect","Fries all unshielded electronics"],["Origin","Discovered during Starfish Prime"]],
+desc:"A nuclear electromagnetic pulse (EMP) weapon detonated at high altitude (200-300 miles) generates three electromagnetic pulses: E1 (nanosecond spike that destroys microelectronics), E2 (similar to lightning), and E3 (slow pulse that overloads power grids). During the 1962 Starfish Prime test — a 1.4 megaton detonation at 250 miles altitude — streetlights blew out in Hawaii 900 miles away, and phone lines failed across the Pacific. A single warhead detonated over Kansas could theoretically disable electronics across the entire continental United States.",
+d:function(t){
+  nsky();st(40);
+  tx('NUCLEAR EMP — High-Altitude Electromagnetic Pulse',W/2,25,'#50e8c0',13);
+  // Earth curvature with grid
+  c.fillStyle='rgba(20,60,40,.3)';c.beginPath();c.arc(W/2,H+250,350,Math.PI,Math.PI*2);c.fill();
+  // US outline (simplified)
+  c.strokeStyle='rgba(80,200,150,.2)';c.lineWidth=1;c.beginPath();c.arc(W/2,H+250,350,Math.PI+.3,Math.PI*2-.3);c.stroke();
+  // City lights
+  for(let i=0;i<20;i++){const cx3=200+i*30+Math.sin(i*3)*20,cy3=H-100-Math.sin((i*30/350)*Math.PI)*50;
+  if(t<.35||Math.random()>.5*(t-.35)*3){ci(cx3,cy3,2,'rgba(255,200,100,.4)')}}
+  // Warhead ascending
+  if(t<.25){const rp=t/.25;
+  const rx=W/2,ry=H-50-rp*280;
+  c.fillStyle='#aaa';c.fillRect(rx-2,ry-8,4,16);
+  for(let i=0;i<3;i++){pl(rx,ry+8,Math.PI/2+Math.random()*.5,15,6,'rgba(255,150,50,.3)')}}
+  // Detonation
+  if(t>.25&&t<.5){const dp=(t-.25)/.25;
+  const flashR=dp*300;
+  ci(W/2,H-330,flashR*.3,`rgba(255,255,255,${(1-dp)*.8})`);
+  ci(W/2,H-330,flashR,`rgba(255,200,100,${(1-dp)*.1})`)}
+  // EMP wave expanding
+  if(t>.3){const ep=(t-.3)/.7;
+  const empR=ep*500;
+  c.strokeStyle=`rgba(100,200,255,${.3*(1-ep)})`;c.lineWidth=3;c.beginPath();c.arc(W/2,H-330,empR,.3,Math.PI-.3);c.stroke();
+  c.strokeStyle=`rgba(100,200,255,${.15*(1-ep)})`;c.lineWidth=1;c.beginPath();c.arc(W/2,H-330,empR*1.1,.3,Math.PI-.3);c.stroke()}
+  // Lights going out
+  if(t>.4){const blk=(t-.4)/.3;
+  tx('Electronics failing across 1,500-mile radius',W/2,H-20,`rgba(240,230,140,${Math.min(1,blk*2)})`,10)}
+  // E1, E2, E3 labels
+  if(t>.35){const la=Math.min(1,(t-.35)*3);
+  tx('E1: Nanosecond spike → destroys microchips',180,100,`rgba(255,100,100,${la*.6})`,9,'left');
+  tx('E2: Millisecond pulse → like lightning',180,120,`rgba(255,200,100,${la*.6})`,9,'left');
+  tx('E3: Slow pulse → overloads power grid',180,140,`rgba(100,200,255,${la*.6})`,9,'left')}
+}},
+
+// ═══ EXOTIC CONCEPTS ═══
+{cat:"Exotic Concepts",id:"project1794",nm:"Project 1794 (CIA Flying Saucer)",sub:"1950s — USAF/CIA actually tried to build a flying saucer",
+info:[["Year","1952-1961"],["Builder","Avro Canada"],["Goal","VTOL Mach 4 at 100k ft"],["Result","Wobbled at 3 ft altitude"]],
+desc:"Project 1794 (also known as the Avrocar) was an actual US military attempt to build a flying saucer. Declassified in 2012, the project was contracted to Avro Canada to build a disc-shaped VTOL aircraft that could reach Mach 4 at 100,000+ feet — fast enough to intercept Soviet bombers. The resulting VZ-9 Avrocar looked exactly like a stereotypical UFO but could barely hover 3 feet off the ground and became wildly unstable at any speed. The project burned through $10 million before cancellation in 1961. The real saucer is now in the National Museum of the USAF.",
+d:function(t){
+  sky();
+  tx('PROJECT 1794 / AVROCAR — The Real Flying Saucer (1950s)',W/2,25,'#234',13);
+  gnd(380,'#4a6a3a','#2a4a1a');
+  // Test pad
+  c.fillStyle='#888';c.fillRect(350,378,220,8);
+  // Avrocar
+  const avY=t<.3?378:378-Math.min(12,(t-.3)*30)+Math.sin(t*15)*((t-.3)*10);
+  const wobble=t>.3?Math.sin(t*12)*(t-.3)*15:0;
+  c.save();c.translate(460,avY);c.rotate(wobble*.01);
+  // Disc body
+  c.fillStyle='#889';c.beginPath();c.ellipse(0,0,50,18,0,0,Math.PI*2);c.fill();
+  c.fillStyle='#99a';c.beginPath();c.ellipse(0,-5,30,12,0,0,Math.PI*2);c.fill();
+  // Cockpit
+  c.fillStyle='rgba(150,200,255,.3)';c.beginPath();c.ellipse(0,-8,12,8,0,Math.PI,Math.PI*2);c.fill();
+  // Exhaust glow
+  if(t>.25){ci(0,10,25,`rgba(255,200,100,${.1+Math.sin(t*20)*.05})`)}
+  c.restore();
+  // Height indicator
+  if(t>.3){const ht=Math.min(3,((t-.3)*7)).toFixed(1);
+  dsh(470,378,470,avY,'rgba(255,200,100,.3)');
+  tx(`${ht} ft`,485,(378+avY)/2,'rgba(255,200,100,.5)',9,'left')}
+  // Expectation vs reality
+  if(t>.5){const er=Math.min(1,(t-.5)*2);
+  // Expected stats
+  tx('EXPECTED:',150,430,`rgba(200,200,220,${er})`,10);
+  tx('Mach 4, 100,000 ft altitude',150,448,`rgba(100,255,100,${er*.5})`,9);
+  // Actual
+  tx('ACTUAL:',650,430,`rgba(200,200,220,${er})`,10);
+  tx('35 mph, 3 ft altitude, unstable',650,448,`rgba(255,100,100,${er*.5})`,9)}
+  if(t>.7){tx('Now in the National Museum of the USAF — the saucer that couldn\'t fly',W/2,H-20,`rgba(240,230,140,${Math.min(1,(t-.7)*3)})`,10)}
+}},
+
+{cat:"Exotic Concepts",id:"lookingglass",nm:"Project Looking Glass (Alleged)",sub:"Rumored reverse-engineered alien technology for viewing probable futures",
+info:[["Origin","Area 51 / S-4 rumors"],["Source","Bob Lazar, Dan Burisch"],["Type","Spacetime viewer"],["Status","Unverified / speculative"]],
+desc:"Project Looking Glass is an alleged secret government program to use reverse-engineered extraterrestrial technology for viewing probable future timelines. The concept entered public discourse through claims by Bob Lazar and later Dan Burisch, who described a device resembling a barrel-shaped apparatus that used rotating gas to create a 'lens' through which probable future events could be observed. While firmly in the realm of unverified claims and conspiracy theory, the concept appears repeatedly in UFO/government secrecy lore. The name may be borrowed from Lewis Carroll — and the project, if it existed at all, likely had a far more mundane purpose.",
+d:function(t){
+  nsky();grid(0,0,40,'rgba(100,0,200,.03)');
+  tx('PROJECT LOOKING GLASS — Alleged Timeline Viewer',W/2,25,'#50e8c0',13);
+  // Device
+  const devX=W/2,devY=260;
+  // Barrel shape
+  c.fillStyle='rgba(80,80,100,.6)';c.fillRect(devX-30,devY-60,60,120);
+  c.strokeStyle='rgba(120,120,150,.4)';c.lineWidth=2;
+  c.beginPath();c.ellipse(devX,devY-60,30,10,0,0,Math.PI*2);c.stroke();
+  c.beginPath();c.ellipse(devX,devY+60,30,10,0,0,Math.PI*2);c.stroke();
+  // Rotating gas effect
+  for(let i=0;i<12;i++){const ga=t*8+i*Math.PI/6;const gr=15+Math.sin(ga*2)*8;
+  ci(devX+Math.cos(ga)*gr,devY+Math.sin(ga*3)*40,3,`rgba(150,100,255,${.1+Math.sin(ga)*.05})`)}
+  // Lens / viewing portal
+  if(t>.2){const la2=Math.min(1,(t-.2)*2);
+  const portalR=20+la2*25;
+  const pg2=rg(devX,devY,portalR,'rgba(100,150,255,.3)','rgba(50,0,150,.1)');
+  c.fillStyle=pg2;c.beginPath();c.arc(devX,devY,portalR,0,Math.PI*2);c.fill();
+  // "Future" imagery inside portal
+  if(t>.4){const fi=Math.min(1,(t-.4)*2);
+  c.save();c.beginPath();c.arc(devX,devY,portalR-2,0,Math.PI*2);c.clip();
+  // Swirling temporal imagery
+  for(let i=0;i<8;i++){const fa3=t*3+i;
+  c.fillStyle=`rgba(${150+i*10},${100+i*15},255,${fi*.08})`;
+  c.beginPath();c.arc(devX+Math.cos(fa3)*15,devY+Math.sin(fa3)*15,10+i*2,0,Math.PI*2);c.fill()}
+  c.restore()}}
+  // Warning label
+  if(t>.6){const wa=Math.min(1,(t-.6)*2);
+  tx('⚠ UNVERIFIED — Based on claims by Bob Lazar & Dan Burisch',W/2,H-35,`rgba(255,150,100,${wa})`,10);
+  tx('Firmly in conspiracy/speculation territory — no credible evidence exists',W/2,H-18,`rgba(200,200,220,${wa*.6})`,9)}
+}},
+
+{cat:"Exotic Concepts",id:"montauk",nm:"Montauk Project (Alleged)",sub:"Rumored time travel and mind control at Camp Hero, Long Island",
+info:[["Location","Camp Hero, Montauk, NY"],["Period","1971-1983 (alleged)"],["Source","Preston Nichols books"],["Status","Unverified / fiction"]],
+desc:"The Montauk Project is an alleged series of secret government experiments at Camp Hero in Montauk, New York, involving time travel, teleportation, mind control, and contact with extraterrestrials. The claims originated from books by Preston Nichols and Peter Moon in the 1990s. According to the stories, the project was an extension of the Philadelphia Experiment and used a massive Sage radar antenna to amplify psychic abilities and open time portals. Camp Hero is now a state park with its imposing radar tower still standing. The story inspired the Netflix series 'Stranger Things.' No credible evidence supports any of the claims.",
+d:function(t){
+  nsky();
+  tx('MONTAUK PROJECT — Alleged Time Travel Experiments',W/2,25,'#50e8c0',13);
+  // Camp Hero / radar tower
+  c.fillStyle='#2a2a3a';c.fillRect(420,200,80,180);
+  c.fillStyle='#3a3a4a';c.fillRect(430,180,60,20);
+  // Radar dish
+  c.save();c.translate(460,180);
+  c.fillStyle='#4a4a5a';c.beginPath();c.moveTo(-35,-30);c.lineTo(-40,0);c.lineTo(40,0);c.lineTo(35,-30);c.closePath();c.fill();
+  // Dish face
+  c.fillStyle='#555';c.beginPath();c.ellipse(0,-15,35,15,0,0,Math.PI*2);c.fill();
+  c.restore();
+  tx('SAGE Radar — Camp Hero',460,400,'rgba(150,150,180,.4)',8);
+  // Energy beam from radar
+  if(t>.15){const eb=(t-.15)/.85;
+  // Psychic amplification beam
+  for(let i=0;i<6;i++){const br=i*25+eb*40;
+  c.strokeStyle=`rgba(150,80,255,${.12*(1-i/6)*Math.sin(t*8+i)})`;c.lineWidth=2;c.beginPath();c.arc(460,170,br,Math.PI+.8,Math.PI*2-.8);c.stroke()}}
+  // Time portal
+  if(t>.35){const tp=(t-.35)/.65;const pr=Math.min(60,tp*80);
+  const portalX=200,portalY=250;
+  // Swirling portal
+  for(let i=0;i<5;i++){
+  c.strokeStyle=`rgba(${100+i*30},50,255,${tp*.15*(1-i/5)})`;c.lineWidth=2;
+  c.beginPath();c.arc(portalX,portalY,pr-i*8,t*4+i*.5,t*4+i*.5+Math.PI*1.5);c.stroke()}
+  const pg3=rg(portalX,portalY,pr,'rgba(100,50,200,.15)','rgba(100,50,200,0)');
+  c.fillStyle=pg3;c.beginPath();c.arc(portalX,portalY,pr,0,Math.PI*2);c.fill();
+  if(tp>.3){tx('"Time Portal"',portalX,portalY+pr+20,`rgba(200,150,255,${Math.min(1,tp)})`,9)}}
+  // Disclaimer
+  if(t>.6){const da=Math.min(1,(t-.6)*2);
+  tx('⚠ No credible evidence — inspired Netflix\'s "Stranger Things"',W/2,H-20,`rgba(255,200,100,${da})`,10)}
+}},
+
+// ═══ NAVAL TECHNOLOGY ═══
+{cat:"Naval Technology",id:"ussford",nm:"USS Gerald R. Ford (EMALS)",sub:"Electromagnetic Aircraft Launch System — catapulting jets with magnets",
+info:[["Ship","CVN-78"],["System","EMALS"],["Force","Linear induction motor"],["Replaces","Steam catapults"]],
+desc:"The USS Gerald R. Ford (CVN-78) is the first carrier to use the Electromagnetic Aircraft Launch System (EMALS), replacing the steam-powered catapults used since the 1950s. EMALS uses a linear induction motor — essentially a railgun for aircraft — to smoothly accelerate planes from 0 to 150+ mph in under 3 seconds. Unlike steam catapults, EMALS provides precisely controllable launch energy, allowing it to launch everything from heavy fighters to light drones. The system stores energy in massive capacitor banks and releases it in a precisely controlled electromagnetic pulse.",
+d:function(t){
+  sea(300);sky();
+  tx('EMALS — Electromagnetic Aircraft Launch System',W/2,25,'#234',13);
+  // Carrier deck (top-down cross section)
+  c.fillStyle='#667';c.fillRect(100,280,700,25);
+  c.fillStyle='#778';c.fillRect(100,275,700,5);
+  // EMALS track
+  c.fillStyle='rgba(100,200,255,.1)';c.fillRect(150,285,500,10);
+  // Linear motor coils
+  for(let i=0;i<20;i++){c.fillStyle=`rgba(100,200,255,${.1+(.2*(t*20>i?.5:0))})`;c.fillRect(155+i*25,283,8,14)}
+  // F/A-18
+  const accelT=Math.min(1,t*1.5);
+  const planeX=170+e(accelT)*550;
+  const planeY=t>.7?270-((t-.7)/.3)*200:275;
+  if(t<.95){
+  jet(planeX,planeY,30,20,'#556',t>.7?-.2-(t-.7):0);
+  // Afterburner
+  if(t>.3){for(let i=0;i<3;i++){pl(planeX-15,planeY+2,Math.PI+Math.random()*.3,15+Math.random()*10,6,'rgba(255,180,50,.3)')}}}
+  // EM pulse visualization
+  if(t<.7){const ep2=t/.7;
+  const pulseX=170+ep2*500;
+  for(let i=0;i<3;i++){c.strokeStyle=`rgba(100,200,255,${.2*(1-i/3)})`;c.lineWidth=2;c.beginPath();c.arc(pulseX,290,8+i*5,0,Math.PI);c.stroke()}}
+  // Speed indicator
+  const speed2=Math.floor(e(accelT)*165);
+  tx(`${speed2} mph`,planeX,planeY-25,'rgba(100,200,255,.6)',10);
+  // Energy diagram
+  if(t>.1){const ea2=Math.min(1,t*2);
+  tx('Capacitor Bank',120,350,`rgba(200,200,220,${ea2})`,9);
+  c.fillStyle=`rgba(255,200,50,${ea2*.3})`;c.fillRect(100,355,80*ea2,10);
+  tx('Energy Released',120,380,`rgba(150,200,255,${ea2})`,8)}
+  if(t>.8){tx('0 → 165 mph in 2.5 seconds — smoothly controllable for any aircraft weight',W/2,H-20,`rgba(240,230,140,${Math.min(1,(t-.8)*4)})`,10)}
+}},
+
+{cat:"Naval Technology",id:"zumwalt",nm:"USS Zumwalt (DDG-1000)",sub:"Stealth destroyer with electromagnetic railgun capability",
+info:[["Class","Zumwalt"],["Displacement","15,000+ tons"],["RCS","Similar to fishing boat"],["Cost","$4.4 billion each"]],
+desc:"The USS Zumwalt (DDG-1000) is the US Navy's most advanced and futuristic destroyer. Its tumblehome hull and angular superstructure reduce its radar cross-section to that of a small fishing boat despite displacing 15,000+ tons. The ship generates 78 megawatts of power — enough for a small city — designed to support future weapons like electromagnetic railguns and laser systems. Only three were built due to extreme cost ($4.4B each). The Zumwalt was designed for shore bombardment with its Advanced Gun System, but the $800,000-per-round ammunition was canceled, leaving the guns without projectiles.",
+d:function(t){
+  sea(320);
+  const skyG2=c.createLinearGradient(0,0,0,320);skyG2.addColorStop(0,'#2a3a5a');skyG2.addColorStop(1,'#5a7aaa');c.fillStyle=skyG2;c.fillRect(0,0,W,320);
+  tx('USS ZUMWALT (DDG-1000) — Stealth Destroyer',W/2,25,'#dde',13);
+  // Zumwalt — angular stealth hull
+  const sx=250+t*200,sy=290;
+  // Hull - tumblehome
+  c.fillStyle='#556';c.beginPath();c.moveTo(sx+100,sy);c.lineTo(sx+80,sy+25);c.lineTo(sx-80,sy+25);c.lineTo(sx-60,sy);c.closePath();c.fill();
+  // Upper hull (narrower - tumblehome)
+  c.fillStyle='#667';c.beginPath();c.moveTo(sx+90,sy);c.lineTo(sx+70,sy-10);c.lineTo(sx-50,sy-10);c.lineTo(sx-55,sy);c.closePath();c.fill();
+  // Angular superstructure
+  c.fillStyle='#778';c.beginPath();c.moveTo(sx+20,sy-10);c.lineTo(sx+15,sy-40);c.lineTo(sx-20,sy-45);c.lineTo(sx-25,sy-10);c.closePath();c.fill();
+  // Mast
+  c.fillStyle='#889';c.fillRect(sx-5,sy-65,8,20);
+  // Wake
+  for(let i=0;i<10;i++){c.strokeStyle=`rgba(255,255,255,${.05*(1-i/10)})`;c.lineWidth=1+i*.3;
+  c.beginPath();c.moveTo(sx-60,sy+25);c.lineTo(sx-80-i*20,sy+30+i*4);c.stroke();
+  c.beginPath();c.moveTo(sx-60,sy+25);c.lineTo(sx-80-i*20,sy+20-i*2);c.stroke()}
+  // RCS comparison
+  if(t>.3){const rc=Math.min(1,(t-.3)*2);
+  tx('Radar Cross Section:',W/2+200,100,`rgba(200,200,220,${rc})`,10);
+  ci(W/2+200,140,30,`rgba(255,100,100,${rc*.2})`);tx('Normal destroyer',W/2+200,180,`rgba(200,150,150,${rc})`,8);
+  ci(W/2+200,220,3,`rgba(100,255,100,${rc*.4})`);tx('Zumwalt (fishing boat)',W/2+200,240,`rgba(150,200,150,${rc})`,8)}
+  // Power generation
+  if(t>.6){const pg4=Math.min(1,(t-.6)*3);
+  tx('78 MW power generation — future railgun & laser capable',W/2,H-20,`rgba(240,230,140,${pg4})`,10)}
+}},
+
+// ═══ BIOLOGICAL / PSYCH ═══
+{cat:"Biological / Psych",id:"mkultra",nm:"MKUltra Mind Control",sub:"1953-1973 — CIA illegal experiments with LSD and hypnosis",
+info:[["Period","1953-1973"],["Sub-projects","150+"],["Director","Sidney Gottlieb"],["Status","Most files destroyed"]],
+desc:"Project MKUltra was the CIA's illegal mind control research program, running over 150 sub-projects at 80+ universities and institutions. CIA chemist Sidney Gottlieb oversaw experiments with LSD, hypnosis, sensory deprivation, electroshock, and psychological torture on unwitting subjects including prisoners, mental patients, and even CIA employees. Operation Midnight Climax ran CIA-funded brothels where prostitutes dosed unwitting men with LSD while agents watched through one-way mirrors. CIA Director Richard Helms ordered all MKUltra files destroyed in 1973, but 20,000 documents survived due to a filing error, discovered in 1977.",
+d:function(t){
+  bg('#0a0a15','#05050a');
+  tx('PROJECT MKUltra — CIA Mind Control (1953-1973)',W/2,25,'#50e8c0',13);
+  // Test subject in chair
+  const sx2=W/2,sy2=260;
+  c.fillStyle='rgba(60,60,70,.5)';c.fillRect(sx2-25,sy2-10,50,60);c.fillRect(sx2-30,sy2+50,60,5);
+  // Person
+  ci(sx2,sy2-25,12,'rgba(180,160,140,.4)');c.fillStyle='rgba(150,140,130,.3)';c.fillRect(sx2-8,sy2-13,16,35);
+  // Electrodes
+  if(t>.1){const ea3=Math.min(1,t*2);
+  ln(sx2-10,sy2-30,sx2-40,sy2-60,`rgba(200,200,100,${ea3*.4})`,1);
+  ln(sx2+10,sy2-30,sx2+40,sy2-60,`rgba(200,200,100,${ea3*.4})`,1);
+  // Electrode pads
+  ci(sx2-10,sy2-30,3,`rgba(200,200,100,${ea3*.5})`);ci(sx2+10,sy2-30,3,`rgba(200,200,100,${ea3*.5})`)}
+  // LSD molecule (simplified)
+  if(t>.2){const la3=Math.min(1,(t-.2)*2);
+  c.save();c.translate(180,200);
+  c.strokeStyle=`rgba(200,100,255,${la3*.4})`;c.lineWidth=1.5;
+  for(let i=0;i<6;i++){const a2=i*Math.PI/3;const na=(i+1)*Math.PI/3;
+  ln(Math.cos(a2)*25,Math.sin(a2)*25,Math.cos(na)*25,Math.sin(na)*25,`rgba(200,100,255,${la3*.4})`,1.5)}
+  c.restore();tx('LSD-25',180,240,`rgba(200,100,255,${la3*.4})`,8)}
+  // Hallucination effects
+  if(t>.3){const ha=Math.min(1,(t-.3)*1.5);
+  for(let i=0;i<15;i++){const hx=sx2+Math.cos(t*3+i)*80*(ha),hy=sy2-30+Math.sin(t*4+i*1.3)*60*(ha);
+  ci(hx,hy,2+Math.sin(t*6+i)*.5,`rgba(${150+i*7},${50+i*10},${200+i*3},${ha*.08})`)}}
+  // Files destroyed
+  if(t>.6){const fd=Math.min(1,(t-.6)*2);
+  tx('1973: Director Helms ordered all files destroyed',W/2,380,`rgba(255,100,100,${fd})`,10);
+  tx('20,000 documents survived due to filing error — discovered 1977',W/2,400,`rgba(200,200,220,${fd*.7})`,9)}
+  if(t>.8){tx('150+ sub-projects across 80+ institutions — thousands of unwitting subjects',W/2,H-20,`rgba(240,230,140,${Math.min(1,(t-.8)*4)})`,10)}
+}},
+
+{cat:"Biological / Psych",id:"stargate2",nm:"Project Star Gate (Remote Viewing)",sub:"1972-1995 — $20M psychic spy program for military intelligence",
+info:[["Period","1972-1995"],["Budget","$20 million total"],["Method","Remote viewing"],["Result","'Defied randomness' but unreliable"]],
+desc:"Project Star Gate was a $20 million, 23-year Defense Intelligence Agency program that employed psychics ('remote viewers') to gather intelligence by supposedly projecting their consciousness to distant locations. Remote viewers attempted to locate hostages, describe Soviet weapons facilities, and even view the surface of Mars and Jupiter. In one extraordinary session, a viewer was given sealed coordinates on Mars and described ancient pyramids and tall beings. A 1995 evaluation found that while results 'defied randomness,' the intelligence was too unreliable for operational use. The program was terminated.",
+d:function(t){
+  bg('#0a0a20','#05051a');grid(0,0,50,'rgba(50,100,200,.02)');
+  tx('PROJECT STAR GATE — Remote Viewing (1972-1995)',W/2,25,'#50e8c0',13);
+  // Remote viewer
+  const vx=200,vy=300;
+  ci(vx,vy-30,10,'rgba(180,160,140,.3)');c.fillStyle='rgba(150,140,130,.2)';c.fillRect(vx-7,vy-20,14,30);
+  c.fillStyle='rgba(100,80,60,.2)';c.fillRect(vx-15,vy+10,30,5);
+  tx('Remote Viewer',vx,vy+30,'rgba(150,150,180,.4)',8);
+  // Consciousness projection lines
+  if(t>.1){const cp=(t-.1)/.4;const cpa=Math.min(1,cp);
+  for(let i=0;i<5;i++){const lx=vx+20+cpa*i*100;const ly=vy-30-cpa*i*40;
+  c.strokeStyle=`rgba(100,150,255,${cpa*.1*(1-i/5)})`;c.lineWidth=1;c.setLineDash([2,4]);
+  c.beginPath();c.moveTo(vx+10,vy-30);c.lineTo(lx,ly);c.stroke();c.setLineDash([])}}
+  // Target: Mars surface
+  if(t>.3){const ma2=Math.min(1,(t-.3)*2);
+  const mx2=650,my2=220;
+  ci(mx2,my2,60,`rgba(180,80,50,${ma2*.3})`);
+  // Mars surface details
+  ci(mx2-15,my2-10,8,`rgba(160,70,40,${ma2*.2})`);ci(mx2+20,my2+15,12,`rgba(150,60,35,${ma2*.2})`);
+  // Pyramids on Mars
+  if(t>.5){const pa2=Math.min(1,(t-.5)*3);
+  c.fillStyle=`rgba(200,180,140,${pa2*.4})`;
+  c.beginPath();c.moveTo(mx2-10,my2+5);c.lineTo(mx2-18,my2+15);c.lineTo(mx2-2,my2+15);c.fill();
+  c.beginPath();c.moveTo(mx2+15,my2);c.lineTo(mx2+8,my2+12);c.lineTo(mx2+22,my2+12);c.fill();
+  tx('"Ancient pyramids and tall beings"',mx2,my2+80,`rgba(200,180,140,${pa2*.5})`,9)}
+  tx('Mars — Coordinates in sealed envelope',mx2,my2-75,`rgba(255,150,100,${ma2*.5})`,9)}
+  if(t>.7){tx('1995: "Defied randomness" but too unreliable for intelligence — program terminated',W/2,H-20,`rgba(240,230,140,${Math.min(1,(t-.7)*3)})`,10)}
+}},
+
+// ═══ SPACE TECHNOLOGY ═══
+{cat:"Space Technology",id:"gps3",nm:"GPS III Military Signals",sub:"Military GPS with anti-jam and M-Code — 100x more jam-resistant",
+info:[["Satellites","31+ operational"],["Military Signal","M-Code"],["Accuracy","Sub-meter"],["Anti-jam","100x improvement"]],
+desc:"While civilian GPS provides ~3-meter accuracy, the military version is far more capable and heavily classified. GPS III satellites carry the new M-Code signal — an encrypted, anti-jam military signal that is 100 times more resistant to electronic jamming than previous military GPS. M-Code uses spot beams that can concentrate signal power over specific regions, overpowering jammers. Military GPS receivers can achieve sub-meter accuracy and are hardened against spoofing attacks. GPS is also the backbone of precision-guided munitions — without it, modern warfare as we know it would be impossible.",
+d:function(t){
+  nsky();st(60);
+  tx('GPS III MILITARY — M-Code Anti-Jam Signals',W/2,25,'#50e8c0',13);
+  // Earth
+  c.fillStyle='rgba(30,60,120,.4)';c.beginPath();c.arc(W/2,H+150,250,Math.PI,Math.PI*2);c.fill();
+  // GPS satellites
+  for(let i=0;i<5;i++){const sa3=t*2+i*Math.PI*2/5;
+  const satX=W/2+Math.cos(sa3)*300,satY=120+Math.sin(sa3)*40;
+  if(satY<300){
+  c.fillStyle='rgba(200,200,220,.5)';c.fillRect(satX-8,satY-3,16,6);
+  // Solar panels
+  c.fillStyle='rgba(50,50,200,.3)';c.fillRect(satX-20,satY-2,10,4);c.fillRect(satX+10,satY-2,10,4);
+  // Signal beams
+  if(t>.2){const sb2=Math.min(1,(t-.2)*2);
+  c.fillStyle=`rgba(100,200,100,${sb2*.04})`;c.beginPath();c.moveTo(satX,satY+3);c.lineTo(satX-40,H-100);c.lineTo(satX+40,H-100);c.fill()}}}
+  // M-Code focused beam
+  if(t>.3){const mb=Math.min(1,(t-.3)*2);
+  const focX=W/2+50,focY=100;
+  c.fillStyle=`rgba(255,200,50,${mb*.08})`;c.beginPath();c.moveTo(focX,focY+5);c.lineTo(focX-20,H-120);c.lineTo(focX+20,H-120);c.fill();
+  tx('M-Code Spot Beam',focX+30,200,`rgba(255,200,100,${mb*.5})`,9,'left');
+  tx('(100x anti-jam)',focX+30,215,`rgba(255,200,100,${mb*.4})`,8,'left')}
+  // Jammer on ground
+  if(t>.4){const ja2=Math.min(1,(t-.4)*2);
+  ci(300,H-110,8,`rgba(255,50,50,${ja2*.4})`);
+  for(let i=0;i<3;i++){c.strokeStyle=`rgba(255,50,50,${ja2*.1*(1-i/3)})`;c.lineWidth=1;c.beginPath();c.arc(300,H-110,15+i*10,0,Math.PI*2);c.stroke()}
+  tx('Enemy Jammer',300,H-85,`rgba(255,100,100,${ja2*.4})`,8);
+  // Jammer defeated
+  if(t>.6){tx('DEFEATED',300,H-125,`rgba(100,255,100,${Math.sin(t*6)*.3+.4})`,9)}}
+  if(t>.7){tx('Backbone of precision-guided munitions — modern warfare depends on GPS',W/2,H-20,`rgba(240,230,140,${Math.min(1,(t-.7)*3)})`,10)}
+}},
+
+{cat:"Space Technology",id:"sbirs",nm:"SBIRS Missile Warning",sub:"Space-Based Infrared System — detecting every missile launch on Earth",
+info:[["Orbit","GEO + HEO"],["Sensors","Scanning + staring IR"],["Detects","All missile launches globally"],["Cost","$19.2 billion"]],
+desc:"The Space-Based Infrared System (SBIRS) is the US military's constellation of satellites that detects missile launches anywhere on Earth within seconds. Using advanced infrared sensors in geosynchronous and highly elliptical orbits, SBIRS can spot the heat signature of a missile's exhaust plume immediately after launch, providing early warning to national command authority. The staring sensors are so sensitive they can detect tactical short-range missiles in addition to ICBMs. SBIRS is the backbone of US missile defense — providing the initial detection that triggers the entire interceptor chain.",
+d:function(t){
+  nsky();st(50);
+  tx('SBIRS — Space-Based Infrared Missile Warning',W/2,25,'#50e8c0',13);
+  // Earth
+  c.fillStyle='rgba(30,60,120,.3)';c.beginPath();c.arc(W/2,H+200,300,Math.PI,Math.PI*2);c.fill();
+  // SBIRS satellite
+  const satX2=W/2-100,satY2=80;
+  c.fillStyle='rgba(200,200,220,.5)';c.fillRect(satX2-10,satY2-4,20,8);
+  c.fillStyle='rgba(50,50,200,.3)';c.fillRect(satX2-28,satY2-3,16,6);c.fillRect(satX2+12,satY2-3,16,6);
+  tx('SBIRS GEO',satX2,satY2-15,'rgba(150,200,255,.4)',8);
+  // IR sensor cone
+  c.fillStyle='rgba(255,50,50,.03)';c.beginPath();c.moveTo(satX2,satY2+4);c.lineTo(satX2-200,H-80);c.lineTo(satX2+200,H-80);c.fill();
+  // Missile launch
+  if(t>.2){const lp2=Math.min(1,(t-.2)/.3);
+  const mlx=350,mly=H-80-lp2*200;
+  // Missile
+  c.fillStyle='rgba(200,200,200,.6)';c.fillRect(mlx-2,mly-10,4,20);
+  // Exhaust plume (IR signature)
+  for(let i=0;i<4;i++){pl(mlx,mly+10,Math.PI/2+Math.random()*.4,20+Math.random()*15,10,'rgba(255,150,50,.3)')}
+  ci(mlx,mly+10,8,`rgba(255,200,50,.3)`);
+  tx('ICBM Launch',mlx+15,mly,'rgba(255,150,100,.5)',8,'left')}
+  // Detection alert
+  if(t>.3){const da2=Math.min(1,(t-.3)*3);
+  // Detection line to satellite
+  dsh(350,H-80-((t-.2)/.3)*200,satX2,satY2+4,`rgba(255,100,100,${da2*.3})`);
+  // Alert cascade
+  if(t>.4){const ac=Math.min(1,(t-.4)*2);
+  c.fillStyle=`rgba(255,50,50,${Math.sin(t*8)*.2+.2})`;c.fillRect(620,140,180,60);
+  tx('⚠ MISSILE WARNING',710,160,`rgba(255,255,255,${ac})`,11);
+  tx('NORAD / STRATCOM ALERT',710,178,`rgba(255,200,200,${ac*.7})`,9);
+  // Interceptor launch
+  if(t>.6){const ip2=(t-.6)/.4;
+  const ix=600,iy=H-80-ip2*250;
+  c.fillStyle='rgba(100,200,100,.5)';c.fillRect(ix-1,iy-8,3,16);
+  for(let i=0;i<2;i++){pl(ix,iy+8,Math.PI/2+Math.random()*.3,12,5,'rgba(100,255,100,.2)')}
+  tx('GBI Interceptor',ix+10,iy,'rgba(100,255,100,.4)',8,'left')}}}
+  if(t>.8){tx('Detects every missile launch on Earth within seconds — triggers interceptor chain',W/2,H-20,`rgba(240,230,140,${Math.min(1,(t-.8)*4)})`,10)}
+}},
+
+// ═══ CYBER WEAPONS ═══
+{cat:"Cyber Weapons",id:"stuxnet",nm:"Stuxnet (Olympic Games)",sub:"US/Israel cyberweapon that physically destroyed Iranian centrifuges",
+info:[["Date","~2007-2010"],["Target","Natanz, Iran"],["Effect","Destroyed 1,000 centrifuges"],["Attribution","US/Israel (Operation Olympic Games)"]],
+desc:"Stuxnet was the world's first known cyberweapon designed to cause physical destruction. Jointly developed by the US (NSA) and Israel (Unit 8200) under Operation Olympic Games, the worm specifically targeted Siemens SCADA systems controlling Iran's uranium enrichment centrifuges at Natanz. It altered centrifuge spin speeds — making them spin too fast, then too slow — while displaying normal readings to operators. The worm destroyed roughly 1,000 centrifuges and set back Iran's nuclear program by an estimated 2 years. It escaped the Natanz facility (reportedly via an infected laptop) and was discovered by security researchers in 2010, revealing the era of state-sponsored cyberwarfare.",
+d:function(t){
+  bg('#050510','#0a0a15');
+  tx('STUXNET — Operation Olympic Games',W/2,25,'#50e8c0',13);
+  // Matrix-style code rain background
+  for(let i=0;i<30;i++){const cx4=i*32;
+  for(let j=0;j<8;j++){const cy4=((j*70+t*200+i*31)%520);
+  tx(String.fromCharCode(48+Math.floor(Math.random()*74)),cx4,cy4,'rgba(50,200,100,.06)',10)}}
+  // Iranian centrifuge array
+  for(let i=0;i<8;i++){const cenX=350+i*40,cenY=300;
+  c.fillStyle='rgba(160,160,170,.3)';c.fillRect(cenX-5,cenY-30,10,60);
+  c.strokeStyle='rgba(200,200,210,.2)';c.lineWidth=1;c.beginPath();c.ellipse(cenX,cenY-30,8,4,0,0,Math.PI*2);c.stroke();
+  // Spinning indicator
+  const spinSpeed=t>.3?1+Math.sin(t*8+i)*.5:1;
+  c.strokeStyle=`rgba(${t>.3?255:100},${t>.3?100:200},100,.3)`;c.lineWidth=1;c.beginPath();c.arc(cenX,cenY,12,t*spinSpeed*6+i,t*spinSpeed*6+i+Math.PI);c.stroke()}
+  tx('Natanz Centrifuges',510,370,'rgba(150,150,180,.4)',9);
+  // Stuxnet worm visualization
+  if(t>.15){const wa2=Math.min(1,(t-.15)*2);
+  const wormX=100+wa2*250;
+  // Worm path
+  c.strokeStyle=`rgba(255,50,50,${wa2*.3})`;c.lineWidth=2;c.setLineDash([3,3]);
+  c.beginPath();c.moveTo(100,260);c.quadraticCurveTo(200,200,wormX,260);c.stroke();c.setLineDash([]);
+  ci(wormX,260,5,`rgba(255,50,50,${wa2*.5})`);
+  tx('STUXNET',wormX,245,`rgba(255,80,80,${wa2*.5})`,9)}
+  // Centrifuge destruction
+  if(t>.5){const dd=(t-.5)/.5;
+  for(let i=0;i<Math.floor(dd*8);i++){const cenX2=350+i*40,cenY2=300;
+  c.strokeStyle=`rgba(255,100,50,${.3*Math.sin(t*12+i)})`;c.lineWidth=2;
+  c.beginPath();c.arc(cenX2,cenY2,15+Math.random()*5,0,Math.PI*2);c.stroke()}
+  tx(`${Math.floor(dd*1000)} centrifuges destroyed`,510,400,`rgba(255,150,100,${dd})`,10)}
+  if(t>.8){tx('First cyberweapon to cause physical destruction — began the era of cyber warfare',W/2,H-20,`rgba(240,230,140,${Math.min(1,(t-.8)*4)})`,10)}
+}},
+
+{cat:"Cyber Weapons",id:"vault7",nm:"Vault 7 (CIA Hacking Tools)",sub:"Leaked CIA arsenal — hacking smartphones, smart TVs, and cars",
+info:[["Leaked","March 2017"],["Source","WikiLeaks"],["Scope","8,761 documents"],["Targets","iOS, Android, Windows, TVs"]],
+desc:"In March 2017, WikiLeaks published 'Vault 7' — the largest ever leak of CIA documents, revealing the agency's entire arsenal of cyber weapons. The tools included exploits for iPhones, Android phones, Windows, macOS, Linux, smart TVs (Samsung TVs could be turned into listening devices while appearing to be off — codenamed 'Weeping Angel'), and even vehicle control systems. The CIA's hacking division had effectively built its own NSA with over 5,000 registered users. The leak revealed the CIA could bypass Signal, WhatsApp, and Telegram encryption — not by breaking the crypto, but by compromising the devices before encryption occurs.",
+d:function(t){
+  bg('#050510','#0a0a15');
+  tx('VAULT 7 — CIA Hacking Arsenal (Leaked 2017)',W/2,25,'#50e8c0',13);
+  // Devices being hacked
+  const devices=[
+  {x:150,y:200,nm:'iPhone',w:22,h:38,cl:'rgba(50,50,60,.5)'},
+  {x:300,y:200,nm:'Android',w:22,h:38,cl:'rgba(50,60,50,.5)'},
+  {x:460,y:200,nm:'Samsung TV',w:60,h:38,cl:'rgba(40,40,50,.5)'},
+  {x:620,y:200,nm:'Windows PC',w:45,h:35,cl:'rgba(50,50,60,.5)'},
+  {x:770,y:200,nm:'Vehicle ECU',w:50,h:30,cl:'rgba(50,50,55,.5)'}];
+  devices.forEach((d2,i)=>{const da3=Math.min(1,Math.max(0,(t-.05*i)*3));
+  c.fillStyle=d2.cl;c.fillRect(d2.x-d2.w/2,d2.y-d2.h/2,d2.w,d2.h);
+  c.strokeStyle=`rgba(150,150,170,${da3*.3})`;c.lineWidth=1;c.strokeRect(d2.x-d2.w/2,d2.y-d2.h/2,d2.w,d2.h);
+  // Screen glow
+  c.fillStyle=`rgba(100,200,255,${da3*.1})`;c.fillRect(d2.x-d2.w/2+2,d2.y-d2.h/2+2,d2.w-4,d2.h-4);
+  tx(d2.nm,d2.x,d2.y+d2.h/2+15,`rgba(200,200,220,${da3})`,8)});
+  // CIA hack connections
+  if(t>.2){const ha2=Math.min(1,(t-.2)*2);
+  const ciaX=W/2,ciaY=380;
+  ci(ciaX,ciaY,20,`rgba(200,50,50,${ha2*.3})`);tx('CIA',ciaX,ciaY+4,`rgba(255,255,255,${ha2*.5})`,10);
+  devices.forEach((d2,i)=>{const la4=Math.min(1,Math.max(0,(t-.2-i*.05)*3));
+  c.strokeStyle=`rgba(255,50,50,${la4*.2})`;c.lineWidth=1;c.setLineDash([2,3]);
+  c.beginPath();c.moveTo(ciaX,ciaY-20);c.lineTo(d2.x,d2.y+d2.h/2);c.stroke();c.setLineDash([]);
+  // Exploit name
+  if(la4>.5){const names=['NightSkies','Droidbrute','Weeping Angel','Athena','QNX Exploit'];
+  tx(names[i],d2.x,d2.y-d2.h/2-10,`rgba(255,100,100,${la4*.5})`,7)}})}
+  // Weeping Angel highlight
+  if(t>.5){const wa3=Math.min(1,(t-.5)*2);
+  c.strokeStyle=`rgba(255,200,50,${wa3*.4})`;c.lineWidth=2;c.strokeRect(460-35,200-24,70,48);
+  tx('TV appears OFF but records audio',460,260,`rgba(255,200,100,${wa3*.5})`,8)}
+  if(t>.7){tx('5,000+ CIA users — bypasses encryption by hacking the device itself',W/2,H-20,`rgba(240,230,140,${Math.min(1,(t-.7)*3)})`,10)}
+}}
+];
+
+// ── BUILD SIDEBAR ──
+(function(){const sb=document.getElementById('sb');sb.innerHTML='<h2>🛸 UAP & Advanced Tech</h2>';let ct='';S.forEach(s=>{if(s.cat!==ct){ct=s.cat;sb.innerHTML+=`<div class="ct">${ct}</div>`}sb.innerHTML+=`<button class="bt" data-id="${s.id}" onclick="ld('${s.id}')">${s.nm}</button>`})})();
+
+function ld(id){const s=S.find(v=>v.id===id);if(!s)return;cur=s;t=0;on=false;fr=0;
+document.getElementById('pB').textContent='▶ Play';
+document.getElementById('sT').textContent=s.nm;document.getElementById('sS').textContent=s.sub;
+document.getElementById('dB').textContent=s.desc;
+document.getElementById('iP').innerHTML=s.info.map(([l,v])=>`<div class="ic"><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
+document.querySelectorAll('.bt').forEach(b=>b.classList.toggle('ac',b.dataset.id===id))}
+function tog(){on=!on;document.getElementById('pB').textContent=on?'⏸ Pause':'▶ Play';if(on)an()}
+function rst(){t=0;on=false;fr=0;document.getElementById('pB').textContent='▶ Play';if(cur)dr()}
+function an(){if(!on)return;t+=.0025;fr++;if(t>1){t=1;on=false;document.getElementById('pB').textContent='▶ Play'}dr();af=requestAnimationFrame(an)}
+function dr(){if(!cur)return;c.clearRect(0,0,W,H);cur.d(t)}
+ld('nimitz');
+</script>
+</body>
+</html>

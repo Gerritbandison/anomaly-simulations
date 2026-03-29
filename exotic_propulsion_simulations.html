@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exotic Propulsion & Fission Systems — Interactive Simulations</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a18;color:#e0e0e0;font-family:'Segoe UI',system-ui,sans-serif;display:flex;height:100vh;overflow:hidden}
+.sidebar{width:280px;min-width:280px;background:#0e0e20;border-right:1px solid #1a1a30;overflow-y:auto;padding:10px 0}
+.sidebar h2{padding:12px 16px 8px;font-size:0.95rem;color:#7ec8e3;letter-spacing:1px;text-transform:uppercase}
+.sidebar .cat{padding:8px 16px 4px;font-size:0.68rem;color:#445;text-transform:uppercase;letter-spacing:1.5px;margin-top:10px}
+.sb{display:block;width:100%;text-align:left;background:none;border:none;color:#889;padding:7px 16px 7px 22px;font-size:0.83rem;cursor:pointer;transition:all 0.15s;border-left:3px solid transparent}
+.sb:hover{background:#12122a;color:#bbd}
+.sb.active{background:#14143a;color:#7ec8e3;border-left-color:#3a8;font-weight:600}
+.sb .tag{font-size:0.7rem;color:#445;margin-left:4px}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.hdr{padding:14px 24px;border-bottom:1px solid #1a1a30;background:#0c0c1a}
+.hdr h1{font-size:1.35rem;color:#7ec8e3}
+.hdr .sub{font-size:0.85rem;color:#667;margin-top:2px}
+.area{flex:1;overflow-y:auto;padding:20px 24px}
+.cw{position:relative;max-width:900px;margin:0 auto}
+canvas{display:block;width:100%;border-radius:6px;border:1px solid #1a1a2a}
+.ip{max-width:900px;margin:14px auto 0;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ic{background:#10102a;border:1px solid #1a1a30;border-radius:5px;padding:10px 12px}
+.ic .l{font-size:0.68rem;color:#556;text-transform:uppercase;letter-spacing:1px}
+.ic .v{font-size:1.05rem;color:#ccd;margin-top:2px}
+.ctrls{display:flex;justify-content:center;gap:10px;margin:14px 0}
+.btn{padding:8px 18px;border:none;border-radius:5px;font-size:0.85rem;cursor:pointer;font-weight:600;transition:all 0.15s}
+.bp{background:#2a8a6a;color:#fff}.bp:hover{background:#238a5a}
+.br{background:#2a2a4a;color:#aab}.br:hover{background:#3a3a5a}
+.db{max-width:900px;margin:10px auto;font-size:0.88rem;color:#889;line-height:1.6;background:#0e0e22;padding:12px 14px;border-radius:5px;border:1px solid #151530}
+</style>
+</head>
+<body>
+<div class="sidebar" id="sb"></div>
+<div class="main">
+<div class="hdr"><h1 id="sT">Select a Simulation</h1><div class="sub" id="sS"></div></div>
+<div class="area">
+<div class="cw"><canvas id="C" width="900" height="540"></canvas></div>
+<div class="ctrls">
+<button class="btn bp" id="pB" onclick="tog()">▶ Play</button>
+<button class="btn br" onclick="rst()">↺ Reset</button>
+</div>
+<div class="ip" id="iP"></div>
+<div class="db" id="dB"></div>
+</div>
+</div>
+
+<script>
+const C=document.getElementById('C'),x=C.getContext('2d'),W=900,H=540;
+let on=false,t=0,cur=null,af=null;
+
+const S=[
+// ── NUCLEAR THERMAL ──
+{cat:"Nuclear Thermal",id:"nerva",name:"NERVA Engine",
+sub:"Nuclear Engine for Rocket Vehicle Application — tested 1960s",
+info:[["Thrust","75,000 lbf"],["Isp","841 seconds"],["Reactor","Graphite-core, solid"],["Program","1960–1973"]],
+desc:"NERVA (Nuclear Engine for Rocket Vehicle Application) was a joint NASA/AEC program that successfully ground-tested nuclear thermal rocket engines. The concept is simple: a nuclear fission reactor heats hydrogen propellant to extreme temperatures (~2,500°C), then expels it through a nozzle at tremendous velocity. NERVA achieved roughly twice the specific impulse (efficiency) of the best chemical rockets. The program completed 23 successful reactor tests at Jackass Flats, Nevada before being cancelled in 1973 due to budget cuts — not technical failure. It remains the most mature nuclear propulsion technology ever developed.",
+draw:drawNerva},
+
+{cat:"Nuclear Thermal",id:"ntr",name:"Nuclear Thermal Rocket (Cutaway)",
+sub:"How a solid-core NTR works — reactor heats propellant directly",
+info:[["Core temp","~2,500°C"],["Propellant","Liquid hydrogen"],["Isp","800–1000 s"],["vs Chemical","2× more efficient"]],
+desc:"A nuclear thermal rocket passes hydrogen propellant through a hot fission reactor core. The hydrogen is heated to extreme temperatures and expands out a nozzle at velocities far exceeding any chemical combustion. The reactor core contains hundreds of fuel elements — typically uranium carbide or uranium oxide in a graphite or ceramic matrix — with channels running through them for the hydrogen to flow. Control drums around the core rotate to expose neutron-reflecting material, controlling the reaction rate. The key advantage: you're limited only by how hot you can make the reactor, not by combustion chemistry.",
+draw:drawNTR},
+
+{cat:"Nuclear Thermal",id:"bimodal",name:"Bimodal NTR (BNTR)",
+sub:"Dual-mode: thrust for maneuvers + electricity for cruise",
+info:[["Thrust mode","~25,000 lbf"],["Electric mode","25–50 kWe"],["Use case","Mars transit vehicle"],["Isp","900+ seconds"]],
+desc:"A Bimodal Nuclear Thermal Rocket operates in two modes. In thrust mode, it functions like a standard NTR — heating hydrogen through the reactor core for high-thrust maneuvers like Earth departure and Mars orbit insertion. In electric mode, the reactor runs at low power to generate electricity via a Brayton or Stirling cycle, powering ion thrusters, life support, and communications during the long cruise phase. This dual capability is considered ideal for crewed Mars missions because you get the high thrust needed for fast transits plus reliable power for months of cruise.",
+draw:drawBimodal},
+
+{cat:"Nuclear Thermal",id:"gcr",name:"Gas-Core Nuclear Rocket",
+sub:"Uranium plasma contained by vortex — 3,000+ seconds Isp",
+info:[["Core temp","25,000–55,000°C"],["Isp","3,000–7,000 s"],["Fuel state","Gaseous/plasma uranium"],["Challenge","Containing the fuel"]],
+desc:"The gas-core nuclear rocket takes the NTR concept to its extreme: instead of solid fuel elements, the fissioning uranium is a superheated gas or plasma suspended in the center of the engine by a vortex of hydrogen propellant. Because there are no solid materials to melt, temperatures can reach 25,000–55,000°C — far beyond any solid-core design. The hydrogen propellant flows around and through the uranium plasma, absorbing enormous heat before exhausting through the nozzle. The 'open cycle' variant vents some uranium with the exhaust (higher performance, radioactive exhaust). The 'closed cycle' keeps the uranium contained behind a transparent wall (lower performance, cleaner exhaust). Neither has been built, but the physics is sound.",
+draw:drawGasCore},
+
+// ── NUCLEAR PULSE ──
+{cat:"Nuclear Pulse",id:"orion",name:"Project Orion",
+sub:"Propelled by sequential nuclear explosions — 1958-1965",
+info:[["Concept","Nuclear pulse propulsion"],["Isp","6,000–100,000+ s"],["Payload","Thousands of tons"],["Killed by","Test Ban Treaty (1963)"]],
+desc:"Project Orion is perhaps the most audacious propulsion concept ever seriously studied. The spacecraft rides a massive 'pusher plate' — a thick steel or aluminum disk. Small nuclear bombs (shaped charges) are ejected behind the plate and detonated at a distance, one every few seconds. The plasma from each explosion slams into the pusher plate, pushing the ship forward. Shock absorbers between the plate and the crew compartment smooth out the ride. The concept was studied at General Atomics by Freeman Dyson and Ted Taylor from 1958–1965. The math works — an Orion ship could reach Mars in weeks and carry thousands of tons of payload. It was killed by the Partial Test Ban Treaty banning atmospheric nuclear explosions, not by any engineering impossibility.",
+draw:drawOrion},
+
+{cat:"Nuclear Pulse",id:"medusa",name:"Medusa Sail",
+sub:"Nuclear pulse variant — explosions push a giant sail ahead of the ship",
+info:[["Concept","Spinnaker sail + nukes"],["Advantage","Lighter than Orion"],["Sail","Large parachute-like canopy"],["Status","Conceptual only"]],
+desc:"Medusa is a variant of Orion that replaces the heavy pusher plate with a large, lightweight sail (like a spinnaker or parachute) deployed AHEAD of the spacecraft. Nuclear charges are detonated behind the ship, and the blast wave inflates and pushes the sail forward via long tethers connected to the payload. The key advantage over Orion: the sail can be much lighter than a pusher plate because it flexes and absorbs the impulse over a longer time, and the tethers provide natural shock absorption. The payload hangs below on cables that reel in and out to smooth the ride. It's mechanically simpler and potentially more mass-efficient than Orion, though it's never progressed beyond paper studies.",
+draw:drawMedusa},
+
+{cat:"Nuclear Pulse",id:"nswr",name:"Nuclear Salt Water Rocket",
+sub:"Fissioning uranium solution flows continuously through the engine",
+info:[["Concept","Aqueous fission flow"],["Isp","6,700–67,000 s"],["Fuel","Uranium salts in water"],["Designer","Robert Zubrin"]],
+desc:"Conceived by Robert Zubrin, the Nuclear Salt Water Rocket dissolves highly enriched uranium salts in water. The solution is stored in a bundle of neutron-absorbing boron-lined tubes (keeping it subcritical). When the engine fires, the solution is pumped into a reaction chamber where — free of the absorbing tubes — it goes critical and the water flashes to superheated plasma, expelled out the nozzle at tremendous velocity. It's essentially a continuous nuclear detonation in a controlled flow. The exhaust is obviously extremely radioactive, so it's only usable in deep space. But the performance numbers are extraordinary — potentially matching Orion without requiring pre-manufactured bombs.",
+draw:drawNSWR},
+
+// ── ELECTRIC PROPULSION ──
+{cat:"Electric / Ion",id:"ion",name:"Ion Thruster",
+sub:"Electrostatic acceleration of ionized propellant — extreme efficiency",
+info:[["Thrust","~0.5 N (very low)"],["Isp","1,500–10,000+ s"],["Propellant","Xenon, krypton"],["Used on","Dawn, Starlink, DART"]],
+desc:"Ion thrusters work by ionizing a propellant (typically xenon gas) and accelerating the ions through an electric field to extremely high velocities — 30–50 km/s, compared to ~4.5 km/s for chemical rockets. The thrust is tiny (you could barely feel it on your hand), but the efficiency is extraordinary. Running continuously for months or years, ion engines can achieve total velocity changes far beyond any chemical system. The tradeoff: you need a power source (solar panels or a nuclear reactor) to generate the electricity. NASA's Dawn spacecraft used ion propulsion to orbit both Vesta and Ceres — a mission impossible with chemical rockets.",
+draw:drawIon},
+
+{cat:"Electric / Ion",id:"vasimr",name:"VASIMR Engine",
+sub:"Variable Specific Impulse Magnetoplasma Rocket",
+info:[["Thrust","Up to 6 N"],["Isp","3,000–30,000 s (variable)"],["Key feature","Adjustable thrust/Isp"],["Developer","Ad Astra (Franklin Chang-Díaz)"]],
+desc:"VASIMR uses radio waves to ionize and heat a propellant (argon or hydrogen) into a plasma, then a magnetic nozzle channels and accelerates the plasma out the back. The breakthrough feature: you can dynamically trade between thrust and efficiency. Need high thrust for a maneuver? Dial up the mass flow and accept lower Isp. Want maximum efficiency for a long cruise? Reduce flow and boost Isp. This variable gear ratio is unique among electric engines. Developed by astronaut Franklin Chang-Díaz, VASIMR has been tested on the ground and proposed for ISS reboost. A nuclear-powered VASIMR could theoretically get a crew to Mars in 39 days.",
+draw:drawVasimr},
+
+{cat:"Electric / Ion",id:"mpd",name:"Magnetoplasmadynamic Thruster",
+sub:"Lorentz force accelerates plasma — highest thrust of any electric engine",
+info:[["Thrust","Up to 200 N"],["Isp","1,500–10,000 s"],["Power req","100 kW – 1 MW+"],["Advantage","Highest electric thrust"]],
+desc:"MPD thrusters use the Lorentz force (the interaction between an electric current through a plasma and a magnetic field) to accelerate propellant to very high velocities. An arc discharge ionizes the propellant between a central cathode and cylindrical anode. The current flowing through the plasma interacts with the self-generated magnetic field, creating a force that pushes the plasma out at high speed. MPDs produce far more thrust than ion engines or Hall thrusters — potentially hundreds of newtons — making them suitable for crewed missions. The catch: they need enormous power (hundreds of kilowatts to megawatts), which practically requires a nuclear reactor.",
+draw:drawMPD},
+
+{cat:"Electric / Ion",id:"hall",name:"Hall Effect Thruster",
+sub:"Crossed electric and magnetic fields trap electrons, accelerate ions",
+info:[["Thrust","~1 N"],["Isp","1,500–3,000 s"],["Used on","Starlink, many satellites"],["Heritage","Soviet SPT since 1970s"]],
+desc:"Hall thrusters use a radial magnetic field to trap electrons in a circular drift (the Hall current). These orbiting electrons ionize the propellant and create an electric field that accelerates ions out the back at 15–30 km/s. Simpler and more robust than gridded ion engines, Hall thrusters have been workhorses of the space industry since the Soviets flew the first SPT-60 in 1971. SpaceX uses krypton-fueled Hall thrusters on every Starlink satellite for orbit raising and station-keeping. They hit a sweet spot between thrust and efficiency that makes them ideal for satellite propulsion.",
+draw:drawHall},
+
+// ── FUSION PROPULSION ──
+{cat:"Fusion",id:"daedalus",name:"Project Daedalus",
+sub:"British Interplanetary Society — unmanned fusion starship to Barnard's Star",
+info:[["Target","Barnard's Star (5.9 ly)"],["Speed","12% speed of light"],["Fuel","He-3/D pellets"],["Transit","~50 years"]],
+desc:"Project Daedalus (1973–1978) was the first detailed engineering study of an interstellar spacecraft. Designed by the British Interplanetary Society, it would use inertial confinement fusion — firing electron beams at pellets of deuterium and helium-3, igniting 250 fusion micro-explosions per second. The exhaust velocity would reach 10,000 km/s, accelerating the 54,000-ton ship to 12% the speed of light. It would reach Barnard's Star in about 50 years, performing a flyby (no deceleration — that would require even more fuel). The design called for mining Jupiter's atmosphere for helium-3, which gives a sense of the scale involved.",
+draw:drawDaedalus},
+
+{cat:"Fusion",id:"icf",name:"Inertial Confinement Fusion Drive",
+sub:"Fuel pellets compressed by lasers or particle beams — pulsed fusion",
+info:[["Concept","Micro-fusion explosions"],["Ignition","Laser/beam compression"],["Isp","100,000+ s"],["Challenge","Net energy gain"]],
+desc:"Inertial confinement fusion propulsion fires intense energy beams (lasers or particle beams) at tiny fuel pellets from all sides simultaneously. The pellet's outer layer ablates outward, driving the core inward via Newton's third law — compressing and heating it until fusion ignites. The miniature explosion is directed by a magnetic nozzle to produce thrust. Each pellet produces a brief pulse of energy; fire hundreds per second and you get continuous thrust. The NIF facility at Lawrence Livermore achieved fusion ignition in December 2022, proving the concept works — though an efficient, repetitive engine remains a massive engineering challenge.",
+draw:drawICF},
+
+{cat:"Fusion",id:"mcf",name:"Magnetic Confinement Fusion Drive",
+sub:"Tokamak or field-reversed configuration confines plasma for steady thrust",
+info:[["Concept","Magnetically confined plasma"],["Approach","FRC, Tokamak, Spheromak"],["Isp","10,000–300,000 s"],["Key","Sustained burn, no pellets"]],
+desc:"Instead of pulsed micro-explosions, magnetic confinement fusion drives hold a continuous fusion plasma in a magnetic bottle and allow it to leak out one end as directed exhaust. A Field-Reversed Configuration (FRC) is the most promising for propulsion — it creates a self-contained plasma torus that can be translated along a magnetic field and ejected at enormous velocity. Companies like Helion Energy and TAE Technologies are developing FRC reactors on the ground. For space, Princeton's PFRC (Princeton Field-Reversed Configuration) is specifically designed as a compact fusion engine. The advantage over ICF: continuous thrust without the complexity of pellet fabrication and precision targeting.",
+draw:drawMCF},
+
+// ── EXOTIC CONCEPTS ──
+{cat:"Exotic Concepts",id:"pluto",name:"Project Pluto (SLAM)",
+sub:"Nuclear-powered ramjet cruise missile — 1960s DARPA nightmare",
+info:[["Type","Nuclear ramjet"],["Speed","Mach 3+ at treetop level"],["Reactor","Unshielded, direct-cycle"],["Status","Tested reactor, never flew"]],
+desc:"Project Pluto was a Cold War program to build a nuclear-powered cruise missile called SLAM (Supersonic Low-Altitude Missile). Air entered the ramjet intake at Mach 3+, passed directly through an unshielded nuclear reactor (heating it to enormous temperatures), and exhausted out the back for thrust — no moving parts, unlimited range. The missile would fly at treetop level below radar, dropping hydrogen bombs on Soviet targets one by one. The reactor exhaust itself was lethally radioactive, so the flight path alone would be a weapon. Two reactors (Tory II-A and Tory II-C) were successfully tested at full power on railcars in the Nevada desert. The program was cancelled partly because it was too destabilizing — and partly because ICBMs made it redundant.",
+draw:drawPluto},
+
+{cat:"Exotic Concepts",id:"alcubierre",name:"Alcubierre Warp Drive",
+sub:"Contracting space ahead, expanding behind — moving without moving",
+info:[["Concept","Spacetime metric engineering"],["Speed","Effectively FTL"],["Proposed","Miguel Alcubierre, 1994"],["Requires","Exotic matter (negative energy)"]],
+desc:"Mexican physicist Miguel Alcubierre showed in 1994 that General Relativity technically permits a 'warp bubble' — a region of flat spacetime that moves through the surrounding spacetime by contracting space ahead of it and expanding space behind it. The ship inside the bubble is locally stationary (no acceleration, no time dilation), but the bubble itself moves at arbitrary velocity — even faster than light. The catch: the original formulation required more negative energy than exists in the observable universe. Subsequent refinements (by White, Bobrick, Martire, and Lentz) have reduced the energy requirements enormously, and Erik Lentz showed in 2021 that certain warp solutions might work with only positive energy. Still firmly theoretical, but no longer obviously impossible.",
+draw:drawAlcubierre},
+
+{cat:"Exotic Concepts",id:"bussard",name:"Bussard Ramjet",
+sub:"Scooping interstellar hydrogen as fuel — unlimited range",
+info:[["Concept","Interstellar fuel scoop"],["Proposed","Robert Bussard, 1960"],["Scoop","Magnetic funnel, 1000s km"],["Problem","Drag exceeds thrust"]],
+desc:"The Bussard Ramjet uses an enormous magnetic field (potentially thousands of kilometers across) to scoop up the sparse hydrogen atoms drifting in interstellar space and funnel them into a fusion reactor. Since you're collecting fuel as you go, you never run out — in principle, you could accelerate indefinitely and reach relativistic speeds. The concept inspired countless science fiction works. Unfortunately, detailed analysis showed that the drag from the magnetic scoop collecting interstellar medium likely exceeds the thrust from fusing the collected hydrogen, making it a brake rather than an engine at most speeds. Variations using the scoop only for deceleration (after being accelerated by other means) remain viable.",
+draw:drawBussard},
+
+{cat:"Exotic Concepts",id:"solar",name:"Solar / Laser Sail",
+sub:"Riding photon pressure — no propellant needed",
+info:[["Concept","Radiation pressure propulsion"],["Demonstrated","IKAROS (JAXA, 2010)"],["Starshot target","20% speed of light"],["Advantage","No fuel mass"]],
+desc:"Solar sails use the pressure of photons (sunlight or laser beams) bouncing off a large, highly reflective surface to generate thrust. The force is tiny, but it's continuous and requires zero propellant. JAXA's IKAROS demonstrated solar sailing in 2010. The Breakthrough Starshot initiative proposes using a ground-based laser array to accelerate gram-scale probes with tiny sails to 20% the speed of light, reaching Alpha Centauri in about 20 years. For larger payloads, solar sails are best suited for inner solar system missions where sunlight is intense. The sail material must be extremely thin and reflective — aluminum-coated Mylar or carbon fiber just a few atoms thick.",
+draw:drawSolarSail},
+
+{cat:"Exotic Concepts",id:"emfield",name:"Electromagnetic Catapult / Mass Driver",
+sub:"Railgun-style launch from planetary surfaces",
+info:[["Concept","Electromagnetic acceleration"],["Type","Coilgun / railgun"],["Use case","Lunar/asteroid launch"],["Advantage","No propellant needed"]],
+desc:"A mass driver or electromagnetic catapult uses a series of electromagnetic coils (like a linear motor or coilgun) to accelerate a payload along a track to orbital or escape velocity without any onboard propellant. On Earth, the required track length and g-forces make it impractical for crewed launch, but on the Moon (no atmosphere, 1/6 gravity) a mass driver could loft payloads into orbit or toward Earth cheaply and repeatedly. Gerard O'Neill proposed lunar mass drivers in the 1970s as a way to launch raw materials for space colony construction. The US Navy's electromagnetic aircraft launch system (EMALS) on Ford-class carriers demonstrates the core technology at smaller scale.",
+draw:drawMassDriver},
+
+// ── FISSION SYSTEMS ──
+{cat:"Fission Reactors",id:"kilopower",name:"Kilopower / KRUSTY",
+sub:"NASA's compact fission reactor for Moon and Mars surface power",
+info:[["Power","1–10 kWe"],["Fuel","Uranium-235 (93% enriched)"],["Tested","2018 (full power)"],["Mass","~400 kg (1 kWe)"]],
+desc:"Kilopower is a small, simple fission reactor designed by NASA and Los Alamos National Lab to provide reliable electricity on the Moon or Mars surface. The reactor core is a solid cast uranium-235 cylinder about the size of a paper towel roll. Heat from fission is transferred via sodium heat pipes to Stirling engines that generate electricity. The KRUSTY (Kilopower Reactor Using Stirling Technology) prototype was successfully tested at full power in 2018 in Nevada. The design is elegant in its simplicity — it self-regulates via negative thermal feedback (as it heats up, it naturally reduces its reaction rate). Four 10-kWe units could power a Mars habitat indefinitely.",
+draw:drawKilopower},
+
+{cat:"Fission Reactors",id:"msr",name:"Molten Salt Reactor",
+sub:"Fuel dissolved in liquid salt — can't melt down by definition",
+info:[["Fuel","Uranium/thorium in fluoride salt"],["Temp","650–750°C"],["Advantage","Walk-away safe"],["Heritage","MSRE (Oak Ridge, 1960s)"]],
+desc:"In a molten salt reactor, the nuclear fuel is dissolved directly in a liquid fluoride or chloride salt that serves as both fuel and coolant. Because the fuel is already liquid, a 'meltdown' is physically impossible — if the reactor overheats, a freeze plug at the bottom melts and the fuel drains by gravity into a passively cooled dump tank. The concept was proven at Oak Ridge National Lab in the 1960s with the Molten Salt Reactor Experiment (MSRE), which ran successfully for 4 years. MSRs can burn thorium (3× more abundant than uranium), consume existing nuclear waste, and operate at atmospheric pressure (no risk of pressure explosions). Multiple companies are now racing to commercialize the technology.",
+draw:drawMSR},
+
+{cat:"Fission Reactors",id:"rtg",name:"Radioisotope Thermoelectric Generator",
+sub:"Plutonium-238 decay heat → electricity — powers Voyager, Curiosity, Perseverance",
+info:[["Fuel","Plutonium-238"],["Power","~110 We per unit"],["Half-life","87.7 years"],["Notable","Voyager 1 (since 1977)"]],
+desc:"An RTG converts the heat from radioactive decay of plutonium-238 into electricity via thermocouples (no moving parts). They're incredibly reliable — Voyager 1's RTGs have been running continuously since 1977 and are still powering the spacecraft in interstellar space, nearly 50 years later. Every Mars rover since Curiosity uses a Multi-Mission RTG (MMRTG). The beauty is simplicity: Pu-238 decays steadily for decades, the thermocouples have no moving parts to fail, and the output is independent of sunlight. The downside: Pu-238 is expensive to produce (~$8 million per kilogram), and each RTG generates only about 110 watts — enough for a rover, not for a habitat.",
+draw:drawRTG},
+
+{cat:"Fission Reactors",id:"pebblebed",name:"Pebble Bed Reactor",
+sub:"Fuel in billiard-ball-sized pebbles — inherently safe, high temperature",
+info:[["Fuel form","TRISO fuel pebbles"],["Coolant","Helium gas"],["Temp","~900°C outlet"],["Safety","Can't melt down"]],
+desc:"A pebble bed reactor uses thousands of billiard-ball-sized graphite spheres, each containing thousands of tiny TRISO (TRi-structural ISOtropic) fuel particles — uranium kernels coated with layers of carbon and silicon carbide that act as miniature containment vessels. Hot helium gas flows through the gaps between the pebbles, carrying heat to a turbine. The design is inherently safe: TRISO particles can withstand temperatures far above anything the reactor can produce, and the reactor has a strong negative temperature coefficient — it naturally shuts itself down if it overheats. China's HTR-PM is the first commercial pebble bed reactor, connected to the grid in 2023.",
+draw:drawPebbleBed},
+
+{cat:"Fission Reactors",id:"snap",name:"SNAP-10A (Space Reactor)",
+sub:"First nuclear reactor operated in space — 1965",
+info:[["Power","500 We"],["Orbit","Launched April 1965"],["Duration","43 days in space"],["Coolant","NaK (sodium-potassium)"]],
+desc:"SNAP-10A was the first (and so far only) US nuclear fission reactor to operate in orbit. Launched in April 1965, it used a compact uranium-zirconium hydride reactor cooled by liquid NaK (sodium-potassium alloy), with thermoelectric converters generating 500 watts of electricity. It operated successfully for 43 days before a voltage regulator failure (unrelated to the reactor) shut it down. The reactor and its payload remain in a 700-year orbit. The Soviet Union was far more prolific, orbiting over 30 RORSAT reactors to power ocean surveillance radar satellites. SNAP-10A proved that fission reactors work fine in space — the engineering challenges are political and regulatory, not technical.",
+draw:drawSNAP}
+];
+
+// BUILD SIDEBAR
+(function(){
+const sb=document.getElementById('sb');
+sb.innerHTML='<h2>🚀 Propulsion Sims</h2>';
+let c='';
+S.forEach(s=>{
+if(s.cat!==c){c=s.cat;sb.innerHTML+=`<div class="cat">${c}</div>`}
+sb.innerHTML+=`<button class="sb" data-id="${s.id}" onclick="ld('${s.id}')">${s.name}</button>`;
+});
+})();
+
+function ld(id){
+const s=S.find(v=>v.id===id);if(!s)return;
+cur=s;t=0;on=false;
+document.getElementById('pB').textContent='▶ Play';
+document.getElementById('sT').textContent=s.name;
+document.getElementById('sS').textContent=s.sub;
+document.getElementById('dB').textContent=s.desc;
+document.getElementById('iP').innerHTML=s.info.map(([l,v])=>`<div class="ic"><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
+document.querySelectorAll('.sb').forEach(b=>b.classList.toggle('active',b.dataset.id===id));
+dr();
+}
+function tog(){on=!on;document.getElementById('pB').textContent=on?'⏸ Pause':'▶ Play';if(on)an()}
+function rst(){t=0;on=false;document.getElementById('pB').textContent='▶ Play';if(cur)dr()}
+function an(){if(!on)return;t+=0.003;if(t>1){t=1;on=false;document.getElementById('pB').textContent='▶ Play'}dr();af=requestAnimationFrame(an)}
+function dr(){if(!cur)return;x.clearRect(0,0,W,H);cur.draw(t)}
+
+// HELPERS
+function bg(c1,c2){const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,c1);g.addColorStop(1,c2);x.fillStyle=g;x.fillRect(0,0,W,H)}
+function stars(n){x.fillStyle='rgba(255,255,255,0.5)';for(let i=0;i<n;i++){x.beginPath();x.arc((i*173+31)%W,(i*97+17)%H,0.4+(i%3)*0.3,0,Math.PI*2);x.fill()}}
+function txt(s,cx,cy,c,sz,al){x.fillStyle=c||'#888';x.font=(sz||11)+'px sans-serif';x.textAlign=al||'center';x.fillText(s,cx,cy)}
+function lerp(a,b,p){return a+(b-a)*Math.max(0,Math.min(1,p))}
+function ease(p){return p<0.5?2*p*p:1-Math.pow(-2*p+2,2)/2}
+
+// Exhaust plume helper
+function plume(cx,cy,angle,len,width,color,t,spread){
+  const s=spread||0.3;
+  x.save();x.translate(cx,cy);x.rotate(angle);
+  const g=x.createLinearGradient(0,0,len,0);
+  g.addColorStop(0,color);g.addColorStop(0.3,color.replace(/[\d.]+\)$/,`${0.6})`));g.addColorStop(1,color.replace(/[\d.]+\)$/,'0)'));
+  x.fillStyle=g;
+  x.beginPath();x.moveTo(0,-width/2);
+  x.quadraticCurveTo(len*0.3,-width/2-len*s*Math.random()*0.3,len,-width*2*Math.random());
+  x.quadraticCurveTo(len*0.3,width/2+len*s*Math.random()*0.3,0,width/2);
+  x.fill();
+  // hot core
+  const g2=x.createLinearGradient(0,0,len*0.5,0);
+  g2.addColorStop(0,'rgba(255,255,255,0.6)');g2.addColorStop(1,'rgba(255,255,255,0)');
+  x.fillStyle=g2;
+  x.beginPath();x.moveTo(0,-width*0.3);x.lineTo(len*0.4,0);x.lineTo(0,width*0.3);x.fill();
+  x.restore();
+}
+
+// Particle array for reuse
+function particles(arr,cx,cy,count,spread,speed,color,sz){
+  while(arr.length<count)arr.push({x:cx,y:cy,vx:(Math.random()-0.5)*spread,vy:(Math.random()-0.5)*spread,life:Math.random()});
+  arr.forEach(p=>{
+    p.x+=p.vx*speed;p.y+=p.vy*speed;p.life-=0.008;
+    if(p.life<=0){p.x=cx;p.y=cy;p.vx=(Math.random()-0.5)*spread;p.vy=(Math.random()-0.5)*spread;p.life=1}
+    x.fillStyle=color.replace('A',p.life*0.7);
+    x.beginPath();x.arc(p.x,p.y,sz*p.life,0,Math.PI*2);x.fill();
+  });
+}
+
+let pts=[];
+
+// ─── DRAW FUNCTIONS ───
+
+function drawNerva(t){
+  bg('#060612','#0a0a1a');stars(80);
+  txt('NERVA — Nuclear Engine for Rocket Vehicle Application',W/2,30,'#7ec8e3',14);
+  // Engine cross-section
+  const ex=450,ey=300;
+  // Pressure vessel
+  x.fillStyle='#334';x.fillRect(ex-100,ey-50,200,100);x.strokeStyle='#556';x.lineWidth=2;x.strokeRect(ex-100,ey-50,200,100);
+  // Reactor core
+  const coreGlow=0.3+Math.sin(t*20)*0.1*(t>0.15?1:0);
+  x.fillStyle=`rgba(50,200,100,${coreGlow})`;x.fillRect(ex-60,ey-35,120,70);
+  // Fuel elements (channels)
+  for(let i=0;i<8;i++){
+    x.fillStyle='#1a1a30';x.fillRect(ex-50+i*14,ey-30,8,60);
+    if(t>0.15){x.fillStyle=`rgba(100,200,255,${0.3+Math.random()*0.2})`;x.fillRect(ex-50+i*14+2,ey-30,4,60)}
+  }
+  txt('Reactor Core',ex,ey-45,'#5a8',9);
+  // Nozzle
+  x.fillStyle='#445';x.beginPath();x.moveTo(ex+100,ey-30);x.lineTo(ex+180,ey-60);x.lineTo(ex+180,ey+60);x.lineTo(ex+100,ey+30);x.fill();
+  x.strokeStyle='#556';x.stroke();
+  txt('Nozzle',ex+140,ey+75,'#667',9);
+  // Hydrogen input
+  x.strokeStyle='#4af';x.lineWidth=2;x.setLineDash([4,3]);
+  x.beginPath();x.moveTo(ex-150,ey-20);x.lineTo(ex-100,ey-20);x.stroke();
+  x.beginPath();x.moveTo(ex-150,ey+20);x.lineTo(ex-100,ey+20);x.stroke();
+  x.setLineDash([]);
+  txt('LH₂ in','left',0,'',0);
+  x.fillStyle='#4af';x.font='9px sans-serif';x.textAlign='right';x.fillText('LH₂ propellant →',ex-105,ey-25);
+  // Exhaust
+  if(t>0.15){
+    const p=(t-0.15)/0.85;
+    const elen=150+p*200;
+    plume(ex+180,ey,0,elen,40+p*30,'rgba(100,200,255,0.5)',t);
+    plume(ex+180,ey,0,elen*0.6,20,'rgba(255,255,255,0.3)',t);
+    // H₂ exhaust label
+    if(p>0.3) txt('Superheated H₂ exhaust (~2,500°C)',ex+280,ey+80,`rgba(100,200,255,${Math.min(1,(p-0.3)*2)})`,10);
+  }
+  // Control drums
+  for(let i=0;i<4;i++){
+    const dy=ey-45+i*30;
+    x.fillStyle='#556';x.beginPath();x.arc(ex-70,dy,6,0,Math.PI*2);x.fill();
+    x.fillStyle=t>0.1?'#5a5':'#555';x.beginPath();x.arc(ex-70,dy,4,0,Math.PI*2);x.fill();
+  }
+  txt('Control drums',ex-70,ey+60,'#667',8);
+  // Reflector
+  x.strokeStyle='#5a5';x.lineWidth=3;x.strokeRect(ex-65,ey-38,130,76);
+  txt('Neutron reflector',ex+80,ey-42,'#5a5',8);
+  // Turbopump
+  x.fillStyle='#448';x.fillRect(ex-160,ey-15,30,30);txt('Turbo-pump',ex-145,ey+25,'#668',8);
+  // Stats
+  if(t>0.5){const a=Math.min(1,(t-0.5)*2);txt('Isp: 841 s (2× chemical rockets)',W/2,H-40,`rgba(126,200,227,${a})`,12);txt('23 successful test firings at Jackass Flats, Nevada',W/2,H-22,`rgba(150,150,180,${a})`,10)}
+}
+
+function drawNTR(t){
+  bg('#060612','#0a0a1a');stars(60);
+  txt('NUCLEAR THERMAL ROCKET — Solid Core Cutaway',W/2,30,'#7ec8e3',14);
+  const cx=450,cy=270;
+  // Full rocket body
+  x.fillStyle='#2a2a3a';
+  x.beginPath();x.moveTo(cx-280,cy-45);x.lineTo(cx+120,cy-45);x.lineTo(cx+120,cy+45);x.lineTo(cx-280,cy+45);x.closePath();x.fill();
+  // Nose cone
+  x.fillStyle='#333';x.beginPath();x.moveTo(cx-280,cy-45);x.lineTo(cx-330,cy);x.lineTo(cx-280,cy+45);x.fill();
+  // LH2 tank
+  x.fillStyle='rgba(50,100,200,0.2)';x.fillRect(cx-270,cy-38,180,76);
+  x.strokeStyle='#4a7ab5';x.lineWidth=1;x.strokeRect(cx-270,cy-38,180,76);
+  txt('Liquid Hydrogen Tank',cx-180,cy,'#5a8abd',10);
+  // Reactor section
+  x.fillStyle='rgba(50,180,80,0.15)';x.fillRect(cx-80,cy-38,100,76);
+  x.strokeStyle='#3a8a5a';x.lineWidth=1;x.strokeRect(cx-80,cy-38,100,76);
+  // Fuel elements
+  const glow=t>0.2?0.4+Math.sin(t*15)*0.15:0.1;
+  for(let r=0;r<5;r++){for(let c=0;c<6;c++){
+    x.fillStyle=`rgba(80,220,120,${glow})`;
+    x.beginPath();x.arc(cx-70+c*16,cy-28+r*14,4,0,Math.PI*2);x.fill();
+  }}
+  txt('Fission Core',cx-30,cy-42,'#4a8',9);
+  // Nozzle
+  x.fillStyle='#3a3a4a';x.beginPath();x.moveTo(cx+120,cy-35);x.lineTo(cx+220,cy-70);x.lineTo(cx+220,cy+70);x.lineTo(cx+120,cy+35);x.fill();
+  // Nozzle interior lines
+  x.strokeStyle='#4a4a5a';x.lineWidth=1;
+  for(let i=0;i<5;i++){const yy=cy-50+i*25;x.beginPath();x.moveTo(cx+125,yy*0.85+cy*0.15);x.lineTo(cx+215,yy);x.stroke()}
+  // Turbopump
+  x.fillStyle='#445';x.beginPath();x.arc(cx-85,cy-55,15,0,Math.PI*2);x.fill();
+  x.fillStyle='#556';x.beginPath();x.arc(cx-85,cy-55,8,0,Math.PI*2);x.fill();
+  txt('Turbopump',cx-85,cy-75,'#778',8);
+  // Flow arrows
+  x.strokeStyle='rgba(80,160,255,0.5)';x.lineWidth=1.5;x.setLineDash([4,3]);
+  x.beginPath();x.moveTo(cx-180,cy-35);x.lineTo(cx-85,cy-45);x.lineTo(cx-80,cy);x.stroke();
+  x.setLineDash([]);
+  // Exhaust
+  if(t>0.2){
+    const p=(t-0.2)/0.8;
+    plume(cx+220,cy,0,120+p*250,50+p*40,'rgba(100,200,255,0.5)',t);
+    plume(cx+220,cy,0.05,100+p*200,20,'rgba(200,255,255,0.3)',t);
+  }
+  // Labels
+  txt('H₂ flow →',cx-180,cy+55,'#5a8abd',9);
+  txt('2,500°C exhaust',cx+300,cy+85,'#6bd',9);
+  if(t>0.6){txt('The reactor IS the engine — fuel is just the working fluid',W/2,H-20,`rgba(126,200,227,${Math.min(1,(t-0.6)*2.5)})`,11)}
+}
+
+function drawBimodal(t){
+  bg('#060612','#0a0a1a');stars(70);
+  txt('BIMODAL NUCLEAR THERMAL ROCKET',W/2,30,'#7ec8e3',14);
+  const phase=t<0.5?'thrust':'electric';
+  const p=t<0.5?t/0.5:(t-0.5)/0.5;
+  // Spacecraft body
+  const sx=300,sy=270;
+  x.fillStyle='#2a2a3a';x.fillRect(sx,sy-35,250,70);
+  // Hab module
+  x.fillStyle='#334';x.beginPath();x.arc(sx-20,sy,40,0,Math.PI*2);x.fill();x.strokeStyle='#556';x.stroke();
+  txt('Crew',sx-20,sy,'#aab',9);
+  // Reactor
+  const rGlow=phase==='thrust'?0.5+Math.sin(t*20)*0.15:0.15+Math.sin(t*8)*0.05;
+  x.fillStyle=`rgba(50,200,100,${rGlow})`;x.fillRect(sx+160,sy-25,50,50);
+  x.strokeStyle='#3a8a5a';x.strokeRect(sx+160,sy-25,50,50);
+  txt('Reactor',sx+185,sy,'#4a8',9);
+  // Nozzle
+  x.fillStyle='#3a3a4a';x.beginPath();x.moveTo(sx+250,sy-20);x.lineTo(sx+310,sy-40);x.lineTo(sx+310,sy+40);x.lineTo(sx+250,sy+20);x.fill();
+  // H2 tanks
+  x.fillStyle='rgba(50,100,200,0.15)';x.fillRect(sx+30,sy-30,120,60);
+  x.strokeStyle='#4a7ab5';x.strokeRect(sx+30,sy-30,120,60);
+  txt('LH₂',sx+90,sy,'#5a8abd',9);
+  // Radiator panels (for electric mode)
+  x.fillStyle=phase==='electric'?'rgba(200,100,50,0.3)':'rgba(100,100,100,0.15)';
+  x.fillRect(sx+80,sy-80,100,40);x.fillRect(sx+80,sy+40,100,40);
+  txt('Radiators',sx+130,sy-85,'#a86',8);
+  // Mode indicator
+  if(phase==='thrust'){
+    txt('⚡ THRUST MODE',W/2,70,'#ff8844',13);
+    txt('High thrust for orbital maneuvers',W/2,88,'#aa7744',10);
+    plume(sx+310,sy,0,100+p*250,30+p*30,'rgba(100,200,255,0.5)',t);
+    plume(sx+310,sy,0,80+p*180,15,'rgba(255,255,255,0.3)',t);
+  } else {
+    txt('⚡ ELECTRIC MODE',W/2,70,'#44aaff',13);
+    txt('Low-power electricity generation for cruise phase',W/2,88,'#4488aa',10);
+    // Small ion plumes
+    const ip=ease(p);
+    x.fillStyle='rgba(100,150,255,0.2)';x.beginPath();x.arc(sx+320,sy,3+ip*2,0,Math.PI*2);x.fill();
+    // Electricity symbol
+    x.strokeStyle='#4af';x.lineWidth=1.5;x.setLineDash([2,3]);
+    x.beginPath();x.moveTo(sx+210,sy-20);x.lineTo(sx+230,sy-60);x.lineTo(sx+130,sy-60);x.stroke();
+    x.setLineDash([]);
+    txt('25-50 kWe',sx+180,sy-68,'#4af',9);
+    // Radiator glow
+    x.fillStyle='rgba(255,100,50,0.1)';x.fillRect(sx+80,sy-80,100,40);x.fillRect(sx+80,sy+40,100,40);
+  }
+  // Timeline bar
+  x.fillStyle='#222';x.fillRect(200,H-50,500,8);
+  x.fillStyle=t<0.5?'#f84':'#4af';x.fillRect(200,H-50,500*t,8);
+  txt('Thrust',200,H-55,'#f84',8);txt('Cruise (electric)',700,H-55,'#4af',8);
+  txt('Ideal for crewed Mars missions — fast transit + reliable power',W/2,H-20,'#889',10);
+}
+
+function drawGasCore(t){
+  bg('#060612','#0a0a1a');stars(50);
+  txt('GAS-CORE NUCLEAR ROCKET',W/2,30,'#7ec8e3',14);
+  txt('Fissioning uranium plasma — 3,000 to 7,000 seconds Isp',W/2,50,'#668',10);
+  const cx=450,cy=270;
+  // Chamber wall
+  x.strokeStyle='#556';x.lineWidth=3;
+  x.beginPath();x.ellipse(cx,cy,100,70,0,0,Math.PI*2);x.stroke();
+  x.fillStyle='rgba(30,30,50,0.8)';x.beginPath();x.ellipse(cx,cy,100,70,0,0,Math.PI*2);x.fill();
+  // Uranium plasma core (central vortex)
+  const glow=t>0.1?0.4+Math.sin(t*15)*0.15:0;
+  const pg=x.createRadialGradient(cx,cy,0,cx,cy,50);
+  pg.addColorStop(0,`rgba(0,255,100,${glow})`);pg.addColorStop(0.4,`rgba(0,200,80,${glow*0.7})`);pg.addColorStop(0.8,`rgba(200,255,50,${glow*0.3})`);pg.addColorStop(1,'rgba(0,100,50,0)');
+  x.fillStyle=pg;x.beginPath();x.arc(cx,cy,50,0,Math.PI*2);x.fill();
+  txt('Uranium plasma',cx,cy-5,`rgba(100,255,150,${glow+0.2})`,10);
+  txt('25,000°C+',cx,cy+10,`rgba(200,255,150,${glow})`,9);
+  // Hydrogen vortex flow arrows
+  if(t>0.05){
+    x.strokeStyle='rgba(80,160,255,0.4)';x.lineWidth=1.5;
+    for(let i=0;i<8;i++){
+      const a=i/8*Math.PI*2+t*3;
+      const r1=65,r2=55;
+      x.beginPath();x.moveTo(cx+Math.cos(a)*r1,cy+Math.sin(a)*r1*0.7);x.lineTo(cx+Math.cos(a+0.3)*r2,cy+Math.sin(a+0.3)*r2*0.7);x.stroke();
+    }
+    txt('H₂ vortex containment',cx,cy+80,'#5a8abd',9);
+  }
+  // Nozzle
+  x.fillStyle='#3a3a4a';x.beginPath();x.moveTo(cx+100,cy-25);x.lineTo(cx+200,cy-55);x.lineTo(cx+200,cy+55);x.lineTo(cx+100,cy+25);x.fill();
+  // Exhaust
+  if(t>0.15){
+    const p=(t-0.15)/0.85;
+    plume(cx+200,cy,0,150+p*300,40+p*50,'rgba(100,255,150,0.4)',t);
+    plume(cx+200,cy,0,100+p*200,15,'rgba(255,255,200,0.4)',t);
+  }
+  // Comparison
+  if(t>0.6){const a=Math.min(1,(t-0.6)*2.5);
+    txt('Solid core NTR: ~900 s Isp',200,H-55,`rgba(150,150,180,${a})`,10);
+    txt('Gas core NTR: ~5,000 s Isp',200,H-38,`rgba(100,255,150,${a})`,10);
+    txt('5× better — but containing uranium plasma is the challenge',200,H-20,`rgba(150,150,180,${a*0.7})`,10,'left');
+  }
+}
+
+function drawOrion(t){
+  bg('#060612','#0a0a18');stars(90);
+  txt('PROJECT ORION — Nuclear Pulse Propulsion',W/2,30,'#7ec8e3',14);
+  const cx=450,sy=250;
+  // Ship body
+  x.fillStyle='#2a2a3a';x.beginPath();x.moveTo(cx-40,sy-120);x.lineTo(cx+40,sy-120);x.lineTo(cx+50,sy+20);x.lineTo(cx-50,sy+20);x.closePath();x.fill();
+  // Crew section
+  x.fillStyle='#334';x.fillRect(cx-35,sy-110,70,40);txt('Crew',cx,sy-90,'#aab',9);
+  // Magazine
+  x.fillStyle='#443';x.fillRect(cx-30,sy-60,60,70);txt('Bomb magazine',cx,sy-25,'#aa8',8);
+  // Shock absorbers
+  x.strokeStyle='#668';x.lineWidth=2;
+  for(let i=0;i<3;i++){x.beginPath();const bx=cx-20+i*20;for(let j=0;j<4;j++){x.lineTo(bx+(j%2?5:-5),sy+25+j*10)}x.stroke()}
+  txt('Shock absorbers',cx+70,sy+40,'#668',8);
+  // Pusher plate
+  x.fillStyle='#556';x.fillRect(cx-70,sy+60,140,12);
+  txt('Pusher plate (steel)',cx,sy+85,'#889',9);
+  // Nuclear pulse sequence
+  const pulseRate=5;
+  const pulsePhase=(t*pulseRate)%1;
+  // Bomb ejection
+  if(t>0.1){
+    const bombY=sy+72+pulsePhase*80;
+    if(pulsePhase<0.4){
+      x.fillStyle='#e74c3c';x.beginPath();x.arc(cx,bombY,4,0,Math.PI*2);x.fill();
+    }
+    // Explosion
+    if(pulsePhase>0.4&&pulsePhase<0.9){
+      const ep=(pulsePhase-0.4)/0.5;
+      const fr=10+ep*100;
+      const fg=x.createRadialGradient(cx,sy+160,0,cx,sy+160,fr);
+      fg.addColorStop(0,`rgba(255,255,200,${0.8*(1-ep)})`);fg.addColorStop(0.4,`rgba(255,180,50,${0.5*(1-ep)})`);fg.addColorStop(1,'rgba(255,80,0,0)');
+      x.fillStyle=fg;x.beginPath();x.arc(cx,sy+160,fr,0,Math.PI*2);x.fill();
+      // Plasma hitting plate
+      if(ep>0.3){
+        x.fillStyle=`rgba(255,200,100,${0.3*(1-ep)})`;
+        x.beginPath();x.moveTo(cx-60,sy+72);x.lineTo(cx,sy+160-fr*0.5);x.lineTo(cx+60,sy+72);x.fill();
+      }
+    }
+  }
+  // Velocity indicator
+  if(t>0.2){const a=Math.min(1,(t-0.2)*1.5);
+    txt(`Velocity: ${Math.round(t*50)} km/s`,W/2,H-40,`rgba(126,200,227,${a})`,12);
+    txt('Each pulse: a small nuclear shaped charge',W/2,H-22,`rgba(150,150,180,${a})`,10);
+  }
+}
+
+function drawMedusa(t){
+  bg('#060612','#0a0a18');stars(80);
+  txt('MEDUSA — Nuclear Pulse Sail Propulsion',W/2,30,'#7ec8e3',14);
+  const cx=450,sy=200;
+  // Sail (ahead of ship)
+  const sailOpen=Math.min(1,t*4);
+  const sailW=150*sailOpen,sailH=40*sailOpen;
+  x.strokeStyle='rgba(200,200,220,0.6)';x.lineWidth=1.5;
+  x.beginPath();x.moveTo(cx-sailW,sy-sailH);x.quadraticCurveTo(cx,sy+sailH*0.3,cx+sailW,sy-sailH);x.stroke();
+  x.fillStyle='rgba(200,200,220,0.08)';x.beginPath();x.moveTo(cx-sailW,sy-sailH);x.quadraticCurveTo(cx,sy+sailH*0.3,cx+sailW,sy-sailH);x.fill();
+  if(sailOpen>0.5) txt('Spinnaker sail',cx,sy-sailH-15,`rgba(200,200,220,${sailOpen})`,10);
+  // Tethers
+  x.strokeStyle='rgba(150,150,170,0.4)';x.lineWidth=1;
+  for(let i=-2;i<=2;i++){x.beginPath();x.moveTo(cx+i*30,sy+sailH*0.2);x.lineTo(cx+i*10,sy+180);x.stroke()}
+  // Payload
+  x.fillStyle='#2a2a3a';x.fillRect(cx-25,sy+180,50,40);
+  x.fillStyle='#334';x.fillRect(cx-20,sy+185,40,15);
+  txt('Payload',cx,sy+195,'#aab',8);
+  txt('Tethers',cx+70,sy+120,'#667',8);
+  // Nuclear charges behind payload
+  if(t>0.15){
+    const pulsePhase=(t*4)%1;
+    const chargeY=sy+230+pulsePhase*60;
+    if(pulsePhase<0.35){x.fillStyle='#c33';x.beginPath();x.arc(cx,chargeY,3,0,Math.PI*2);x.fill()}
+    if(pulsePhase>0.35&&pulsePhase<0.85){
+      const ep=(pulsePhase-0.35)/0.5;
+      const fr=5+ep*80;
+      const fg=x.createRadialGradient(cx,sy+300,0,cx,sy+300,fr);
+      fg.addColorStop(0,`rgba(255,255,200,${0.7*(1-ep)})`);fg.addColorStop(1,'rgba(255,80,0,0)');
+      x.fillStyle=fg;x.beginPath();x.arc(cx,sy+300,fr,0,Math.PI*2);x.fill();
+      // Push on sail
+      if(ep>0.2){
+        x.fillStyle=`rgba(255,200,100,${0.15*(1-ep)})`;
+        x.beginPath();x.moveTo(cx-sailW*0.8,sy);x.lineTo(cx,sy+300);x.lineTo(cx+sailW*0.8,sy);x.fill();
+      }
+    }
+  }
+  if(t>0.5){txt('Sail absorbs blast over longer time → less structural stress than Orion',W/2,H-20,`rgba(150,150,180,${Math.min(1,(t-0.5)*2)})`,10)}
+}
+
+function drawNSWR(t){
+  bg('#060612','#0a0a18');stars(60);
+  txt('NUCLEAR SALT WATER ROCKET',W/2,30,'#7ec8e3',14);
+  txt('Continuous nuclear detonation in a flowing solution',W/2,50,'#668',10);
+  const cx=450,cy=260;
+  // Fuel tank (bundle of tubes)
+  x.fillStyle='#2a2a3a';x.fillRect(cx-120,cy-60,100,120);
+  x.strokeStyle='#556';x.strokeRect(cx-120,cy-60,100,120);
+  // Boron-lined tubes
+  for(let i=0;i<5;i++){for(let j=0;j<4;j++){
+    x.fillStyle='#1a3a1a';x.beginPath();x.arc(cx-110+i*20,cy-45+j*30,7,0,Math.PI*2);x.fill();
+    x.fillStyle='rgba(100,255,50,0.3)';x.beginPath();x.arc(cx-110+i*20,cy-45+j*30,4,0,Math.PI*2);x.fill();
+  }}
+  txt('Subcritical fuel tubes',cx-70,cy-68,'#5a5',8);
+  txt('(boron-lined)',cx-70,cy+70,'#454',8);
+  // Pump
+  x.fillStyle='#445';x.fillRect(cx-10,cy-15,30,30);txt('Pump',cx+5,cy+25,'#668',8);
+  // Reaction chamber
+  const glow=t>0.15?0.5+Math.sin(t*25)*0.2:0;
+  x.fillStyle='#333';x.fillRect(cx+40,cy-40,80,80);x.strokeStyle='#556';x.lineWidth=2;x.strokeRect(cx+40,cy-40,80,80);
+  // Criticality glow in chamber
+  const cg=x.createRadialGradient(cx+80,cy,0,cx+80,cy,40);
+  cg.addColorStop(0,`rgba(255,200,50,${glow})`);cg.addColorStop(0.5,`rgba(255,100,20,${glow*0.5})`);cg.addColorStop(1,'rgba(255,50,0,0)');
+  x.fillStyle=cg;x.fillRect(cx+40,cy-40,80,80);
+  txt('Reaction chamber',cx+80,cy-48,'#a85',8);
+  if(t>0.15) txt('CRITICAL',cx+80,cy,`rgba(255,200,100,${glow})`,10);
+  // Flow arrows
+  x.strokeStyle='rgba(100,255,50,0.4)';x.lineWidth=2;x.setLineDash([4,3]);
+  x.beginPath();x.moveTo(cx-20,cy);x.lineTo(cx+40,cy);x.stroke();x.setLineDash([]);
+  // Nozzle
+  x.fillStyle='#3a3a4a';x.beginPath();x.moveTo(cx+120,cy-25);x.lineTo(cx+200,cy-55);x.lineTo(cx+200,cy+55);x.lineTo(cx+120,cy+25);x.fill();
+  // Exhaust
+  if(t>0.15){
+    const p=(t-0.15)/0.85;
+    plume(cx+200,cy,0,120+p*300,40+p*50,'rgba(255,200,50,0.5)',t);
+    plume(cx+200,cy,0,80+p*200,15,'rgba(255,255,200,0.3)',t);
+  }
+  // Labels
+  if(t>0.5){const a=Math.min(1,(t-0.5)*2);
+    txt('Uranium salts in water → pump into open chamber → instant criticality',W/2,H-40,`rgba(200,200,150,${a})`,10);
+    txt('Isp: 6,700 to 67,000 seconds — deep space only (radioactive exhaust)',W/2,H-22,`rgba(150,150,180,${a})`,10);
+  }
+}
+
+function drawIon(t){
+  bg('#060612','#0a0a18');stars(70);
+  txt('ION THRUSTER — Electrostatic Propulsion',W/2,30,'#7ec8e3',14);
+  const cx=450,cy=260;
+  // Engine body
+  x.fillStyle='#2a2a3a';x.beginPath();x.arc(cx,cy,60,0,Math.PI*2);x.fill();x.strokeStyle='#556';x.lineWidth=2;x.stroke();
+  // Inner chamber (ionization)
+  const iGlow=t>0.1?0.3+Math.sin(t*12)*0.1:0;
+  x.fillStyle=`rgba(100,150,255,${iGlow})`;x.beginPath();x.arc(cx,cy,45,0,Math.PI*2);x.fill();
+  // Grids
+  x.strokeStyle='#889';x.lineWidth=2;
+  x.beginPath();x.moveTo(cx+48,cy-40);x.lineTo(cx+48,cy+40);x.stroke();
+  x.beginPath();x.moveTo(cx+55,cy-40);x.lineTo(cx+55,cy+40);x.stroke();
+  txt('Accel grids',cx+52,cy-48,'#889',8);
+  // Xenon input
+  x.strokeStyle='#5a8';x.lineWidth=1.5;x.setLineDash([3,3]);x.beginPath();x.moveTo(cx-100,cy);x.lineTo(cx-60,cy);x.stroke();x.setLineDash([]);
+  txt('Xe gas →',cx-110,cy-8,'#5a8',9,'right');
+  // Ion beam
+  if(t>0.1){
+    const p=(t-0.1)/0.9;
+    const bLen=100+p*350;
+    // Main beam
+    const bg2=x.createLinearGradient(cx+60,0,cx+60+bLen,0);
+    bg2.addColorStop(0,'rgba(100,150,255,0.5)');bg2.addColorStop(0.3,'rgba(80,120,255,0.3)');bg2.addColorStop(1,'rgba(50,80,255,0)');
+    x.fillStyle=bg2;x.beginPath();x.moveTo(cx+60,cy-15);x.lineTo(cx+60+bLen,cy-5);x.lineTo(cx+60+bLen,cy+5);x.lineTo(cx+60,cy+15);x.fill();
+    // Individual ion particles
+    for(let i=0;i<15;i++){
+      const ix=cx+65+((i*67+t*500)%(bLen));
+      const iy=cy+(Math.sin(i*1.7)*8);
+      x.fillStyle=`rgba(120,170,255,${0.5-i/30})`;x.beginPath();x.arc(ix,iy,1.5,0,Math.PI*2);x.fill();
+    }
+    txt('Xe⁺ ion beam → 30-50 km/s',cx+60+bLen/2,cy+35,`rgba(100,150,255,${Math.min(1,p*2)})`,10);
+  }
+  // Solar panels
+  x.fillStyle='rgba(50,50,120,0.4)';x.fillRect(cx-180,cy-10,70,20);x.fillRect(cx-180,cy-35,70,20);
+  x.strokeStyle='#448';x.strokeRect(cx-180,cy-10,70,20);x.strokeRect(cx-180,cy-35,70,20);
+  txt('Solar panels',cx-145,cy-42,'#668',8);
+  // Stats
+  if(t>0.5){const a=Math.min(1,(t-0.5)*2);
+    txt('Thrust: ~0.5 N (weight of a sheet of paper)',W/2,H-40,`rgba(200,200,150,${a})`,10);
+    txt('But running for months → enormous total velocity change',W/2,H-22,`rgba(126,200,227,${a})`,10);
+  }
+}
+
+function drawVasimr(t){
+  bg('#060612','#0a0a18');stars(60);
+  txt('VASIMR — Variable Specific Impulse Magnetoplasma Rocket',W/2,30,'#7ec8e3',14);
+  const cx=450,cy=270;
+  // Engine stages
+  // Stage 1: Helicon ionizer
+  x.fillStyle='#2a2a3a';x.fillRect(cx-120,cy-35,60,70);x.strokeStyle='#556';x.strokeRect(cx-120,cy-35,60,70);
+  x.fillStyle=`rgba(80,120,255,${t>0.1?0.3:0.05})`;x.fillRect(cx-115,cy-30,50,60);
+  txt('Helicon',cx-90,cy-42,'#668',8);txt('(ionizer)',cx-90,cy+45,'#556',7);
+  // Stage 2: ICRH booster
+  x.fillStyle='#2a2a3a';x.fillRect(cx-50,cy-35,70,70);x.strokeStyle='#556';x.strokeRect(cx-50,cy-35,70,70);
+  x.fillStyle=`rgba(200,100,255,${t>0.15?0.3+Math.sin(t*15)*0.1:0.05})`;x.fillRect(cx-45,cy-30,60,60);
+  txt('ICRH',cx-15,cy-42,'#a6d',8);txt('(RF heater)',cx-15,cy+45,'#746',7);
+  // Stage 3: Magnetic nozzle
+  x.strokeStyle='#5a8';x.lineWidth=2;
+  x.beginPath();x.moveTo(cx+30,cy-35);x.quadraticCurveTo(cx+80,cy-55,cx+130,cy-70);x.stroke();
+  x.beginPath();x.moveTo(cx+30,cy+35);x.quadraticCurveTo(cx+80,cy+55,cx+130,cy+70);x.stroke();
+  txt('Magnetic nozzle',cx+80,cy-78,'#5a8',8);
+  // Magnetic field lines
+  x.strokeStyle='rgba(80,200,150,0.2)';x.lineWidth=1;
+  for(let i=-3;i<=3;i++){x.beginPath();x.moveTo(cx-120,cy+i*8);x.quadraticCurveTo(cx,cy+i*12,cx+130,cy+i*20);x.stroke()}
+  // Superconducting magnets
+  for(let mx of[cx-130,cx-55,cx+20,cx+90]){x.fillStyle='#448';x.fillRect(mx,cy-45,10,5);x.fillRect(mx,cy+40,10,5)}
+  txt('SC magnets',cx-130,cy-52,'#668',7);
+  // Argon input
+  txt('Ar gas →',cx-150,cy,'#5a8',9,'right');
+  // Plasma exhaust
+  if(t>0.15){
+    const p=(t-0.15)/0.85;
+    plume(cx+130,cy,0,100+p*280,20+p*40,'rgba(150,100,255,0.4)',t);
+    plume(cx+130,cy,0,60+p*180,8,'rgba(255,200,255,0.3)',t);
+  }
+  // Gear dial
+  if(t>0.4){const a=Math.min(1,(t-0.4)*2);
+    txt('⚙ Variable gear:',cx-30,H-55,`rgba(200,200,200,${a})`,10);
+    txt('High thrust ↔ High efficiency',cx-30,H-38,`rgba(200,200,150,${a})`,10);
+    txt('With nuclear power: Mars in 39 days (theoretical)',W/2,H-18,`rgba(126,200,227,${a})`,11);
+  }
+}
+
+function drawMPD(t){
+  bg('#060612','#0a0a18');stars(50);
+  txt('MAGNETOPLASMADYNAMIC THRUSTER',W/2,30,'#7ec8e3',14);
+  const cx=450,cy=260;
+  // Engine body
+  x.fillStyle='#2a2a3a';x.beginPath();x.arc(cx,cy,55,0,Math.PI*2);x.fill();x.strokeStyle='#556';x.lineWidth=2;x.stroke();
+  // Central cathode
+  x.fillStyle='#889';x.fillRect(cx-4,cy-40,8,80);txt('Cathode',cx,cy-48,'#aab',8);
+  // Anode (outer ring)
+  x.strokeStyle='#a86';x.lineWidth=3;x.beginPath();x.arc(cx,cy,45,0,Math.PI*2);x.stroke();txt('Anode',cx+55,cy-10,'#a86',8);
+  // Arc discharge
+  const arcGlow=t>0.1?0.4+Math.sin(t*20)*0.15:0;
+  for(let i=0;i<6;i++){
+    const a=i/6*Math.PI*2+t*5;
+    x.strokeStyle=`rgba(255,200,100,${arcGlow*0.5})`;x.lineWidth=1;
+    x.beginPath();x.moveTo(cx+Math.cos(a)*8,cy+Math.sin(a)*8);x.lineTo(cx+Math.cos(a)*42,cy+Math.sin(a)*42);x.stroke();
+  }
+  // Lorentz force arrows (outward)
+  if(t>0.1){
+    x.strokeStyle=`rgba(100,200,255,${arcGlow})`;x.lineWidth=1.5;
+    for(let i=0;i<4;i++){const a=-0.3+i*0.15;x.beginPath();x.moveTo(cx+55*Math.cos(a),cy+55*Math.sin(a));x.lineTo(cx+80*Math.cos(a),cy+80*Math.sin(a));x.stroke()}
+    txt('J × B force →',cx+100,cy,'rgba(100,200,255,0.7)',9,'left');
+  }
+  // Exhaust
+  if(t>0.12){
+    const p=(t-0.12)/0.88;
+    plume(cx+60,cy,0,120+p*300,30+p*40,'rgba(255,180,80,0.4)',t);
+    plume(cx+60,cy,0,80+p*200,12,'rgba(255,255,200,0.3)',t);
+  }
+  // Power requirement
+  x.fillStyle='#334';x.fillRect(cx-180,cy-20,80,40);x.strokeStyle='#448';x.strokeRect(cx-180,cy-20,80,40);
+  txt('Nuclear',cx-140,cy-5,'#668',9);txt('reactor',cx-140,cy+10,'#668',9);
+  x.strokeStyle='#448';x.lineWidth=1.5;x.setLineDash([3,3]);x.beginPath();x.moveTo(cx-100,cy);x.lineTo(cx-55,cy);x.stroke();x.setLineDash([]);
+  txt('100 kW – 1 MW+',cx-140,cy+30,'#a48',8);
+  if(t>0.6){const a=Math.min(1,(t-0.6)*2);txt('Highest thrust of any electric propulsion — up to 200 N',W/2,H-20,`rgba(126,200,227,${a})`,11)}
+}
+
+function drawHall(t){
+  bg('#060612','#0a0a18');stars(60);
+  txt('HALL EFFECT THRUSTER',W/2,30,'#7ec8e3',14);
+  const cx=420,cy=260;
+  // Annular channel
+  x.strokeStyle='#556';x.lineWidth=3;x.beginPath();x.arc(cx,cy,50,0,Math.PI*2);x.stroke();
+  x.beginPath();x.arc(cx,cy,30,0,Math.PI*2);x.stroke();
+  // Channel fill
+  x.fillStyle='rgba(30,30,60,0.8)';x.beginPath();x.arc(cx,cy,50,0,Math.PI*2);x.fill();
+  x.fillStyle='#0a0a18';x.beginPath();x.arc(cx,cy,28,0,Math.PI*2);x.fill();
+  // Plasma glow in channel
+  if(t>0.1){
+    const gl=0.3+Math.sin(t*10)*0.1;
+    x.strokeStyle=`rgba(100,150,255,${gl})`;x.lineWidth=8;x.beginPath();x.arc(cx,cy,40,0,Math.PI*2);x.stroke();
+  }
+  // Magnetic field (radial)
+  x.strokeStyle='rgba(200,100,100,0.3)';x.lineWidth=1;
+  for(let i=0;i<8;i++){const a=i/8*Math.PI*2;x.beginPath();x.moveTo(cx+Math.cos(a)*25,cy+Math.sin(a)*25);x.lineTo(cx+Math.cos(a)*55,cy+Math.sin(a)*55);x.stroke()}
+  txt('B field (radial)',cx+65,cy-50,'#a66',8);
+  // Electron drift (Hall current)
+  if(t>0.1){
+    x.strokeStyle='rgba(255,255,100,0.3)';x.lineWidth=1;x.setLineDash([3,3]);
+    x.beginPath();x.arc(cx,cy,40,0,Math.PI*2);x.stroke();x.setLineDash([]);
+    txt('e⁻ Hall drift',cx,cy-55,'#aa8',8);
+  }
+  // Ion beam (axial - out of page, shown going right)
+  if(t>0.12){
+    const p=(t-0.12)/0.88;
+    // Show as side view beam going right
+    const bg2=x.createLinearGradient(cx+55,0,cx+55+p*350,0);
+    bg2.addColorStop(0,'rgba(100,150,255,0.4)');bg2.addColorStop(1,'rgba(50,80,255,0)');
+    x.fillStyle=bg2;
+    x.beginPath();x.moveTo(cx+55,cy-20);x.lineTo(cx+55+p*350,cy-3);x.lineTo(cx+55+p*350,cy+3);x.lineTo(cx+55,cy+20);x.fill();
+    for(let i=0;i<10;i++){const ix=cx+60+((i*47+t*400)%(p*340));x.fillStyle='rgba(120,170,255,0.4)';x.beginPath();x.arc(ix,cy+Math.sin(i)*5,1.5,0,Math.PI*2);x.fill()}
+  }
+  // Krypton input
+  txt('Kr/Xe →',cx-80,cy,'#5a8',9,'right');
+  // Starlink reference
+  if(t>0.5){const a=Math.min(1,(t-0.5)*2);
+    txt('Used on every Starlink satellite (6,000+)',W/2,H-38,`rgba(200,200,150,${a})`,11);
+    txt('Soviet heritage: first SPT-60 flew in 1971',W/2,H-20,`rgba(150,150,180,${a})`,10);
+  }
+}
+
+function drawDaedalus(t){
+  bg('#030308','#060612');stars(120);
+  txt('PROJECT DAEDALUS — Fusion Starship',W/2,30,'#7ec8e3',14);
+  // Ship (massive, two-stage)
+  const cx=350,cy=270;
+  // Second stage (front)
+  x.fillStyle='#2a2a3a';x.beginPath();x.moveTo(cx-100,cy-15);x.lineTo(cx-60,cy-25);x.lineTo(cx+50,cy-25);x.lineTo(cx+50,cy+25);x.lineTo(cx-60,cy+25);x.lineTo(cx-100,cy);x.closePath();x.fill();
+  txt('Stage 2',cx-20,cy,'#889',8);
+  // First stage (rear, larger)
+  x.fillStyle='#333';x.fillRect(cx+50,cy-35,150,70);
+  txt('Stage 1 — He-3/D fuel',cx+125,cy,'#889',8);
+  // Engine bells (rear)
+  x.fillStyle='#3a3a4a';
+  x.beginPath();x.moveTo(cx+200,cy-25);x.lineTo(cx+250,cy-50);x.lineTo(cx+250,cy+50);x.lineTo(cx+200,cy+25);x.fill();
+  // Payload (front)
+  x.fillStyle='#448';x.beginPath();x.moveTo(cx-100,cy);x.lineTo(cx-140,cy-10);x.lineTo(cx-140,cy+10);x.closePath();x.fill();
+  txt('Payload',cx-160,cy,'#668',8);
+  // Fuel pellet injection
+  if(t>0.1){
+    const pulsePhase=(t*8)%1;
+    // Pellet
+    if(pulsePhase<0.3){const px=cx+210+pulsePhase*40;x.fillStyle='#5a5';x.beginPath();x.arc(px,cy,2,0,Math.PI*2);x.fill()}
+    // Micro fusion
+    if(pulsePhase>0.3&&pulsePhase<0.8){
+      const ep=(pulsePhase-0.3)/0.5;
+      const fr=3+ep*30;
+      x.fillStyle=`rgba(200,220,255,${0.5*(1-ep)})`;x.beginPath();x.arc(cx+260,cy,fr,0,Math.PI*2);x.fill();
+    }
+  }
+  // Exhaust
+  if(t>0.1){
+    const p=(t-0.1)/0.9;
+    plume(cx+250,cy,0,100+p*350,25+p*40,'rgba(150,180,255,0.4)',t);
+    plume(cx+250,cy,0,60+p*250,10,'rgba(220,230,255,0.3)',t);
+  }
+  // Barnard's Star
+  x.fillStyle='#fa5';x.beginPath();x.arc(80,100,4,0,Math.PI*2);x.fill();txt("Barnard's Star →",80,85,'#a85',9);
+  // Stats
+  if(t>0.4){const a=Math.min(1,(t-0.4)*2);
+    txt('250 fusion micro-explosions per second',W/2,H-55,`rgba(200,200,200,${a})`,10);
+    txt('Exhaust velocity: 10,000 km/s → 12% speed of light',W/2,H-38,`rgba(126,200,227,${a})`,11);
+    txt("5.9 light-years to Barnard's Star in ~50 years (flyby only)",W/2,H-20,`rgba(150,150,180,${a})`,10);
+  }
+}
+
+function drawICF(t){
+  bg('#060612','#0a0a18');stars(50);
+  txt('INERTIAL CONFINEMENT FUSION DRIVE',W/2,30,'#7ec8e3',14);
+  const cx=400,cy=260;
+  // Reaction chamber
+  x.strokeStyle='#556';x.lineWidth=2;x.beginPath();x.arc(cx,cy,60,0,Math.PI*2);x.stroke();
+  x.fillStyle='rgba(20,20,40,0.8)';x.beginPath();x.arc(cx,cy,60,0,Math.PI*2);x.fill();
+  // Laser/beam arrays
+  const beamCount=8;
+  for(let i=0;i<beamCount;i++){
+    const a=i/beamCount*Math.PI*2;
+    const bx=cx+Math.cos(a)*90,by=cy+Math.sin(a)*90;
+    x.fillStyle='#445';x.beginPath();x.arc(bx,by,8,0,Math.PI*2);x.fill();
+    // Beams firing
+    if(t>0.1){
+      const pulsePhase=(t*6)%1;
+      if(pulsePhase<0.5){
+        x.strokeStyle=`rgba(255,50,50,${0.4*(1-pulsePhase*2)})`;x.lineWidth=2;
+        x.beginPath();x.moveTo(bx,by);x.lineTo(cx+Math.cos(a)*5,cy+Math.sin(a)*5);x.stroke();
+      }
+    }
+  }
+  txt('Beam arrays',cx+100,cy-85,'#668',8);
+  // Pellet and ignition
+  if(t>0.1){
+    const pulsePhase=(t*6)%1;
+    if(pulsePhase<0.3){x.fillStyle='#5a5';x.beginPath();x.arc(cx,cy,3,0,Math.PI*2);x.fill();txt('Fuel pellet',cx,cy+15,'#5a5',8)}
+    if(pulsePhase>0.3&&pulsePhase<0.8){
+      const ep=(pulsePhase-0.3)/0.5;
+      const fr=3+ep*45;
+      const fg=x.createRadialGradient(cx,cy,0,cx,cy,fr);
+      fg.addColorStop(0,`rgba(200,220,255,${0.8*(1-ep)})`);fg.addColorStop(0.5,`rgba(100,150,255,${0.4*(1-ep)})`);fg.addColorStop(1,'rgba(50,50,200,0)');
+      x.fillStyle=fg;x.beginPath();x.arc(cx,cy,fr,0,Math.PI*2);x.fill();
+    }
+  }
+  // Magnetic nozzle
+  x.strokeStyle='#5a8';x.lineWidth=2;
+  x.beginPath();x.moveTo(cx+60,cy-30);x.quadraticCurveTo(cx+120,cy-55,cx+180,cy-70);x.stroke();
+  x.beginPath();x.moveTo(cx+60,cy+30);x.quadraticCurveTo(cx+120,cy+55,cx+180,cy+70);x.stroke();
+  txt('Magnetic nozzle',cx+140,cy-78,'#5a8',8);
+  // Exhaust
+  if(t>0.15){const p=(t-0.15)/0.85;plume(cx+180,cy,0,100+p*250,25+p*35,'rgba(150,180,255,0.4)',t)}
+  if(t>0.5){const a=Math.min(1,(t-0.5)*2);txt('NIF achieved ignition Dec 2022 — proving the concept',W/2,H-38,`rgba(200,200,200,${a})`,10);txt('Isp: 100,000+ seconds — orders of magnitude beyond fission',W/2,H-20,`rgba(126,200,227,${a})`,11)}
+}
+
+function drawMCF(t){
+  bg('#060612','#0a0a18');stars(50);
+  txt('MAGNETIC CONFINEMENT FUSION DRIVE (FRC)',W/2,30,'#7ec8e3',14);
+  const cx=400,cy=260;
+  // Confinement vessel
+  x.fillStyle='rgba(20,20,40,0.6)';x.fillRect(cx-120,cy-40,240,80);x.strokeStyle='#556';x.lineWidth=2;x.strokeRect(cx-120,cy-40,240,80);
+  // Magnetic coils
+  for(let i=0;i<8;i++){const mx=cx-110+i*33;x.fillStyle='#448';x.fillRect(mx,cy-48,8,6);x.fillRect(mx,cy+42,8,6)}
+  txt('Superconducting coils',cx,cy-55,'#668',8);
+  // FRC plasmoid (toroidal)
+  const glow=t>0.1?0.4+Math.sin(t*10)*0.1:0;
+  x.strokeStyle=`rgba(150,100,255,${glow})`;x.lineWidth=3;x.beginPath();x.ellipse(cx,cy,70,25,0,0,Math.PI*2);x.stroke();
+  // Inner field lines
+  x.strokeStyle=`rgba(100,200,150,${glow*0.5})`;x.lineWidth=1;
+  for(let i=-2;i<=2;i++){x.beginPath();x.ellipse(cx,cy+i*6,50-Math.abs(i)*10,15-Math.abs(i)*3,0,0,Math.PI*2);x.stroke()}
+  txt('FRC plasmoid',cx,cy,`rgba(200,150,255,${glow+0.3})`,10);
+  // Open end (nozzle)
+  x.strokeStyle='#5a8';x.lineWidth=2;x.beginPath();x.moveTo(cx+120,cy-30);x.lineTo(cx+200,cy-55);x.stroke();x.beginPath();x.moveTo(cx+120,cy+30);x.lineTo(cx+200,cy+55);x.stroke();
+  // Plasma exhaust
+  if(t>0.15){const p=(t-0.15)/0.85;plume(cx+200,cy,0,100+p*280,20+p*35,'rgba(150,100,255,0.35)',t);plume(cx+200,cy,0,60+p*180,8,'rgba(220,200,255,0.25)',t)}
+  // Labels
+  if(t>0.5){const a=Math.min(1,(t-0.5)*2);
+    txt('Continuous fusion burn — no pellets needed',W/2,H-38,`rgba(200,200,200,${a})`,10);
+    txt('Plasmoid ejected at 100-1000 km/s for thrust',W/2,H-20,`rgba(126,200,227,${a})`,11);
+  }
+}
+
+function drawPluto(t){
+  bg('#5a8aba','#c0d0e0');
+  // Ground (low altitude)
+  x.fillStyle='#6a8a4a';x.fillRect(0,H-60,W,60);
+  // Trees
+  for(let i=0;i<25;i++){const tx=i*38;x.fillStyle='#4a6a3a';x.beginPath();x.moveTo(tx+10,H-60);x.lineTo(tx+19,H-90);x.lineTo(tx+28,H-60);x.fill()}
+  txt('PROJECT PLUTO — Nuclear Ramjet Cruise Missile (SLAM)',W/2,30,'#333',14);
+  // Missile
+  const mx=100+t*600,my=H-120;
+  // Body
+  x.fillStyle='#4a4a5a';x.beginPath();x.moveTo(mx,my);x.lineTo(mx-80,my-10);x.lineTo(mx-80,my+10);x.closePath();x.fill();
+  x.fillRect(mx-80,my-10,60,20);
+  // Intake
+  x.fillStyle='#333';x.beginPath();x.arc(mx-80,my,8,0,Math.PI*2);x.fill();
+  txt('Ram intake',mx-80,my+20,'#445',7);
+  // Reactor glow
+  x.fillStyle=`rgba(50,255,80,${0.3+Math.sin(t*20)*0.1})`;x.fillRect(mx-55,my-6,20,12);
+  // Wings
+  x.fillStyle='#555';x.fillRect(mx-60,my-20,25,5);x.fillRect(mx-60,my+15,25,5);
+  // Exhaust (radioactive!)
+  const eg=x.createLinearGradient(mx-20,0,mx-20-150,0);
+  eg.addColorStop(0,'rgba(100,255,80,0.3)');eg.addColorStop(0.5,'rgba(200,255,100,0.15)');eg.addColorStop(1,'rgba(200,200,100,0)');
+  x.fillStyle=eg;x.beginPath();x.moveTo(mx-20,my-8);x.lineTo(mx-170,my-25);x.lineTo(mx-170,my+25);x.lineTo(mx-20,my+8);x.fill();
+  // Speed lines
+  x.strokeStyle='rgba(255,255,255,0.15)';x.lineWidth=1;
+  for(let i=0;i<5;i++){const ly=my-30+i*15;x.beginPath();x.moveTo(mx-100-i*20,ly);x.lineTo(mx-200-i*30,ly);x.stroke()}
+  // Mach indicator
+  txt('MACH 3+ at treetop level',mx-40,my-35,'#445',10);
+  // Warning
+  if(t>0.4){const a=Math.min(1,(t-0.4)*2);
+    txt('⚠ Flight path itself is lethal — radioactive exhaust trail',W/2,H-30,`rgba(200,50,50,${a})`,11);
+    txt('Unlimited range — air is the propellant, reactor provides all energy',W/2,H-12,`rgba(100,100,130,${a})`,10);
+  }
+  // Shockwave cone
+  x.strokeStyle='rgba(200,200,255,0.15)';x.lineWidth=1;x.beginPath();x.moveTo(mx,my);x.lineTo(mx-120,my-50);x.stroke();x.beginPath();x.moveTo(mx,my);x.lineTo(mx-120,my+50);x.stroke();
+}
+
+function drawAlcubierre(t){
+  bg('#020208','#060612');stars(150);
+  txt('ALCUBIERRE WARP DRIVE',W/2,30,'#7ec8e3',14);
+  const cx=450,cy=270;
+  // Flat spacetime grid
+  x.strokeStyle='rgba(60,60,100,0.3)';x.lineWidth=1;
+  const warpStrength=ease(Math.min(1,t*2));
+  for(let gx=-200;gx<=200;gx+=30){
+    x.beginPath();
+    for(let gy=-150;gy<=150;gy+=5){
+      const dist=Math.sqrt(gx*gx+gy*gy);
+      let dx=0;
+      if(dist<120&&dist>20){
+        const factor=warpStrength*(1-dist/120)*0.4;
+        dx=gx>0?-factor*40:factor*40;// compress ahead, expand behind
+      }
+      const px=cx+gx+dx,py=cy+gy;
+      if(gy===-150)x.moveTo(px,py);else x.lineTo(px,py);
+    }
+    x.stroke();
+  }
+  // Horizontal grid lines
+  for(let gy=-150;gy<=150;gy+=30){
+    x.beginPath();
+    for(let gx=-200;gx<=200;gx+=5){
+      const dist=Math.sqrt(gx*gx+gy*gy);
+      let dx=0;
+      if(dist<120&&dist>20){
+        const factor=warpStrength*(1-dist/120)*0.4;
+        dx=gx>0?-factor*40:factor*40;
+      }
+      const px=cx+gx+dx,py=cy+gy;
+      if(gx===-200)x.moveTo(px,py);else x.lineTo(px,py);
+    }
+    x.stroke();
+  }
+  // Warp bubble
+  x.strokeStyle=`rgba(100,200,255,${warpStrength*0.5})`;x.lineWidth=2;
+  x.beginPath();x.ellipse(cx,cy,80*warpStrength,50*warpStrength,0,0,Math.PI*2);x.stroke();
+  // Ship inside bubble (flat space)
+  x.fillStyle='#556';x.beginPath();x.moveTo(cx-15,cy);x.lineTo(cx+15,cy-6);x.lineTo(cx+15,cy+6);x.closePath();x.fill();
+  // Labels
+  if(warpStrength>0.3){
+    const a=Math.min(1,(warpStrength-0.3)*1.5);
+    txt('Compressed space',cx+120,cy-20,`rgba(255,100,100,${a})`,10);
+    txt('Expanded space',cx-120,cy-20,`rgba(100,100,255,${a})`,10);
+    txt('Flat spacetime (no acceleration felt)',cx,cy+70,`rgba(100,200,100,${a})`,10);
+  }
+  // Direction arrow
+  x.strokeStyle='rgba(200,200,255,0.3)';x.lineWidth=1;x.beginPath();x.moveTo(cx+100,cy);x.lineTo(cx+160,cy);x.stroke();
+  x.beginPath();x.moveTo(cx+155,cy-5);x.lineTo(cx+160,cy);x.lineTo(cx+155,cy+5);x.fill();
+  if(t>0.5){const a=Math.min(1,(t-0.5)*2);
+    txt('Space contracts ahead, expands behind — the ship never locally exceeds c',W/2,H-38,`rgba(200,200,200,${a})`,10);
+    txt('Lentz (2021): positive-energy warp solutions may exist',W/2,H-20,`rgba(126,200,227,${a})`,11);
+  }
+}
+
+function drawBussard(t){
+  bg('#030308','#060612');stars(120);
+  txt('BUSSARD RAMJET — Interstellar Hydrogen Scoop',W/2,30,'#7ec8e3',14);
+  const cx=350,cy=270;
+  // Ship body
+  x.fillStyle='#2a2a3a';x.beginPath();x.moveTo(cx,cy-10);x.lineTo(cx-30,cy-15);x.lineTo(cx-30,cy+15);x.lineTo(cx,cy+10);x.closePath();x.fill();
+  // Magnetic scoop field (enormous)
+  const scoopR=200*ease(Math.min(1,t*3));
+  x.strokeStyle='rgba(100,150,255,0.15)';x.lineWidth=1;
+  for(let i=1;i<=5;i++){x.beginPath();x.ellipse(cx+50,cy,scoopR*i/5,scoopR*i/5*0.6,0,0,Math.PI*2);x.stroke()}
+  // Field lines converging
+  if(scoopR>50){
+    x.strokeStyle='rgba(100,150,255,0.2)';
+    for(let i=0;i<8;i++){
+      const a=i/8*Math.PI*2;
+      x.beginPath();x.moveTo(cx+50+Math.cos(a)*scoopR,cy+Math.sin(a)*scoopR*0.6);x.lineTo(cx,cy);x.stroke();
+    }
+    txt(`Scoop: ~${Math.round(scoopR*50)} km radius`,cx+50,cy-scoopR*0.6-15,`rgba(100,150,255,${Math.min(1,scoopR/100)})`,10);
+  }
+  // Hydrogen atoms being collected
+  if(t>0.1){
+    for(let i=0;i<20;i++){
+      const a=i/20*Math.PI*2;
+      const d=scoopR*(0.3+((i*37+t*200)%100)/100);
+      const hx=cx+50+Math.cos(a)*d;
+      const hy=cy+Math.sin(a)*d*0.6;
+      x.fillStyle=`rgba(200,200,255,${0.3*(1-d/scoopR)})`;
+      x.beginPath();x.arc(hx,hy,1,0,Math.PI*2);x.fill();
+    }
+  }
+  // Fusion reactor
+  x.fillStyle=`rgba(200,150,255,${t>0.15?0.3:0.05})`;x.beginPath();x.arc(cx-10,cy,8,0,Math.PI*2);x.fill();
+  // Exhaust
+  if(t>0.15){const p=(t-0.15)/0.85;plume(cx-30,cy,Math.PI,80+p*200,12+p*20,'rgba(150,100,255,0.3)',t)}
+  if(t>0.5){const a=Math.min(1,(t-0.5)*2);
+    txt('Collects interstellar hydrogen as fuel → unlimited range in theory',W/2,H-38,`rgba(200,200,200,${a})`,10);
+    txt('Problem: scoop drag likely exceeds thrust at most speeds',W/2,H-20,`rgba(255,150,150,${a})`,10);
+  }
+}
+
+function drawSolarSail(t){
+  bg('#030308','#0a0a18');stars(100);
+  txt('SOLAR / LASER SAIL',W/2,30,'#7ec8e3',14);
+  const cx=500,cy=280;
+  // Sun (far left)
+  const sg=x.createRadialGradient(50,cy,0,50,cy,80);
+  sg.addColorStop(0,'rgba(255,220,100,0.8)');sg.addColorStop(0.5,'rgba(255,180,50,0.3)');sg.addColorStop(1,'rgba(255,100,0,0)');
+  x.fillStyle=sg;x.beginPath();x.arc(50,cy,80,0,Math.PI*2);x.fill();
+  // Photon rays
+  if(t>0.05){
+    x.strokeStyle='rgba(255,220,100,0.1)';x.lineWidth=1;
+    for(let i=0;i<12;i++){const a=-0.3+i*0.05;x.beginPath();x.moveTo(100,cy+a*200);x.lineTo(cx-60,cy+a*50);x.stroke()}
+  }
+  // Sail
+  const sailOpen=ease(Math.min(1,t*3));
+  const sailW=120*sailOpen;
+  x.fillStyle='rgba(200,210,230,0.15)';x.strokeStyle='rgba(200,210,230,0.5)';x.lineWidth=1;
+  x.beginPath();x.moveTo(cx,cy-sailW);x.lineTo(cx+5,cy);x.lineTo(cx,cy+sailW);x.lineTo(cx-5,cy);x.closePath();x.fill();x.stroke();
+  // Reflections
+  if(sailOpen>0.5){
+    x.fillStyle='rgba(255,255,255,0.05)';
+    x.beginPath();x.moveTo(cx-2,cy-sailW*0.8);x.lineTo(cx+3,cy);x.lineTo(cx-2,cy+sailW*0.8);x.fill();
+  }
+  // Payload
+  x.fillStyle='#334';x.fillRect(cx+8,cy-5,15,10);
+  // Photons bouncing
+  if(t>0.1){
+    for(let i=0;i<8;i++){
+      const py=cy-sailW+i*sailW*2/8;
+      const bounce=(t*3+i*0.1)%1;
+      if(bounce<0.5){
+        x.strokeStyle='rgba(255,220,100,0.2)';x.lineWidth=1;
+        x.beginPath();x.moveTo(cx-10,py);x.lineTo(cx+20+bounce*60,py+(Math.random()-0.5)*20);x.stroke();
+      }
+    }
+  }
+  // Breakthrough Starshot concept
+  if(t>0.5){const a=Math.min(1,(t-0.5)*2);
+    txt('Breakthrough Starshot: 100-GW laser array → gram-scale probe',W/2,H-55,`rgba(200,200,200,${a})`,10);
+    txt('Target: 20% speed of light → Alpha Centauri in ~20 years',W/2,H-38,`rgba(126,200,227,${a})`,11);
+    txt('No propellant = no fuel mass = extreme speeds possible',W/2,H-20,`rgba(150,150,180,${a})`,10);
+  }
+}
+
+function drawMassDriver(t){
+  bg('#1a1a2e','#0a0a18');
+  // Lunar surface
+  x.fillStyle='#4a4a55';x.fillRect(0,H-80,W,80);
+  for(let i=0;i<15;i++){x.fillStyle='rgba(60,60,70,0.5)';x.beginPath();x.arc(100+i*55,(H-80)+((i*37)%40)+20,10+i%8,0,Math.PI*2);x.fill()}
+  stars(80);
+  // Earth in sky
+  x.fillStyle='#2a5a8a';x.beginPath();x.arc(750,100,30,0,Math.PI*2);x.fill();x.fillStyle='#3a7a3a';x.beginPath();x.arc(745,95,15,0.5,2);x.fill();
+  txt('ELECTROMAGNETIC MASS DRIVER',W/2,30,'#7ec8e3',14);
+  // Track
+  x.fillStyle='#556';x.fillRect(100,H-85,600,6);
+  // Coils along track
+  for(let i=0;i<20;i++){x.fillStyle='#668';x.fillRect(110+i*30,H-92,6,14)}
+  txt('Electromagnetic coils',400,H-100,'#889',8);
+  // Payload capsule
+  const payX=100+ease(Math.min(1,t*1.5))*600;
+  const launched=t>0.7;
+  const launchT=launched?(t-0.7)/0.3:0;
+  if(!launched){
+    x.fillStyle='#3a8a5a';x.fillRect(payX-10,H-95,20,10);
+    // Speed indicator
+    if(t>0.1){const spd=Math.round(ease(Math.min(1,t*1.5))*2400);txt(`${spd} m/s`,payX,H-110,`rgba(100,255,150,${Math.min(1,t*3)})`,10)}
+    // Coil activation wave
+    x.fillStyle=`rgba(100,150,255,${0.3})`;
+    for(let i=0;i<3;i++){const cx2=payX+i*30;if(cx2<700){x.fillRect(cx2,H-92,6,14)}}
+  } else {
+    // Launched off the track
+    const lx=700+launchT*150;
+    const ly=(H-90)-launchT*200;
+    x.fillStyle='#3a8a5a';x.fillRect(lx-8,ly-5,16,10);
+    // trajectory
+    x.strokeStyle='rgba(100,255,150,0.3)';x.lineWidth=1;x.setLineDash([3,3]);
+    x.beginPath();x.moveTo(700,H-90);x.quadraticCurveTo(750,H-200,lx,ly);x.stroke();x.setLineDash([]);
+    txt('2.4 km/s → lunar orbit',lx+20,ly,'#5a8',9,'left');
+  }
+  if(t>0.5){const a=Math.min(1,(t-0.5)*2);
+    txt('Moon: no air resistance, 1/6 gravity — ideal for mass drivers',W/2,H-25,`rgba(200,200,200,${a})`,10);
+    txt("Gerard O'Neill (1970s): launch lunar materials for space colony construction",W/2,H-8,`rgba(150,150,180,${a})`,9);
+  }
+}
+
+function drawKilopower(t){
+  bg('#8a4a2a','#3a1a0a');
+  // Mars surface
+  x.fillStyle='#a05030';x.fillRect(0,H-100,W,100);
+  for(let i=0;i<10;i++){x.fillStyle='rgba(130,60,30,0.5)';x.beginPath();x.arc(80+i*85,(H-100)+((i*23)%50)+25,15+i%10,0,Math.PI*2);x.fill()}
+  // Mars sky gradient
+  txt('KILOPOWER / KRUSTY — Compact Fission Reactor',W/2,30,'#f0e68c',14);
+  const cx=450,cy=300;
+  // Reactor unit
+  // Radiator fins (top)
+  x.fillStyle='#556';
+  x.beginPath();x.moveTo(cx-60,cy-80);x.lineTo(cx-10,cy-30);x.lineTo(cx+10,cy-30);x.lineTo(cx+60,cy-80);x.fill();
+  // Stirling engines
+  x.fillStyle='#445';x.fillRect(cx-12,cy-30,24,20);txt('Stirling',cx,cy-18,'#889',7);
+  // Heat pipes
+  x.strokeStyle='#a55';x.lineWidth=2;x.beginPath();x.moveTo(cx-5,cy-10);x.lineTo(cx-5,cy+10);x.stroke();
+  x.beginPath();x.moveTo(cx+5,cy-10);x.lineTo(cx+5,cy+10);x.stroke();
+  txt('Na heat pipes',cx+30,cy,'#a88',7);
+  // Core
+  const glow=t>0.1?0.4+Math.sin(t*8)*0.1:0.05;
+  x.fillStyle=`rgba(50,200,80,${glow})`;x.fillRect(cx-8,cy+10,16,20);
+  x.strokeStyle='#3a8a5a';x.strokeRect(cx-8,cy+10,16,20);
+  txt('U-235 core',cx,cy+40,'#5a8',8);
+  txt('(size of paper towel roll)',cx,cy+52,'#486',7);
+  // Shield
+  x.fillStyle='#334';x.fillRect(cx-15,cy+30,30,8);txt('Shield',cx,cy+48,'#556',6);
+  // Power output
+  if(t>0.2){
+    const a=Math.min(1,(t-0.2)*2);
+    x.strokeStyle=`rgba(255,220,100,${a*0.5})`;x.lineWidth=1.5;x.setLineDash([4,3]);
+    x.beginPath();x.moveTo(cx+15,cy-20);x.lineTo(cx+100,cy-50);x.stroke();x.setLineDash([]);
+    txt('10 kWe output',cx+105,cy-55,`rgba(255,220,100,${a})`,10,'left');
+    // Habitat
+    x.fillStyle=`rgba(60,60,80,${a})`;x.fillRect(cx+100,cy-40,80,50);x.fillStyle=`rgba(100,150,200,${a*0.3})`;x.fillRect(cx+115,cy-30,20,15);x.fillRect(cx+145,cy-30,20,15);
+    txt('Mars habitat',cx+140,cy+18,`rgba(200,200,200,${a})`,9);
+  }
+  // 4 units
+  if(t>0.5){
+    const a=Math.min(1,(t-0.5)*2);
+    for(let i=0;i<3;i++){
+      const ux=cx-200+i*80;
+      x.fillStyle=`rgba(80,80,100,${a*0.5})`;
+      x.beginPath();x.moveTo(ux-15,cy-40);x.lineTo(ux,cy);x.lineTo(ux+15,cy-40);x.fill();
+      x.fillStyle=`rgba(50,200,80,${glow*a})`;x.fillRect(ux-3,cy,6,10);
+    }
+    txt('4 × 10 kWe = 40 kW — enough for a full Mars base',W/2,H-20,`rgba(255,220,100,${a})`,11);
+  }
+}
+
+function drawMSR(t){
+  bg('#0a0a18','#0a0a18');
+  txt('MOLTEN SALT REACTOR',W/2,30,'#7ec8e3',14);
+  const cx=450,cy=280;
+  // Reactor vessel
+  x.fillStyle='#2a2a3a';x.beginPath();x.arc(cx,cy,80,0,Math.PI*2);x.fill();x.strokeStyle='#556';x.lineWidth=2;x.stroke();
+  // Molten salt (fuel IS the coolant)
+  const saltGlow=t>0.1?0.35+Math.sin(t*6)*0.1:0.1;
+  x.fillStyle=`rgba(255,180,50,${saltGlow})`;x.beginPath();x.arc(cx,cy,70,0,Math.PI*2);x.fill();
+  txt('Molten fluoride salt',cx,cy-10,`rgba(255,220,150,${saltGlow+0.3})`,10);
+  txt('(fuel dissolved in coolant)',cx,cy+8,'rgba(200,150,80,0.6)',8);
+  // Circulation arrows
+  if(t>0.05){
+    x.strokeStyle='rgba(255,200,100,0.3)';x.lineWidth=1.5;
+    const ang=t*3;
+    for(let i=0;i<4;i++){const a=i/4*Math.PI*2+ang;x.beginPath();x.arc(cx+Math.cos(a)*40,cy+Math.sin(a)*40,15,a,a+1);x.stroke()}
+  }
+  // Heat exchanger
+  x.fillStyle='#445';x.fillRect(cx+100,cy-30,50,60);x.strokeStyle='#556';x.strokeRect(cx+100,cy-30,50,60);
+  txt('Heat',cx+125,cy-5,'#889',8);txt('exchanger',cx+125,cy+8,'#889',8);
+  x.strokeStyle='rgba(255,180,50,0.3)';x.lineWidth=2;x.beginPath();x.moveTo(cx+80,cy-15);x.lineTo(cx+100,cy-15);x.stroke();x.beginPath();x.moveTo(cx+100,cy+15);x.lineTo(cx+80,cy+15);x.stroke();
+  // Turbine
+  x.fillStyle='#448';x.beginPath();x.arc(cx+200,cy,20,0,Math.PI*2);x.fill();
+  if(t>0.15){x.strokeStyle='#66a';x.lineWidth=2;const spin=t*10;for(let i=0;i<4;i++){const a=i/4*Math.PI*2+spin;x.beginPath();x.moveTo(cx+200,cy);x.lineTo(cx+200+Math.cos(a)*18,cy+Math.sin(a)*18);x.stroke()}}
+  txt('Turbine',cx+200,cy+30,'#668',8);
+  // FREEZE PLUG (key safety feature!)
+  x.fillStyle=t>0.3?'rgba(100,100,255,0.5)':'rgba(100,100,255,0.2)';
+  x.fillRect(cx-5,cy+75,10,15);
+  txt('Freeze plug ↑',cx,cy+100,'#88a',8);
+  // Drain tank
+  x.fillStyle='#2a2a3a';x.fillRect(cx-30,cy+120,60,30);x.strokeStyle='#556';x.strokeRect(cx-30,cy+120,60,30);
+  txt('Drain tank',cx,cy+138,'#889',8);
+  // Safety demo
+  if(t>0.6){
+    const a=Math.min(1,(t-0.6)*2.5);
+    txt('If overheated → freeze plug melts → fuel drains to safe tank by gravity',W/2,H-38,`rgba(100,200,255,${a})`,11);
+    txt('"Walk-away safe" — a meltdown is physically impossible',W/2,H-20,`rgba(100,255,150,${a})`,11);
+  }
+}
+
+function drawRTG(t){
+  bg('#030308','#0a0a12');stars(100);
+  txt('RADIOISOTOPE THERMOELECTRIC GENERATOR (RTG)',W/2,30,'#7ec8e3',14);
+  const cx=450,cy=260;
+  // RTG body
+  x.fillStyle='#3a3a4a';x.fillRect(cx-60,cy-35,120,70);x.strokeStyle='#556';x.lineWidth=2;x.strokeRect(cx-60,cy-35,120,70);
+  // Fins
+  for(let i=0;i<6;i++){x.fillStyle='#445';x.fillRect(cx-70,cy-30+i*10,10,6);x.fillRect(cx+60,cy-30+i*10,10,6)}
+  txt('Cooling fins',cx+80,cy-35,'#668',8);
+  // Pu-238 fuel stack
+  const glow=0.3+Math.sin(t*4)*0.05;
+  x.fillStyle=`rgba(255,100,50,${glow})`;x.fillRect(cx-20,cy-25,40,50);
+  x.strokeStyle='#a55';x.strokeRect(cx-20,cy-25,40,50);
+  txt('Pu-238',cx,cy,'rgba(255,150,100,0.8)',9);
+  // Thermocouples
+  for(let i=0;i<4;i++){
+    x.fillStyle='#668';x.fillRect(cx-50,cy-20+i*12,25,6);x.fillRect(cx+25,cy-20+i*12,25,6);
+  }
+  txt('Thermo-couples',cx-50,cy+35,'#668',7);
+  // Heat flow arrows
+  x.strokeStyle='rgba(255,100,50,0.3)';x.lineWidth=1;
+  x.beginPath();x.moveTo(cx-20,cy);x.lineTo(cx-45,cy);x.stroke();
+  x.beginPath();x.moveTo(cx+20,cy);x.lineTo(cx+45,cy);x.stroke();
+  // Electricity output
+  if(t>0.15){
+    const a=Math.min(1,(t-0.15)*2);
+    x.strokeStyle=`rgba(255,220,100,${a*0.5})`;x.lineWidth=1.5;x.setLineDash([3,3]);
+    x.beginPath();x.moveTo(cx,cy-35);x.lineTo(cx,cy-80);x.stroke();x.setLineDash([]);
+    txt('~110 We',cx,cy-90,`rgba(255,220,100,${a})`,11);
+  }
+  // Spacecraft examples
+  if(t>0.3){
+    const a=Math.min(1,(t-0.3)*2);
+    // Voyager
+    x.fillStyle=`rgba(100,100,130,${a})`;x.fillRect(150,cy-10,30,20);x.fillRect(135,cy-3,60,6);
+    // Dish
+    x.beginPath();x.arc(165,cy-15,15,Math.PI,0);x.fillStyle=`rgba(150,150,170,${a})`;x.fill();
+    txt('Voyager 1',165,cy+20,`rgba(200,200,200,${a})`,9);
+    txt('(running since 1977)',165,cy+34,`rgba(150,150,180,${a})`,8);
+    // Curiosity
+    x.fillStyle=`rgba(130,100,70,${a})`;x.fillRect(700,cy+5,35,15);x.fillRect(695,cy-5,10,15);x.fillRect(730,cy-5,10,15);
+    x.fillRect(710,cy-10,15,10);
+    txt('Curiosity',717,cy+30,`rgba(200,200,200,${a})`,9);
+  }
+  if(t>0.6){const a=Math.min(1,(t-0.6)*2);txt('No moving parts — Pu-238 decays for decades → heat → electricity',W/2,H-20,`rgba(126,200,227,${a})`,11)}
+}
+
+function drawPebbleBed(t){
+  bg('#0a0a18','#0a0a18');
+  txt('PEBBLE BED REACTOR — TRISO Fuel',W/2,30,'#7ec8e3',14);
+  const cx=400,cy=270;
+  // Reactor vessel
+  x.fillStyle='#2a2a3a';x.beginPath();x.moveTo(cx-60,cy-100);x.lineTo(cx+60,cy-100);x.lineTo(cx+70,cy+80);x.lineTo(cx-70,cy+80);x.closePath();x.fill();x.strokeStyle='#556';x.lineWidth=2;x.stroke();
+  // Pebbles
+  const glow=t>0.1?0.2+Math.sin(t*5)*0.05:0.05;
+  for(let i=0;i<40;i++){
+    const px=cx-45+((i*37)%90);
+    const py=cy-80+((i*53)%150);
+    x.fillStyle=`rgba(150,150,160,0.6)`;x.beginPath();x.arc(px,py,6,0,Math.PI*2);x.fill();
+    x.fillStyle=`rgba(80,200,100,${glow})`;x.beginPath();x.arc(px,py,3,0,Math.PI*2);x.fill();
+  }
+  // TRISO cutaway (zoomed)
+  const tx=700,ty=180;
+  x.strokeStyle='#889';x.lineWidth=1;x.setLineDash([3,3]);x.beginPath();x.moveTo(cx+50,cy-60);x.lineTo(tx-40,ty);x.stroke();x.setLineDash([]);
+  // Pebble cross section
+  x.fillStyle='#888';x.beginPath();x.arc(tx,ty,35,0,Math.PI*2);x.fill();
+  txt('Graphite matrix',tx,ty-42,'#aab',8);
+  // TRISO particles inside
+  for(let i=0;i<7;i++){
+    const px2=tx-15+((i*11)%30);
+    const py2=ty-15+((i*17)%30);
+    // Layers of TRISO
+    x.fillStyle='#a55';x.beginPath();x.arc(px2,py2,5,0,Math.PI*2);x.fill();//SiC
+    x.fillStyle='#555';x.beginPath();x.arc(px2,py2,3.5,0,Math.PI*2);x.fill();//PyC
+    x.fillStyle='#5a5';x.beginPath();x.arc(px2,py2,2,0,Math.PI*2);x.fill();//UO2
+  }
+  // TRISO detail
+  txt('TRISO particle →',tx+45,ty,'#889',8,'left');
+  txt('UO₂ kernel',tx+45,ty+15,'#5a5',7,'left');
+  txt('PyC buffer',tx+45,ty+28,'#888',7,'left');
+  txt('SiC barrier',tx+45,ty+41,'#a55',7,'left');
+  // Helium coolant flow
+  x.strokeStyle='rgba(100,200,255,0.3)';x.lineWidth=1.5;
+  for(let i=0;i<3;i++){
+    const fx=cx-30+i*30;
+    x.beginPath();x.moveTo(fx,cy-90);x.lineTo(fx,cy+70);x.stroke();
+    // Arrows
+    x.fillStyle='rgba(100,200,255,0.4)';x.beginPath();x.moveTo(fx-3,cy+60);x.lineTo(fx,cy+70);x.lineTo(fx+3,cy+60);x.fill();
+  }
+  txt('He coolant ↓',cx-60,cy+90,'#5ab',8);
+  if(t>0.5){const a=Math.min(1,(t-0.5)*2);
+    txt('TRISO survives 1600°C+ — reactor can never overheat its own fuel',W/2,H-38,`rgba(100,255,150,${a})`,11);
+    txt("China's HTR-PM: first commercial pebble bed reactor (2023)",W/2,H-20,`rgba(200,200,200,${a})`,10);
+  }
+}
+
+function drawSNAP(t){
+  bg('#030308','#0a0a18');stars(100);
+  // Earth curve
+  x.fillStyle='#1a3a6a';x.beginPath();x.ellipse(450,H+350,500,400,0,Math.PI,0);x.fill();
+  x.fillStyle='#2a5a3a';x.beginPath();x.ellipse(400,H+350,300,390,0.2,Math.PI+0.3,Math.PI+1.5);x.fill();
+  txt('SNAP-10A — First Nuclear Reactor in Space (1965)',W/2,30,'#7ec8e3',14);
+  // Satellite body
+  const sx=450,sy=200;
+  x.fillStyle='#3a3a4a';x.fillRect(sx-15,sy-20,30,40);
+  // Reactor (top, cone-shaped)
+  const glow=t>0.1?0.3+Math.sin(t*6)*0.1:0.05;
+  x.fillStyle=`rgba(50,200,80,${glow})`;
+  x.beginPath();x.moveTo(sx-10,sy-20);x.lineTo(sx,sy-40);x.lineTo(sx+10,sy-20);x.fill();
+  txt('Reactor',sx,sy-48,`rgba(100,255,150,${glow+0.2})`,8);
+  // NaK coolant pipes
+  x.strokeStyle='#a55';x.lineWidth=1;
+  x.beginPath();x.moveTo(sx-10,sy-15);x.lineTo(sx-25,sy);x.lineTo(sx-10,sy+15);x.stroke();
+  x.beginPath();x.moveTo(sx+10,sy-15);x.lineTo(sx+25,sy);x.lineTo(sx+10,sy+15);x.stroke();
+  // Thermoelectric converter
+  x.fillStyle='#448';x.fillRect(sx-12,sy+5,24,10);txt('TE converter',sx+25,sy+12,'#668',7);
+  // Radiator cone
+  x.strokeStyle='#667';x.lineWidth=1;
+  x.beginPath();x.moveTo(sx-15,sy+20);x.lineTo(sx-40,sy+60);x.stroke();
+  x.beginPath();x.moveTo(sx+15,sy+20);x.lineTo(sx+40,sy+60);x.stroke();
+  x.beginPath();x.moveTo(sx-40,sy+60);x.lineTo(sx+40,sy+60);x.stroke();
+  txt('Radiator',sx,sy+70,'#778',8);
+  // Agena bus
+  x.fillStyle='#334';x.fillRect(sx-12,sy+75,24,40);txt('Agena bus',sx,sy+100,'#556',7);
+  // Orbit path
+  x.strokeStyle='rgba(100,150,255,0.15)';x.lineWidth=1;x.setLineDash([5,5]);
+  x.beginPath();x.ellipse(450,H+350,420,160,-0.1,Math.PI+0.8,Math.PI+2.3);x.stroke();x.setLineDash([]);
+  // Power output label
+  if(t>0.2){const a=Math.min(1,(t-0.2)*2);
+    txt('500 We output',sx+60,sy-30,`rgba(255,220,100,${a})`,10,'left');
+    // Power beam
+    x.strokeStyle=`rgba(255,220,100,${a*0.3})`;x.lineWidth=1;x.setLineDash([3,3]);x.beginPath();x.moveTo(sx+15,sy-20);x.lineTo(sx+55,sy-32);x.stroke();x.setLineDash([]);
+  }
+  // Soviet comparison
+  if(t>0.5){const a=Math.min(1,(t-0.5)*2);
+    txt('US: 1 space reactor (SNAP-10A)',250,H-55,`rgba(200,200,200,${a})`,10);
+    txt('USSR: 30+ RORSAT reactors in orbit',250,H-38,`rgba(200,200,200,${a})`,10);
+    txt('Operated 43 days before voltage regulator failure (not reactor)',W/2,H-18,`rgba(150,150,180,${a})`,10);
+  }
+}
+
+// INIT
+ld('nerva');
+</script>
+</body>
+</html>

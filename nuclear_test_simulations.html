@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nuclear Test Simulations — Interactive Encyclopedia</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d0d1a;color:#e0e0e0;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;display:flex;height:100vh;overflow:hidden}
+
+/* Sidebar */
+.sidebar{width:280px;min-width:280px;background:#111125;border-right:1px solid #222;overflow-y:auto;padding:10px 0}
+.sidebar h2{padding:12px 16px 8px;font-size:1rem;color:#f0e68c;letter-spacing:1px;text-transform:uppercase}
+.sidebar .cat-label{padding:8px 16px 4px;font-size:0.7rem;color:#666;text-transform:uppercase;letter-spacing:1.5px;margin-top:8px}
+.sim-btn{display:block;width:100%;text-align:left;background:none;border:none;color:#aaa;padding:8px 16px 8px 24px;font-size:0.85rem;cursor:pointer;transition:all 0.15s;border-left:3px solid transparent}
+.sim-btn:hover{background:#1a1a35;color:#ddd}
+.sim-btn.active{background:#1a1a3a;color:#f0e68c;border-left-color:#e74c3c}
+.sim-btn .yr{color:#555;font-size:0.75rem;margin-left:4px}
+
+/* Main area */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.header{padding:16px 24px;border-bottom:1px solid #222;background:#0f0f22}
+.header h1{font-size:1.4rem;color:#f0e68c}
+.header .sub{font-size:0.85rem;color:#888;margin-top:2px}
+
+.sim-area{flex:1;overflow-y:auto;padding:20px 24px}
+.sim-canvas-wrap{position:relative;max-width:900px;margin:0 auto}
+canvas{display:block;width:100%;border-radius:6px;border:1px solid #2a2a3a}
+
+.info-panel{max-width:900px;margin:16px auto 0;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.info-card{background:#141428;border:1px solid #222;border-radius:6px;padding:12px 14px}
+.info-card .label{font-size:0.7rem;color:#666;text-transform:uppercase;letter-spacing:1px}
+.info-card .value{font-size:1.1rem;color:#e0e0e0;margin-top:2px}
+.info-card .value.red{color:#e74c3c}
+.info-card .value.yellow{color:#f0e68c}
+.info-card .value.green{color:#27ae60}
+
+.controls{display:flex;justify-content:center;gap:10px;margin:16px 0;flex-wrap:wrap}
+.btn{padding:8px 18px;border:none;border-radius:5px;font-size:0.85rem;cursor:pointer;font-weight:600;transition:all 0.15s}
+.btn-play{background:#e74c3c;color:#fff}.btn-play:hover{background:#c0392b}
+.btn-reset{background:#2c3e50;color:#ddd}.btn-reset:hover{background:#34495e}
+
+.desc-box{max-width:900px;margin:12px auto;font-size:0.9rem;color:#999;line-height:1.6;background:#111125;padding:14px 16px;border-radius:6px;border:1px solid #1a1a30}
+
+.legend-row{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin:10px 0;font-size:0.78rem;color:#888}
+.legend-row .li{display:flex;align-items:center;gap:4px}
+.legend-row .sw{width:12px;height:12px;border-radius:2px}
+</style>
+</head>
+<body>
+
+<div class="sidebar" id="sidebar"></div>
+
+<div class="main">
+  <div class="header">
+    <h1 id="simTitle">Select a Simulation</h1>
+    <div class="sub" id="simSub"></div>
+  </div>
+  <div class="sim-area">
+    <div class="sim-canvas-wrap">
+      <canvas id="C" width="900" height="520"></canvas>
+    </div>
+    <div class="controls">
+      <button class="btn btn-play" id="playBtn" onclick="togglePlay()">▶ Play</button>
+      <button class="btn btn-reset" onclick="resetSim()">↺ Reset</button>
+    </div>
+    <div class="info-panel" id="infoPanel"></div>
+    <div class="desc-box" id="descBox"></div>
+    <div class="legend-row" id="legendRow"></div>
+  </div>
+</div>
+
+<script>
+const C=document.getElementById('C'),ctx=C.getContext('2d'),W=900,H=520;
+let playing=false,t=0,anim=null,curSim=null,speed=1;
+
+// ─── SIMULATION DATA ───
+const sims=[
+// ── HISTORIC FIRSTS ──
+{cat:"Historic Firsts",id:"trinity",name:"Trinity Test",yr:"1945",
+ sub:"Alamogordo, New Mexico — First nuclear detonation in history",
+ info:[["Yield","21 kilotons"],["Type","Implosion (plutonium)"],["Date","July 16, 1945"],["Altitude","100 ft tower"]],
+ desc:"The world's first nuclear explosion. A plutonium implosion device nicknamed 'The Gadget' was detonated atop a 100-foot steel tower in the Jornada del Muerto desert. The blast vaporized the tower and fused the desert sand into a glassy substance later called 'trinitite.' The flash was visible 200 miles away and the mushroom cloud rose to 40,000 feet. J. Robert Oppenheimer famously recalled: 'Now I am become Death, the destroyer of worlds.'",
+ draw:drawTrinity},
+
+{cat:"Historic Firsts",id:"hiroshima",name:"Hiroshima — Little Boy",yr:"1945",
+ sub:"First nuclear weapon used in warfare — gun-type uranium bomb",
+ info:[["Yield","15 kilotons"],["Type","Gun-type (uranium-235)"],["Altitude","1,900 ft airburst"],["Casualties","~80,000 instant"]],
+ desc:"Little Boy was a gun-type fission weapon that used uranium-235. It was detonated 1,900 feet above Hiroshima on August 6, 1945. The airburst maximized the blast wave's destructive reach across the city. A fireball hotter than the surface of the sun formed in milliseconds, followed by a shockwave that flattened everything within a mile. Human shadows were burned permanently into concrete by the thermal flash.",
+ draw:drawHiroshima},
+
+{cat:"Historic Firsts",id:"nagasaki",name:"Nagasaki — Fat Man",yr:"1945",
+ sub:"Plutonium implosion bomb — second and last nuclear weapon used in war",
+ info:[["Yield","21 kilotons"],["Type","Implosion (plutonium)"],["Altitude","1,650 ft airburst"],["Casualties","~40,000 instant"]],
+ desc:"Fat Man used a plutonium implosion design — the same type tested at Trinity. Dropped on Nagasaki on August 9, 1945. Despite being more powerful than Little Boy, the hilly terrain of Nagasaki contained some of the blast, resulting in fewer casualties than Hiroshima. The bomb detonated over the Urakami Valley, missing the intended aim point by nearly two miles due to cloud cover.",
+ draw:drawNagasaki},
+
+{cat:"Historic Firsts",id:"ivymike",name:"Ivy Mike",yr:"1952",
+ sub:"Enewetak Atoll — First thermonuclear (hydrogen) bomb test",
+ info:[["Yield","10.4 megatons"],["Type","Thermonuclear (staged)"],["Date","Nov 1, 1952"],["Result","Island vaporized"]],
+ desc:"The first full-scale test of a thermonuclear device. Ivy Mike used a Teller-Ulam design with liquid deuterium as fuel, making it a building-sized apparatus weighing 82 tons — far too large for a weapon. The explosion was 500 times more powerful than Hiroshima and completely vaporized the island of Elugelab, leaving a crater 6,240 feet wide and 164 feet deep on the ocean floor. The mushroom cloud rose to 135,000 feet and was 100 miles wide.",
+ draw:drawIvyMike},
+
+// ── MASSIVE TESTS ──
+{cat:"Massive Tests",id:"castlebravo",name:"Castle Bravo",yr:"1954",
+ sub:"Bikini Atoll — Largest US nuclear test, accidentally 2.5× expected yield",
+ info:[["Yield","15 megatons"],["Expected","6 megatons"],["Type","Thermonuclear (dry fuel)"],["Fallout","7,000 sq mi"]],
+ desc:"The worst nuclear accident in US history. Castle Bravo used lithium deuteride as fuel — a solid that was easier to weaponize than liquid deuterium. But the scientists miscalculated: they assumed only Li-6 would fuse, but Li-7 (60% of the fuel) also underwent fusion, producing 2.5 times the expected yield. The blast gouged a crater 6,500 feet wide in the reef. Radioactive fallout contaminated the crew of the Japanese fishing vessel Lucky Dragon No. 5 and irradiated the inhabited atolls of Rongelap and Utrik, whose residents weren't evacuated for days.",
+ draw:drawCastleBravo},
+
+{cat:"Massive Tests",id:"tsarbomba",name:"Tsar Bomba",yr:"1961",
+ sub:"Novaya Zemlya, USSR — Largest nuclear weapon ever detonated",
+ info:[["Yield","50 megatons"],["Design max","100 megatons"],["Fireball","5 miles wide"],["Shockwave","3× around Earth"]],
+ desc:"The most powerful weapon ever detonated by humanity. The Soviets deliberately halved its design yield (from 100 to 50 megatons) by replacing the uranium tamper with lead to reduce fallout. Even at half power, the fireball was 5 miles across and nearly touched the ground from its 13,000-foot drop altitude. The mushroom cloud rose 40 miles into the sky. Windows were broken 560 miles away in Finland. The shockwave circled the Earth three times. The pilot of the delivery aircraft, Major Andrei Durnovtsev, was given only a 50% chance of surviving.",
+ draw:drawTsarBomba},
+
+// ── TEST TYPES ──
+{cat:"Test Types",id:"atmospheric",name:"Atmospheric Test",yr:"1945-63",
+ sub:"Above-ground detonation — banned by Partial Test Ban Treaty in 1963",
+ info:[["Era","1945–1963"],["US Tests","~215 atmospheric"],["Fallout","Global distribution"],["Ban","PTBT 1963"]],
+ desc:"Atmospheric tests detonated weapons in the open air — on towers, dropped from aircraft, fired from cannons, or suspended from balloons. The resulting mushroom clouds carried radioactive material into the stratosphere, where it spread worldwide. Peak testing in the late 1950s and early 1960s nearly doubled atmospheric carbon-14 levels. Public outcry over fallout — especially strontium-90 in milk — led to the 1963 Partial Test Ban Treaty.",
+ draw:drawAtmospheric},
+
+{cat:"Test Types",id:"underwater",name:"Underwater Test (Baker)",yr:"1946",
+ sub:"Bikini Atoll — Operation Crossroads, 90 ft underwater detonation",
+ info:[["Yield","23 kilotons"],["Depth","90 ft underwater"],["Water column","6,000 ft tall"],["Ships sunk","8 target vessels"]],
+ desc:"The Baker shot of Operation Crossroads detonated a nuclear weapon 90 feet underwater in Bikini Atoll's lagoon, surrounded by a fleet of 95 target ships. The blast created a hollow column of water 6,000 feet tall and 2,000 feet wide, crowned by a condensation cloud called a 'Wilson cloud.' When the column collapsed, it generated a massive radioactive wave that swamped the target fleet. The lagoon water was so contaminated that many ships could never be decontaminated and had to be sunk.",
+ draw:drawUnderwater},
+
+{cat:"Test Types",id:"highalt",name:"High-Altitude Test (Starfish Prime)",yr:"1962",
+ sub:"400 km above Pacific — EMP knocked out electronics in Hawaii",
+ info:[["Yield","1.4 megatons"],["Altitude","400 km (250 mi)"],["EMP range","900 miles"],["Effect","Streetlights out in Hawaii"]],
+ desc:"Starfish Prime was detonated 400 kilometers above Johnston Island in the Pacific. At that altitude, there's no mushroom cloud — instead, the explosion created a brilliant artificial aurora visible across the Pacific. The electromagnetic pulse (EMP) knocked out streetlights, triggered burglar alarms, and disrupted telephone service in Hawaii, 900 miles away. It also damaged several satellites. This test demonstrated the terrifying potential of nuclear EMP weapons and led to major rethinking of electronic warfare.",
+ draw:drawHighAlt},
+
+{cat:"Test Types",id:"underground",name:"Underground Test (Sedan)",yr:"1962",
+ sub:"Nevada Test Site — Created a 1,280 ft crater, part of Project Plowshare",
+ info:[["Yield","104 kilotons"],["Depth","635 ft buried"],["Crater","1,280 ft × 320 ft"],["Debris","12 million tons"]],
+ desc:"The Sedan test was part of Project Plowshare — the government's program to find 'peaceful' uses for nuclear weapons, like digging canals and harbors. A 104-kiloton device was buried 635 feet underground at the Nevada Test Site. The explosion displaced 12 million tons of earth, creating the largest artificial crater in the United States. The resulting fallout cloud drifted across the country, and the Sedan crater is now a registered National Historic Landmark visible on Google Maps.",
+ draw:drawSedan},
+
+// ── WEAPON DESIGNS ──
+{cat:"Weapon Designs",id:"guntype",name:"Gun-Type Fission Bomb",yr:"",
+ sub:"Simplest nuclear weapon design — fires one mass into another",
+ info:[["Used in","Little Boy (Hiroshima)"],["Fuel","Highly enriched uranium"],["Efficiency","~1.5%"],["Pros","Simple, reliable"]],
+ desc:"The gun-type design is the simplest nuclear weapon. A conventional explosive propels a subcritical 'bullet' of uranium-235 down a gun barrel into a subcritical 'target' mass. When combined, they exceed critical mass and a chain reaction occurs. The design is so straightforward that the US never even tested Little Boy before dropping it on Hiroshima — they were that confident it would work. However, the design is very inefficient (only ~1.5% of the uranium fissions) and cannot work with plutonium.",
+ draw:drawGunType},
+
+{cat:"Weapon Designs",id:"implosion",name:"Implosion Design",yr:"",
+ sub:"Shaped explosive lenses compress a plutonium core to supercriticality",
+ info:[["Used in","Fat Man, Trinity, most weapons"],["Fuel","Plutonium-239"],["Efficiency","~17%"],["Complexity","High (precision lenses)"]],
+ desc:"The implosion design surrounds a subcritical sphere of plutonium with carefully shaped conventional explosive 'lenses.' When detonated simultaneously, they create a perfectly symmetrical inward-directed shockwave that compresses the plutonium to several times its normal density, achieving supercriticality. This design is far more efficient than gun-type but requires extreme precision — if the implosion is even slightly asymmetric, the core squirts out sideways and fizzles. Nearly all modern nuclear weapons use some form of implosion.",
+ draw:drawImplosion},
+
+{cat:"Weapon Designs",id:"thermonuclear",name:"Thermonuclear (H-Bomb)",yr:"",
+ sub:"Teller-Ulam staged design — fission primary triggers fusion secondary",
+ info:[["Stages","2 (fission → fusion)"],["Yield range","Megatons"],["Key insight","Radiation implosion"],["Fuel","Lithium deuteride"]],
+ desc:"The Teller-Ulam design uses a fission bomb (the 'primary') to compress and ignite a separate fusion fuel capsule (the 'secondary') through radiation pressure. The primary's X-rays fill the weapon casing and crush the secondary from all sides, heating it to hundreds of millions of degrees — hot enough for hydrogen fusion. This design can be scaled to virtually unlimited yield. A uranium tamper around the secondary can also fission, adding a third stage. The exact mechanism remains classified, but the basic concept is publicly known.",
+ draw:drawThermonuclear},
+
+{cat:"Weapon Designs",id:"neutron",name:"Neutron Bomb (ERW)",yr:"",
+ sub:"Enhanced radiation weapon — maximizes neutron output, minimizes blast",
+ info:[["Type","Enhanced radiation"],["Purpose","Kill crews, spare buildings"],["Yield","~1 kiloton"],["Controversy","'Capitalist bomb'"]],
+ desc:"The neutron bomb (Enhanced Radiation Weapon) is designed to maximize lethal neutron radiation while minimizing blast and heat damage. The idea was a tactical battlefield weapon that could kill enemy tank crews through armor with intense neutron radiation while leaving buildings, infrastructure, and friendly forces relatively intact. The concept was deeply controversial — critics called it the 'capitalist bomb' because it destroyed people but preserved property. The US produced neutron warheads in the 1980s but never deployed them in significant numbers.",
+ draw:drawNeutron},
+
+// ── TEST SITES ──
+{cat:"Test Sites",id:"nevada",name:"Nevada Test Site Overview",yr:"1951-92",
+ sub:"928 tests — the most-bombed place on Earth",
+ info:[["Total tests","928"],["Atmospheric","100"],["Underground","828"],["Area","1,375 sq miles"]],
+ desc:"The Nevada Test Site (now the Nevada National Security Site) conducted 928 nuclear tests between 1951 and 1992, making it the most-bombed place on Earth. The site is larger than Rhode Island and is pockmarked with hundreds of subsidence craters from underground tests. Mushroom clouds from atmospheric tests were visible from downtown Las Vegas, 65 miles away, and became a tourist attraction — hotels advertised 'atomic viewpoints.' The site's Sedan crater alone is 1,280 feet across and is a National Historic Landmark.",
+ draw:drawNevada},
+
+{cat:"Test Sites",id:"bikini",name:"Bikini Atoll",yr:"1946-58",
+ sub:"Marshall Islands — 23 nuclear tests devastated a Pacific paradise",
+ info:[["Total tests","23"],["Largest","15 MT (Castle Bravo)"],["Displaced","167 Bikinians"],["Status","Still uninhabitable"]],
+ desc:"The US relocated the 167 residents of Bikini Atoll in 1946, promising they could return 'when it was safe.' They never did. Over the next 12 years, 23 nuclear weapons were detonated there, including the 15-megaton Castle Bravo shot that contaminated thousands of square miles. The atoll's islands were cratered, irradiated, and in some cases vaporized entirely. Despite cleanup efforts, Bikini remains too contaminated for permanent habitation. The displaced Bikinians and their descendants are still fighting for full compensation.",
+ draw:drawBikini},
+
+{cat:"Test Sites",id:"novaya",name:"Novaya Zemlya",yr:"1955-90",
+ sub:"Soviet Arctic test site — including Tsar Bomba",
+ info:[["Total tests","224"],["Largest","50 MT (Tsar Bomba)"],["Location","Arctic archipelago"],["Total yield","265 megatons"]],
+ desc:"Novaya Zemlya is a remote Arctic archipelago where the Soviet Union conducted 224 nuclear tests, including the 50-megaton Tsar Bomba. The combined yield of all tests there — 265 megatons — is more than all other nuclear tests worldwide combined. The indigenous Nenets people were relocated before testing began. The site's extreme remoteness (above the Arctic Circle) made it ideal for massive tests that would have been impossible closer to populated areas. Russia continues to use the site for subcritical experiments.",
+ draw:drawNovaya},
+
+// ── EFFECTS ──
+{cat:"Effects & Physics",id:"fireball",name:"Fireball Formation",yr:"",
+ sub:"Microsecond-by-microsecond formation of a nuclear fireball",
+ info:[["Temperature","100 million °C (core)"],["Expansion","300 m in 1 second"],["Brightness","Visible 300+ miles"],["Duration","~10 seconds luminous"]],
+ desc:"In the first microseconds after detonation, the weapon's energy is released as X-rays that heat the surrounding air to tens of millions of degrees. This superheated air radiates visible light so intensely it's brighter than the sun. The fireball expands rapidly, initially driven by radiation transport (moving faster than the shockwave), then by the hydrodynamic blast wave. As it rises and cools, it transitions from white to orange to the characteristic red-brown color of a mushroom cloud, pulled upward by its own buoyancy.",
+ draw:drawFireball},
+
+{cat:"Effects & Physics",id:"shockwave",name:"Blast Shockwave",yr:"",
+ sub:"How the pressure wave destroys buildings at varying distances",
+ info:[["Speed","Initially >1,000 mph"],["Peak overpressure","Varies by distance"],["5 psi","Destroys most buildings"],["Followed by","Negative pressure (suction)"]],
+ desc:"The nuclear shockwave is a wall of compressed air that expands outward from the fireball. It arrives as a sudden spike in air pressure (overpressure) followed by powerful winds that can exceed hurricane force for miles. At 5 psi overpressure, most residential buildings collapse. At 10 psi, reinforced concrete is damaged. After the positive pressure phase passes, a negative pressure phase follows — a partial vacuum that sucks debris back toward ground zero, often causing additional damage. The blast wave accounts for roughly 50% of a nuclear weapon's destructive energy.",
+ draw:drawShockwave},
+
+{cat:"Effects & Physics",id:"fallout",name:"Radioactive Fallout Pattern",yr:"",
+ sub:"How wind carries lethal fallout hundreds of miles downwind",
+ info:[["Most dangerous","First 48 hours"],["Range","100+ miles downwind"],["Key isotopes","I-131, Sr-90, Cs-137"],["7-10 rule","10× time = 10× decay"]],
+ desc:"Fallout is radioactive debris — vaporized soil, weapon material, and neutron-activated dust — that's lofted into the atmosphere and drifts downwind. A ground burst creates far more fallout than an airburst because it sucks up millions of tons of irradiated earth. The fallout plume forms an elongated ellipse downwind, with lethal dose rates near ground zero and dangerous levels extending 100+ miles. The 7-10 rule governs decay: for every 7-fold increase in time after detonation, radiation intensity drops by 10-fold.",
+ draw:drawFallout},
+
+{cat:"Effects & Physics",id:"yieldcompare",name:"Yield Comparison",yr:"",
+ sub:"Side-by-side fireball sizes from tactical to Tsar Bomba",
+ info:[["Davy Crockett","0.02 kt"],["Hiroshima","15 kt"],["Castle Bravo","15,000 kt"],["Tsar Bomba","50,000 kt"]],
+ desc:"Nuclear weapons range from sub-kiloton tactical warheads to the 50-megaton Tsar Bomba — a factor of over 2 million in yield. This visualization shows the relative fireball sizes of notable weapons, illustrating the enormous range in destructive power. Note that doubling the yield does NOT double the fireball size — it follows a cube-root scaling law, so you need 8× the yield to double the radius. Even so, the jump from kiloton to megaton weapons is staggering.",
+ draw:drawYieldCompare},
+
+{cat:"Effects & Physics",id:"emp",name:"Electromagnetic Pulse (EMP)",yr:"",
+ sub:"How a single high-altitude nuke could disable a continent's electronics",
+ info:[["Altitude","30-400 km optimal"],["Range","Continental"],["Duration","Nanoseconds to minutes"],["Components","E1, E2, E3 phases"]],
+ desc:"A nuclear EMP occurs when gamma rays from a high-altitude detonation strip electrons from air molecules in the upper atmosphere. These electrons spiral along Earth's magnetic field lines, generating an intense electromagnetic pulse in three phases: E1 (nanoseconds, like a massive lightning bolt — fries microelectronics), E2 (microseconds to seconds, similar to lightning — most systems can handle this), and E3 (seconds to minutes, like a geomagnetic storm — overloads power grid transformers). A single weapon at 300 km altitude could blanket the entire continental US.",
+ draw:drawEMP}
+];
+
+// ─── BUILD SIDEBAR ───
+(function(){
+  const sb=document.getElementById('sidebar');
+  sb.innerHTML='<h2>☢ Nuclear Sims</h2>';
+  let cat='';
+  sims.forEach(s=>{
+    if(s.cat!==cat){cat=s.cat;sb.innerHTML+=`<div class="cat-label">${cat}</div>`}
+    sb.innerHTML+=`<button class="sim-btn" data-id="${s.id}" onclick="loadSim('${s.id}')">${s.name}${s.yr?`<span class="yr">${s.yr}</span>`:''}</button>`;
+  });
+})();
+
+function loadSim(id){
+  const s=sims.find(x=>x.id===id);if(!s)return;
+  curSim=s;t=0;playing=false;
+  document.getElementById('playBtn').textContent='▶ Play';
+  document.getElementById('simTitle').textContent=s.name+(s.yr?' ('+s.yr+')':'');
+  document.getElementById('simSub').textContent=s.sub;
+  document.getElementById('descBox').textContent=s.desc;
+
+  const ip=document.getElementById('infoPanel');
+  ip.innerHTML=s.info.map(([l,v])=>`<div class="info-card"><div class="label">${l}</div><div class="value">${v}</div></div>`).join('');
+
+  document.querySelectorAll('.sim-btn').forEach(b=>{b.classList.toggle('active',b.dataset.id===id)});
+  drawFrame();
+}
+
+function togglePlay(){playing=!playing;document.getElementById('playBtn').textContent=playing?'⏸ Pause':'▶ Play';if(playing)animate()}
+function resetSim(){t=0;playing=false;document.getElementById('playBtn').textContent='▶ Play';if(curSim)drawFrame()}
+
+function animate(){if(!playing)return;t+=0.003;if(t>1){t=1;playing=false;document.getElementById('playBtn').textContent='▶ Play'}drawFrame();anim=requestAnimationFrame(animate)}
+function drawFrame(){if(!curSim)return;ctx.clearRect(0,0,W,H);curSim.draw(t)}
+
+// ─── HELPERS ───
+function sky(topColor,botColor,surfY){const g=ctx.createLinearGradient(0,0,0,surfY||H);g.addColorStop(0,topColor);g.addColorStop(1,botColor);ctx.fillStyle=g;ctx.fillRect(0,0,W,surfY||H)}
+function ground(y,c1,c2){const g=ctx.createLinearGradient(0,y,0,H);g.addColorStop(0,c1);g.addColorStop(1,c2);ctx.fillStyle=g;ctx.fillRect(0,y,W,H-y)}
+function stars(n){ctx.fillStyle='rgba(255,255,255,0.5)';for(let i=0;i<n;i++){ctx.beginPath();ctx.arc((i*173+31)%W,(i*97+17)%(H*0.3),0.5+(i%3)*0.3,0,Math.PI*2);ctx.fill()}}
+function text(txt,x,y,color,size,align){ctx.fillStyle=color||'#aaa';ctx.font=(size||12)+'px sans-serif';ctx.textAlign=align||'center';ctx.fillText(txt,x,y)}
+function lerp(a,b,t){return a+(b-a)*Math.max(0,Math.min(1,t))}
+function ease(t){return t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2}
+function flash(p,alpha){if(p<0.15){ctx.fillStyle=`rgba(255,255,255,${(1-p/0.15)*alpha})`;ctx.fillRect(0,0,W,H)}}
+function mushroom(cx,baseY,t,maxH,maxW,color){
+  const h=maxH*ease(Math.min(1,t)),w=maxW*ease(Math.min(1,t*1.2));
+  const stemW=w*0.25,capY=baseY-h;
+  // stem
+  const sg=ctx.createLinearGradient(cx-stemW,0,cx+stemW,0);
+  sg.addColorStop(0,'rgba(180,120,60,0.4)');sg.addColorStop(0.5,color||'rgba(200,140,70,0.7)');sg.addColorStop(1,'rgba(180,120,60,0.4)');
+  ctx.fillStyle=sg;ctx.beginPath();ctx.moveTo(cx-stemW*0.5,baseY);ctx.quadraticCurveTo(cx-stemW,baseY-h*0.5,cx-stemW*0.8,capY+w*0.3);ctx.lineTo(cx+stemW*0.8,capY+w*0.3);ctx.quadraticCurveTo(cx+stemW,baseY-h*0.5,cx+stemW*0.5,baseY);ctx.fill();
+  // cap
+  const cg=ctx.createRadialGradient(cx,capY,0,cx,capY,w);
+  cg.addColorStop(0,color||'rgba(220,160,80,0.8)');cg.addColorStop(0.6,'rgba(180,120,60,0.5)');cg.addColorStop(1,'rgba(150,100,50,0)');
+  ctx.fillStyle=cg;ctx.beginPath();ctx.ellipse(cx,capY,w,w*0.55,0,0,Math.PI*2);ctx.fill();
+}
+function shake(intensity){return{x:(Math.random()-0.5)*intensity,y:(Math.random()-0.5)*intensity}}
+
+// ─── DRAWING FUNCTIONS ───
+
+function drawTrinity(t){
+  sky('#1a1a3e','#2d1a3e',300);stars(50);ground(300,'#c2956b','#8a6a40');
+  // tower
+  if(t<0.08){
+    ctx.strokeStyle='#888';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(450,300);ctx.lineTo(450,220);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(440,300);ctx.lineTo(450,220);ctx.lineTo(460,300);ctx.stroke();
+    text('100 ft tower',450,212,'#aaa',10);
+    ctx.fillStyle='#e74c3c';ctx.beginPath();ctx.arc(450,220,4,0,Math.PI*2);ctx.fill();
+  }
+  if(t>=0.08){
+    const p=(t-0.08)/0.92;
+    flash(p,0.8);
+    // fireball
+    const fr=10+p*80;
+    const fg=ctx.createRadialGradient(450,300,0,450,300,fr);
+    fg.addColorStop(0,'rgba(255,255,200,0.9)');fg.addColorStop(0.4,'rgba(255,180,50,0.7)');fg.addColorStop(1,'rgba(255,80,0,0)');
+    ctx.fillStyle=fg;ctx.beginPath();ctx.arc(450,300-p*30,fr,0,Math.PI*2);ctx.fill();
+    if(p>0.15) mushroom(450,300,Math.max(0,(p-0.15)/0.85),250,80);
+    // trinitite
+    if(p>0.5){const a=Math.min(1,(p-0.5)*2);ctx.fillStyle=`rgba(120,180,100,${a*0.4})`;ctx.fillRect(350,300,200,6)}
+    // shockwave ring
+    if(p>0.05&&p<0.6){const sr=p*500;ctx.strokeStyle=`rgba(255,200,100,${0.4*(1-p/0.6)})`;ctx.lineWidth=2;ctx.beginPath();ctx.arc(450,300,sr,Math.PI,0);ctx.stroke()}
+  }
+  text('TRINITY — July 16, 1945, 05:29:45',450,H-15,'#666',11);
+}
+
+function drawHiroshima(t){
+  sky('#87CEEB','#B0C4DE',280);
+  // city buildings
+  ctx.fillStyle='#8a7a6a';
+  for(let i=0;i<30;i++){const x=50+i*28,h=15+((i*17)%25),w=18;ctx.fillRect(x,280-h,w,h)}
+  ground(280,'#9a8a7a','#7a6a5a');
+  // B-29
+  if(t<0.15){const bx=100+t/0.15*300;ctx.fillStyle='#556';ctx.fillRect(bx,80,40,8);ctx.fillRect(bx+10,76,20,4);ctx.fillRect(bx+35,78,12,3);text('Enola Gay',bx+20,72,'#777',9)}
+  // bomb falling
+  if(t>=0.1&&t<0.2){const by=80+(t-0.1)/0.1*100;ctx.fillStyle='#444';ctx.fillRect(448,by,4,12)}
+  // detonation
+  if(t>=0.2){
+    const p=(t-0.2)/0.8;
+    flash(p,0.9);
+    // airburst point
+    const burstY=180;
+    const fr=5+p*100;
+    const fg=ctx.createRadialGradient(450,burstY,0,450,burstY,fr);
+    fg.addColorStop(0,`rgba(255,255,220,${Math.max(0,0.9-p)})`)
+    fg.addColorStop(0.5,`rgba(255,150,30,${Math.max(0,0.7-p*0.5)})`);
+    fg.addColorStop(1,'rgba(255,80,0,0)');
+    ctx.fillStyle=fg;ctx.beginPath();ctx.arc(450,burstY,fr,0,Math.PI*2);ctx.fill();
+    // destroy buildings
+    if(p>0.1){
+      const destroyR=p*400;
+      ctx.fillStyle='#9a8a7a';ctx.fillRect(0,260,W,30);
+      for(let i=0;i<30;i++){
+        const x=50+i*28,dist=Math.abs(x-450);
+        if(dist<destroyR){const h=Math.max(2,(15+((i*17)%25))*(dist/destroyR));ctx.fillStyle='#6a5a4a';ctx.fillRect(x,280-h,18,h)}
+        else{const h=15+((i*17)%25);ctx.fillStyle='#8a7a6a';ctx.fillRect(x,280-h,18,h)}
+      }
+    }
+    if(p>0.2) mushroom(450,burstY+20,(p-0.2)/0.8,220,90,'rgba(200,140,70,0.6)');
+    // thermal shadow hint
+    if(p>0.6){text('Thermal shadows burned into concrete',450,310,`rgba(200,150,100,${(p-0.6)*2.5})`,10)}
+  }
+  text('1,900 ft airburst',780,180,'rgba(255,150,100,0.5)',10);
+}
+
+function drawNagasaki(t){
+  sky('#87CEEB','#B8C8D8',200);
+  // hills/terrain
+  ctx.fillStyle='#6a8a5a';
+  ctx.beginPath();ctx.moveTo(0,280);ctx.quadraticCurveTo(150,220,300,260);ctx.quadraticCurveTo(450,290,600,250);ctx.quadraticCurveTo(750,220,900,270);ctx.lineTo(900,300);ctx.lineTo(0,300);ctx.fill();
+  // valley
+  ctx.fillStyle='#8a7a6a';ctx.beginPath();ctx.moveTo(300,260);ctx.quadraticCurveTo(450,290,600,250);ctx.lineTo(600,300);ctx.lineTo(300,300);ctx.fill();
+  // buildings in valley
+  for(let i=0;i<15;i++){const x=320+i*18;ctx.fillStyle='#7a6a5a';ctx.fillRect(x,280-8-((i*13)%12),12,8+((i*13)%12))}
+  ground(300,'#7a6a5a','#5a4a3a');
+
+  if(t>=0.15){
+    const p=(t-0.15)/0.85;
+    flash(p,0.85);
+    const burstY=165;
+    const fr=5+p*90;
+    const fg=ctx.createRadialGradient(450,burstY,0,450,burstY,fr);
+    fg.addColorStop(0,`rgba(255,255,220,${Math.max(0,0.9-p)})`);fg.addColorStop(1,'rgba(255,80,0,0)');
+    ctx.fillStyle=fg;ctx.beginPath();ctx.arc(450,burstY,fr,0,Math.PI*2);ctx.fill();
+    if(p>0.2) mushroom(450,burstY+20,(p-0.2)/0.8,200,85,'rgba(200,130,60,0.6)');
+    if(p>0.5){text('Hills contained the blast',750,240,`rgba(200,200,150,${(p-0.5)*2})`,10)}
+    // shockwave bouncing off hills
+    if(p>0.05&&p<0.5){const sr=p*400;ctx.strokeStyle=`rgba(255,200,100,${0.3*(1-p/0.5)})`;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(450,burstY,sr,0,Math.PI*2);ctx.stroke()}
+  }
+  text('Urakami Valley — hilly terrain reduced casualties',450,H-15,'#666',11);
+}
+
+function drawIvyMike(t){
+  sky('#4a7ab5','#87CEEB',200);
+  // ocean
+  ctx.fillStyle='#1a5a8a';ctx.fillRect(0,200,W,H-200);
+  // small island
+  ctx.fillStyle='#c2a56b';ctx.beginPath();ctx.ellipse(450,200,60,8,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#5a8a4a';for(let i=0;i<5;i++){ctx.beginPath();ctx.arc(420+i*15,195,4+i%3,0,Math.PI*2);ctx.fill()}
+  // device building
+  if(t<0.1){ctx.fillStyle='#888';ctx.fillRect(435,185,30,15);text('"The Sausage" — 82 tons',450,178,'#aaa',9)}
+
+  if(t>=0.1){
+    const p=(t-0.1)/0.9;
+    flash(p,1);
+    // island vaporizes
+    if(p>0.05){ctx.fillStyle='#1a5a8a';ctx.beginPath();ctx.ellipse(450,200,60+p*40,8+p*20,0,0,Math.PI*2);ctx.fill()}
+    // massive fireball
+    const fr=10+p*150;
+    const fg=ctx.createRadialGradient(450,200,0,450,200,fr);
+    fg.addColorStop(0,`rgba(255,255,220,${Math.max(0,0.95-p*0.5)})`);fg.addColorStop(0.3,`rgba(255,200,50,${Math.max(0,0.7-p*0.3)})`);fg.addColorStop(1,'rgba(255,60,0,0)');
+    ctx.fillStyle=fg;ctx.beginPath();ctx.arc(450,200-p*30,fr,0,Math.PI*2);ctx.fill();
+    // enormous mushroom
+    if(p>0.15) mushroom(450,210,(p-0.15)/0.85,300,140,'rgba(220,150,70,0.7)');
+    // crater in ocean
+    if(p>0.3){
+      const ca=Math.min(1,(p-0.3)*2);
+      ctx.fillStyle=`rgba(20,60,100,${ca})`;
+      ctx.beginPath();ctx.ellipse(450,205,80*ca,15*ca,0,0,Math.PI*2);ctx.fill();
+      text('6,240 ft crater — island gone',450,230,`rgba(200,200,255,${ca})`,10);
+    }
+    // water displacement rings
+    if(p>0.1&&p<0.7){for(let r=0;r<3;r++){const rr=p*300+r*60;ctx.strokeStyle=`rgba(150,200,255,${0.2*(1-p)})`;ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(450,205,rr,rr*0.15,0,0,Math.PI*2);ctx.stroke()}}
+  }
+  text('10.4 megatons — 500× Hiroshima',450,H-15,'#668',11);
+}
+
+function drawCastleBravo(t){
+  sky('#4a7ab5','#87CEEB',200);
+  ctx.fillStyle='#1a5a8a';ctx.fillRect(0,200,W,H-200);
+  // atoll ring
+  ctx.strokeStyle='#c2a56b';ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(450,220,120,25,0,0,Math.PI*2);ctx.stroke();
+  ctx.fillStyle='#5a8a4a';for(let i=0;i<8;i++){const a=i/8*Math.PI*2;ctx.beginPath();ctx.arc(450+Math.cos(a)*120,220+Math.sin(a)*25,5,0,Math.PI*2);ctx.fill()}
+
+  if(t>=0.08){
+    const p=(t-0.08)/0.92;
+    flash(p,1);
+    const fr=15+p*180;
+    const fg=ctx.createRadialGradient(450,200,0,450,200,fr);
+    fg.addColorStop(0,`rgba(255,255,220,${Math.max(0,0.95-p*0.4)})`);fg.addColorStop(0.4,`rgba(255,180,50,${Math.max(0,0.7-p*0.3)})`);fg.addColorStop(1,'rgba(255,50,0,0)');
+    ctx.fillStyle=fg;ctx.beginPath();ctx.arc(450,200-p*20,fr,0,Math.PI*2);ctx.fill();
+    if(p>0.12) mushroom(450,210,(p-0.12)/0.88,320,160,'rgba(240,160,60,0.75)');
+    // fallout plume drifting east
+    if(p>0.3){
+      const fa=Math.min(1,(p-0.3)*1.5);
+      ctx.fillStyle=`rgba(200,200,100,${fa*0.2})`;
+      ctx.beginPath();ctx.moveTo(500,180);ctx.quadraticCurveTo(650,150+p*20,850,120+p*40);ctx.quadraticCurveTo(650,200+p*30,500,220);ctx.fill();
+      text('Fallout plume →',700,160,`rgba(255,200,100,${fa})`,10);
+      if(p>0.6){text('Lucky Dragon No. 5',780,190,`rgba(255,100,100,${(p-0.6)*2.5})`,9);ctx.fillStyle=`rgba(200,100,50,${(p-0.6)*2})`;ctx.fillRect(770,195,20,6)}
+    }
+    // yield surprise label
+    if(p>0.4){text('Expected: 6 MT → Actual: 15 MT',450,H-30,`rgba(255,100,100,${Math.min(1,(p-0.4)*2)})`,12)}
+  }
+  text('CASTLE BRAVO — Bikini Atoll, March 1, 1954',450,H-12,'#668',10);
+}
+
+function drawTsarBomba(t){
+  sky('#2a3a5a','#5a7a9a',250);
+  // snowy arctic terrain
+  ground(250,'#d0d8e0','#a0a8b0');
+  ctx.fillStyle='#b8c0c8';for(let i=0;i<W;i+=40){ctx.beginPath();ctx.moveTo(i,250);ctx.lineTo(i+20,240+(i*7%15));ctx.lineTo(i+40,250);ctx.fill()}
+
+  // Tu-95 bomber
+  if(t<0.12){const bx=100+t/0.12*250;ctx.fillStyle='#445';ctx.fillRect(bx,100,50,10);ctx.fillRect(bx+15,95,20,5);text('Tu-95V',bx+25,90,'#888',9)}
+  // bomb drop
+  if(t>=0.08&&t<0.18){const by=100+(t-0.08)/0.1*130;ctx.fillStyle='#444';ctx.fillRect(345,by,10,20);text('27 tons',370,by+10,'#888',8)}
+
+  if(t>=0.18){
+    const p=(t-0.18)/0.82;
+    flash(p,1);
+    const fr=20+p*220;
+    const fg=ctx.createRadialGradient(450,240,0,450,240,fr);
+    fg.addColorStop(0,`rgba(255,255,230,${Math.max(0,1-p*0.5)})`);fg.addColorStop(0.3,`rgba(255,200,60,${Math.max(0,0.8-p*0.3)})`);fg.addColorStop(0.7,`rgba(255,100,20,${Math.max(0,0.5-p*0.2)})`);fg.addColorStop(1,'rgba(200,60,0,0)');
+    ctx.fillStyle=fg;ctx.beginPath();ctx.arc(450,240-p*40,fr,0,Math.PI*2);ctx.fill();
+    if(p>0.1) mushroom(450,250,(p-0.1)/0.9,350,180,'rgba(250,170,70,0.8)');
+    // shockwave
+    if(p>0.03&&p<0.5){const sr=p*600;ctx.strokeStyle=`rgba(255,220,150,${0.3*(1-p/0.5)})`;ctx.lineWidth=2;ctx.beginPath();ctx.arc(450,240,sr,0,Math.PI*2);ctx.stroke()}
+    // scale text
+    if(p>0.4){
+      const a=Math.min(1,(p-0.4)*2);
+      text('Fireball: 5 miles wide',450,H-50,`rgba(255,200,100,${a})`,11);
+      text('Mushroom cloud: 40 miles high',450,H-35,`rgba(255,200,100,${a})`,11);
+      text('Windows broken 560 miles away (Finland)',450,H-20,`rgba(255,200,100,${a})`,11);
+    }
+  }
+}
+
+function drawAtmospheric(t){
+  sky('#5a8aba','#a0c0e0',280);ground(280,'#c2956b','#8a6a40');
+  // tower
+  ctx.strokeStyle='#888';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(450,280);ctx.lineTo(450,210);ctx.stroke();
+  ctx.fillStyle='#e74c3c';ctx.beginPath();ctx.arc(450,210,5,0,Math.PI*2);ctx.fill();
+  // observers
+  ctx.fillStyle='#555';for(let i=0;i<3;i++){ctx.fillRect(700+i*25,272,8,12)}
+  text('Observers — 10+ miles away',735,265,'#888',9);
+
+  if(t>=0.1){
+    const p=(t-0.1)/0.9;flash(p,0.7);
+    const fr=5+p*100;
+    const fg=ctx.createRadialGradient(450,280,0,450,280,fr);
+    fg.addColorStop(0,`rgba(255,255,200,${Math.max(0,0.9-p)})`);fg.addColorStop(1,'rgba(255,80,0,0)');
+    ctx.fillStyle=fg;ctx.beginPath();ctx.arc(450,280-p*20,fr,0,Math.PI*2);ctx.fill();
+    if(p>0.15) mushroom(450,280,(p-0.15)/0.85,240,100);
+    // fallout particles rising
+    if(p>0.3){for(let i=0;i<20;i++){const px=400+((i*37)%100),py=280-p*200-((i*53)%80);ctx.fillStyle=`rgba(200,180,100,${0.3*Math.random()})`;ctx.beginPath();ctx.arc(px,py,1+i%2,0,Math.PI*2);ctx.fill()}}
+  }
+  text('Atmospheric Test — pre-1963',450,H-12,'#887',10);
+}
+
+function drawUnderwater(t){
+  sky('#5a8aba','#a0c0e0',150);
+  // ocean
+  const og=ctx.createLinearGradient(0,150,0,H);og.addColorStop(0,'#2a6a9a');og.addColorStop(1,'#0a2a4a');ctx.fillStyle=og;ctx.fillRect(0,150,W,H-150);
+  // ships
+  ctx.fillStyle='#666';
+  [[200,146],[320,146],[580,146],[700,146]].forEach(([x,y])=>{ctx.fillRect(x,y,30,8);ctx.fillRect(x+5,y-5,20,5)});
+  // bomb location
+  if(t<0.1){ctx.fillStyle='#e74c3c';ctx.beginPath();ctx.arc(450,240,4,0,Math.PI*2);ctx.fill();text('90 ft depth',480,244,'#8ab',9)}
+
+  if(t>=0.1){
+    const p=(t-0.1)/0.9;
+    flash(p*0.5,0.5);
+    // underwater flash
+    const uf=ctx.createRadialGradient(450,240,0,450,240,50+p*100);
+    uf.addColorStop(0,`rgba(255,255,200,${Math.max(0,0.6-p)})`);uf.addColorStop(1,'rgba(100,200,255,0)');
+    ctx.fillStyle=uf;ctx.beginPath();ctx.arc(450,240,50+p*100,0,Math.PI*2);ctx.fill();
+    // water column rising
+    if(p>0.08){
+      const colH=Math.min(1,(p-0.08)/0.5)*280;
+      const colW=40+p*60;
+      const cg=ctx.createLinearGradient(450-colW,0,450+colW,0);
+      cg.addColorStop(0,'rgba(150,200,230,0.3)');cg.addColorStop(0.5,'rgba(200,230,250,0.7)');cg.addColorStop(1,'rgba(150,200,230,0.3)');
+      ctx.fillStyle=cg;
+      ctx.beginPath();ctx.moveTo(450-colW*0.6,150);ctx.lineTo(450-colW,150-colH);ctx.quadraticCurveTo(450,150-colH-40,450+colW,150-colH);ctx.lineTo(450+colW*0.6,150);ctx.fill();
+      // Wilson cloud (condensation ring)
+      if(p>0.2){const wr=colW*1.5+p*40;ctx.fillStyle=`rgba(220,240,255,${0.3*Math.max(0,1-p)})`;ctx.beginPath();ctx.ellipse(450,150-colH+20,wr,wr*0.2,0,0,Math.PI*2);ctx.fill()}
+      // base surge (wave)
+      if(p>0.3){const sw=p*350;ctx.fillStyle=`rgba(200,230,250,${0.3*(1-p)})`;ctx.beginPath();ctx.ellipse(450,155,sw,15,0,0,Math.PI*2);ctx.fill()}
+    }
+    // ships getting swamped
+    if(p>0.4){
+      const tilt=Math.min(20,(p-0.4)*80);
+      ctx.save();ctx.translate(320,150);ctx.rotate(tilt*Math.PI/180);ctx.fillStyle='#555';ctx.fillRect(-15,-4,30,8);ctx.restore();
+    }
+  }
+  text('BAKER Shot — Operation Crossroads, Bikini Atoll 1946',450,H-12,'#668',10);
+}
+
+function drawHighAlt(t){
+  // space view
+  sky('#000010','#000030',H);stars(80);
+  // Earth curve at bottom
+  ctx.fillStyle='#1a4a2a';ctx.beginPath();ctx.ellipse(450,H+200,500,250,0,Math.PI,0);ctx.fill();
+  ctx.fillStyle='#2a5a3a';ctx.beginPath();ctx.ellipse(450,H+200,500,248,0,Math.PI,0);ctx.fill();
+  // atmosphere glow
+  ctx.strokeStyle='rgba(100,150,255,0.3)';ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(450,H+200,500,252,0,Math.PI,0);ctx.stroke();
+  // Hawaii label
+  text('Hawaii ↓',250,H-50,'#4a8a6a',10);ctx.fillStyle='#3a7a5a';ctx.beginPath();ctx.arc(250,H-35,4,0,Math.PI*2);ctx.fill();
+
+  // detonation point
+  const detY=150;
+  text('400 km altitude',380,detY-5,'#558',9);
+
+  if(t<0.1){ctx.fillStyle='#e74c3c';ctx.beginPath();ctx.arc(450,detY,3,0,Math.PI*2);ctx.fill()}
+
+  if(t>=0.1){
+    const p=(t-0.1)/0.9;
+    // flash
+    flash(p,0.6);
+    // expanding glow (no mushroom in space)
+    const fr=5+p*200;
+    const fg=ctx.createRadialGradient(450,detY,0,450,detY,fr);
+    fg.addColorStop(0,`rgba(255,200,255,${Math.max(0,0.8-p)})`);
+    fg.addColorStop(0.3,`rgba(200,100,255,${Math.max(0,0.5-p*0.5)})`);
+    fg.addColorStop(0.7,`rgba(100,50,200,${Math.max(0,0.3-p*0.3)})`);
+    fg.addColorStop(1,'rgba(50,0,100,0)');
+    ctx.fillStyle=fg;ctx.beginPath();ctx.arc(450,detY,fr,0,Math.PI*2);ctx.fill();
+    // artificial aurora
+    if(p>0.15){
+      const aa=Math.min(1,(p-0.15)*2);
+      for(let i=0;i<12;i++){
+        const ax=200+i*50,ah=40+((i*17)%30);
+        ctx.fillStyle=`rgba(${50+i*15},${200-i*5},${100+i*10},${aa*0.2*Math.random()})`;
+        ctx.fillRect(ax,H-100-ah,8,ah);
+      }
+      text('Artificial aurora visible in Hawaii',450,H-110,`rgba(150,200,255,${aa})`,11);
+    }
+    // EMP wave
+    if(p>0.05&&p<0.6){
+      const er=p*500;
+      ctx.strokeStyle=`rgba(150,150,255,${0.4*(1-p/0.6)})`;ctx.lineWidth=2;ctx.setLineDash([5,5]);
+      ctx.beginPath();ctx.arc(450,detY,er,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+      text('EMP wavefront',450+er*0.6,detY+er*0.3,`rgba(150,150,255,${0.5*(1-p/0.6)})`,9);
+    }
+    // streetlights going out
+    if(p>0.3){
+      const la=Math.min(1,(p-0.3)*3);
+      text('⚡ Streetlights out in Hawaii',250,H-60,`rgba(255,200,100,${la})`,10);
+    }
+  }
+}
+
+function drawSedan(t){
+  sky('#5a8aba','#a0c0e0',140);ground(140,'#c2956b','#8a6a40');
+  // underground layers
+  ctx.fillStyle='#9a7a50';ctx.fillRect(0,160,W,H-160);
+  ctx.fillStyle='#8a6a40';ctx.fillRect(0,250,W,H-250);
+  // shaft
+  ctx.fillStyle='#333';ctx.fillRect(447,140,6,200);
+  // device
+  ctx.fillStyle='#e74c3c';ctx.beginPath();ctx.arc(450,340,5,0,Math.PI*2);ctx.fill();
+  text('635 ft depth',490,342,'#c97',9);
+
+  if(t>=0.12){
+    const p=(t-0.12)/0.88;
+    // underground flash
+    if(p<0.2){const uf=ctx.createRadialGradient(450,340,0,450,340,50+p*200);uf.addColorStop(0,`rgba(255,200,100,${0.5*(1-p/0.2)})`);uf.addColorStop(1,'rgba(255,100,0,0)');ctx.fillStyle=uf;ctx.beginPath();ctx.arc(450,340,50+p*200,0,Math.PI*2);ctx.fill()}
+    // ground heaving up then collapsing into crater
+    const heave=p<0.3?p/0.3:1;
+    const collapse=p>0.3?Math.min(1,(p-0.3)/0.4):0;
+    const craterW=160*Math.min(1,p*1.5);
+    const craterD=40*collapse;
+    const heaveH=30*heave*(1-collapse);
+
+    // heave mound
+    if(heaveH>0){
+      ctx.fillStyle='#b89a6b';ctx.beginPath();ctx.moveTo(450-craterW,140);ctx.quadraticCurveTo(450,140-heaveH,450+craterW,140);ctx.lineTo(450+craterW,145);ctx.lineTo(450-craterW,145);ctx.fill();
+    }
+    // crater
+    if(collapse>0){
+      ctx.fillStyle='#4a3a2a';ctx.beginPath();ctx.moveTo(450-craterW,140);ctx.quadraticCurveTo(450,140+craterD,450+craterW,140);ctx.fill();
+      // rubble inside
+      ctx.fillStyle='#6a5a4a';for(let i=0;i<15*collapse;i++){ctx.beginPath();ctx.arc(420+((i*37)%60),142+((i*23)%Math.max(1,craterD-5)),2+i%3,0,Math.PI*2);ctx.fill()}
+    }
+    // debris cloud
+    if(p>0.15&&p<0.8){
+      const da=(p-0.15)/0.65;
+      for(let i=0;i<25;i++){
+        const angle=-Math.PI/2+(Math.random()-0.5)*Math.PI*0.8;
+        const dist=50+da*200*Math.random();
+        const dx=450+Math.cos(angle+i*0.3)*dist;
+        const dy=140+Math.sin(angle+i*0.3)*dist;
+        ctx.fillStyle=`rgba(180,160,130,${0.3*(1-da)})`;ctx.beginPath();ctx.arc(dx,dy,3+Math.random()*8,0,Math.PI*2);ctx.fill();
+      }
+    }
+    // label
+    if(p>0.5){text(`Crater: 1,280 ft × 320 ft deep`,450,100,`rgba(255,200,100,${Math.min(1,(p-0.5)*2)})`,11)}
+    text('12 million tons displaced',450,H-15,`rgba(200,180,130,${Math.min(1,p*2)})`,10);
+  }
+}
+
+function drawGunType(t){
+  sky('#1a1a2e','#1a1a2e',H);
+  // bomb casing
+  const cx=450,cy=260;
+  ctx.fillStyle='#3a3a4a';ctx.beginPath();ctx.moveTo(cx-200,cy-30);ctx.lineTo(cx+200,cy-30);ctx.lineTo(cx+220,cy);ctx.lineTo(cx+200,cy+30);ctx.lineTo(cx-200,cy+30);ctx.lineTo(cx-220,cy);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#555';ctx.lineWidth=1;ctx.stroke();
+
+  // gun barrel
+  ctx.fillStyle='#4a4a5a';ctx.fillRect(cx-150,cy-12,200,24);
+  ctx.strokeStyle='#5a5a6a';ctx.strokeRect(cx-150,cy-12,200,24);
+
+  // target mass (right)
+  ctx.fillStyle='#27ae60';ctx.fillRect(cx+60,cy-10,30,20);
+  text('Target','center',0,'',0);
+  ctx.fillStyle='#aaa';ctx.font='9px sans-serif';ctx.textAlign='center';
+  ctx.fillText('Target mass',cx+75,cy+35);
+
+  // bullet mass (moves)
+  const bulletX=cx-140+ease(Math.min(1,t*2))*170;
+  ctx.fillStyle='#e74c3c';ctx.fillRect(bulletX,cy-8,25,16);
+  ctx.fillStyle='#aaa';ctx.font='9px sans-serif';
+  if(t<0.4) ctx.fillText('"Bullet" mass',bulletX+12,cy+35);
+
+  // conventional explosive (left)
+  ctx.fillStyle='#e67e22';ctx.fillRect(cx-190,cy-15,40,30);
+  ctx.fillStyle='#aaa';ctx.font='9px sans-serif';ctx.fillText('Explosive charge',cx-170,cy+50);
+
+  // labels
+  text('GUN-TYPE FISSION WEAPON',cx,80,'#f0e68c',14);
+  text('Conventional explosive fires uranium "bullet" into uranium "target"',cx,105,'#888',11);
+
+  // critical mass achieved
+  if(t>0.45){
+    const p=(t-0.45)/0.55;
+    // chain reaction
+    const fr=5+p*120;
+    const fg=ctx.createRadialGradient(cx+70,cy,0,cx+70,cy,fr);
+    fg.addColorStop(0,`rgba(255,255,200,${Math.max(0,0.8-p*0.5)})`);fg.addColorStop(0.5,`rgba(255,150,50,${Math.max(0,0.5-p*0.3)})`);fg.addColorStop(1,'rgba(255,50,0,0)');
+    ctx.fillStyle=fg;ctx.beginPath();ctx.arc(cx+70,cy,fr,0,Math.PI*2);ctx.fill();
+    text('CRITICAL MASS → CHAIN REACTION',cx,cy+80,`rgba(255,200,100,${Math.min(1,p*2)})`,12);
+    // neutron lines
+    if(p>0.1){for(let i=0;i<12;i++){const a=i/12*Math.PI*2;const d=p*80;ctx.strokeStyle=`rgba(255,255,150,${0.4*(1-p)})`;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(cx+70,cy);ctx.lineTo(cx+70+Math.cos(a)*d,cy+Math.sin(a)*d);ctx.stroke()}}
+  }
+  // Arrow
+  if(t<0.45){ctx.fillStyle='#888';ctx.font='20px sans-serif';ctx.textAlign='center';ctx.fillText('→',cx-60,cy+5)}
+}
+
+function drawImplosion(t){
+  sky('#1a1a2e','#1a1a2e',H);
+  const cx=450,cy=260;
+
+  text('IMPLOSION DESIGN',cx,60,'#f0e68c',14);
+  text('Shaped explosive lenses compress plutonium core to supercriticality',cx,85,'#888',11);
+
+  const compression=ease(Math.min(1,t*2));
+  const coreR=40-compression*20;
+  const lensR=80-compression*35;
+
+  // explosive lenses (outer ring)
+  for(let i=0;i<12;i++){
+    const a=i/12*Math.PI*2;
+    const lx=cx+Math.cos(a)*lensR;
+    const ly=cy+Math.sin(a)*lensR;
+    ctx.fillStyle=t<0.3?'#e67e22':`rgba(230,126,34,${Math.max(0,1-t*2)})`;
+    ctx.beginPath();ctx.arc(lx,ly,12-compression*8,0,Math.PI*2);ctx.fill();
+  }
+
+  // implosion arrows
+  if(t<0.5){
+    for(let i=0;i<8;i++){
+      const a=i/8*Math.PI*2;
+      const d=lensR-15;
+      ctx.strokeStyle=`rgba(255,200,100,${0.5*(1-t*2)})`;ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(cx+Math.cos(a)*d,cy+Math.sin(a)*d);ctx.lineTo(cx+Math.cos(a)*(d-20),cy+Math.sin(a)*(d-20));ctx.stroke();
+    }
+  }
+
+  // plutonium core
+  ctx.fillStyle='#9b59b6';ctx.beginPath();ctx.arc(cx,cy,coreR,0,Math.PI*2);ctx.fill();
+  if(t<0.3) text('Pu-239 core',cx,cy+coreR+20,'#b088c0',10);
+
+  // initiator at center
+  ctx.fillStyle='#f1c40f';ctx.beginPath();ctx.arc(cx,cy,4,0,Math.PI*2);ctx.fill();
+
+  // chain reaction
+  if(t>0.45){
+    const p=(t-0.45)/0.55;
+    const fr=coreR+p*150;
+    const fg=ctx.createRadialGradient(cx,cy,0,cx,cy,fr);
+    fg.addColorStop(0,`rgba(255,255,200,${Math.max(0,0.9-p*0.5)})`);fg.addColorStop(0.5,`rgba(255,150,50,${Math.max(0,0.6-p*0.3)})`);fg.addColorStop(1,'rgba(255,50,0,0)');
+    ctx.fillStyle=fg;ctx.beginPath();ctx.arc(cx,cy,fr,0,Math.PI*2);ctx.fill();
+    text('SUPERCRITICAL → DETONATION',cx,cy+100,`rgba(255,200,100,${Math.min(1,p*2)})`,12);
+  }
+
+  // labels
+  if(t<0.3){
+    text('Explosive lenses',cx+lensR+30,cy-10,'#d4883a',10,'left');
+    text('(detonate simultaneously)',cx+lensR+30,cy+5,'#996',9,'left');
+  }
+}
+
+function drawThermonuclear(t){
+  sky('#1a1a2e','#1a1a2e',H);
+  const cx=450,cy=260;
+
+  text('TELLER-ULAM THERMONUCLEAR DESIGN',cx,50,'#f0e68c',14);
+  text('Fission primary → radiation implosion → fusion secondary',cx,75,'#888',11);
+
+  // weapon casing
+  ctx.fillStyle='#2a2a3a';ctx.beginPath();ctx.moveTo(200,cy-70);ctx.lineTo(700,cy-70);ctx.lineTo(720,cy);ctx.lineTo(700,cy+70);ctx.lineTo(200,cy+70);ctx.lineTo(180,cy);ctx.closePath();ctx.fill();ctx.strokeStyle='#444';ctx.lineWidth=1;ctx.stroke();
+
+  // primary (fission, left)
+  const primaryX=280;
+  if(t<0.3){
+    ctx.fillStyle='#e67e22';ctx.beginPath();ctx.arc(primaryX,cy,30,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#9b59b6';ctx.beginPath();ctx.arc(primaryX,cy,12,0,Math.PI*2);ctx.fill();
+    text('Fission primary',primaryX,cy+50,'#d4883a',10);
+  }
+
+  // secondary (fusion, right)
+  const secondaryX=550;
+  const compressT=Math.max(0,(t-0.3)/0.3);
+  const secW=50-compressT*25;
+  const secH=70-compressT*35;
+
+  if(t<0.7){
+    ctx.fillStyle='#27ae60';ctx.beginPath();ctx.ellipse(secondaryX,cy,secW,secH,0,0,Math.PI*2);ctx.fill();
+    // sparkplug
+    ctx.fillStyle='#e74c3c';ctx.beginPath();ctx.ellipse(secondaryX,cy,8,secH*0.6,0,0,Math.PI*2);ctx.fill();
+    if(t<0.3){text('Fusion secondary',secondaryX,cy+80,'#5a9a5a',10);text('(Li-6 deuteride)',secondaryX,cy+95,'#4a8a4a',9)}
+  }
+
+  // primary detonation
+  if(t>=0.15&&t<0.5){
+    const p=(t-0.15)/0.35;
+    const fr=30+p*60;
+    const fg=ctx.createRadialGradient(primaryX,cy,0,primaryX,cy,fr);
+    fg.addColorStop(0,`rgba(255,255,200,${0.7*(1-p)})`);fg.addColorStop(1,'rgba(255,80,0,0)');
+    ctx.fillStyle=fg;ctx.beginPath();ctx.arc(primaryX,cy,fr,0,Math.PI*2);ctx.fill();
+    text('Stage 1: Fission',primaryX,cy-60,`rgba(255,200,100,${1-p})`,10);
+  }
+
+  // X-ray radiation filling casing
+  if(t>=0.3&&t<0.6){
+    const p=(t-0.3)/0.3;
+    ctx.fillStyle=`rgba(255,200,100,${0.15*p})`;ctx.beginPath();ctx.moveTo(200,cy-70);ctx.lineTo(700,cy-70);ctx.lineTo(720,cy);ctx.lineTo(700,cy+70);ctx.lineTo(200,cy+70);ctx.lineTo(180,cy);ctx.closePath();ctx.fill();
+    // radiation arrows toward secondary
+    for(let i=0;i<6;i++){const yy=cy-50+i*20;ctx.strokeStyle=`rgba(255,200,100,${0.4*p})`;ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(primaryX+40,yy);ctx.lineTo(secondaryX-secW-10,yy);ctx.stroke();ctx.setLineDash([])}
+    text('X-rays compress secondary',420,cy-80,`rgba(255,200,100,${p})`,10);
+  }
+
+  // fusion detonation
+  if(t>=0.6){
+    const p=(t-0.6)/0.4;
+    const fr=20+p*200;
+    const fg=ctx.createRadialGradient(secondaryX,cy,0,secondaryX,cy,fr);
+    fg.addColorStop(0,`rgba(200,220,255,${Math.max(0,0.9-p*0.5)})`);
+    fg.addColorStop(0.3,`rgba(150,180,255,${Math.max(0,0.6-p*0.3)})`);
+    fg.addColorStop(1,'rgba(100,100,255,0)');
+    ctx.fillStyle=fg;ctx.beginPath();ctx.arc(secondaryX,cy,fr,0,Math.PI*2);ctx.fill();
+    text('Stage 2: FUSION — millions of degrees',cx,cy+100,`rgba(200,220,255,${Math.min(1,p*2)})`,12);
+  }
+}
+
+function drawNeutron(t){
+  sky('#1a1a2e','#1a1a2e',H);
+  const cx=450,cy=260;
+  text('ENHANCED RADIATION WEAPON (NEUTRON BOMB)',cx,50,'#f0e68c',13);
+  text('Maximizes lethal neutron radiation — minimizes blast damage',cx,75,'#888',11);
+
+  // city
+  ground(340,'#4a4a5a','#3a3a4a');
+  for(let i=0;i<20;i++){const x=100+i*35,h=20+((i*17)%30);ctx.fillStyle='#5a5a6a';ctx.fillRect(x,340-h,25,h)}
+  // tank
+  ctx.fillStyle='#556b2f';ctx.fillRect(420,330,50,15);ctx.fillRect(430,322,30,10);ctx.fillRect(455,318,20,4);
+
+  if(t>=0.15){
+    const p=(t-0.15)/0.85;
+    // small fireball (neutron bomb has reduced blast)
+    const fr=5+p*40;
+    const fg=ctx.createRadialGradient(cx,300,0,cx,300,fr);
+    fg.addColorStop(0,`rgba(255,255,200,${Math.max(0,0.6-p)})`);fg.addColorStop(1,'rgba(255,80,0,0)');
+    ctx.fillStyle=fg;ctx.beginPath();ctx.arc(cx,300,fr,0,Math.PI*2);ctx.fill();
+
+    // neutron radiation expanding (much larger than blast)
+    if(p>0.1){
+      const nr=p*300;
+      ctx.strokeStyle=`rgba(100,200,255,${0.4*(1-p)})`;ctx.lineWidth=2;ctx.setLineDash([4,4]);
+      ctx.beginPath();ctx.arc(cx,300,nr,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+      // neutron particles
+      for(let i=0;i<20;i++){
+        const a=i/20*Math.PI*2;const d=nr*0.8*Math.random();
+        ctx.fillStyle=`rgba(100,200,255,${0.3*(1-p)})`;ctx.beginPath();ctx.arc(cx+Math.cos(a)*d,300+Math.sin(a)*d,1.5,0,Math.PI*2);ctx.fill();
+      }
+    }
+    // buildings still standing
+    if(p>0.4){
+      text('Buildings intact',200,H-40,`rgba(100,200,100,${Math.min(1,(p-0.4)*2)})`,11);
+      text('Tank crew: lethal dose',500,H-40,`rgba(255,100,100,${Math.min(1,(p-0.4)*2)})`,11);
+    }
+    // small mushroom
+    if(p>0.2) mushroom(cx,310,(p-0.2)/0.8,100,40,'rgba(200,180,160,0.4)');
+  }
+}
+
+function drawNevada(t){
+  sky('#87CEEB','#c0d0e0',120);
+  // desert landscape - aerial view
+  ground(120,'#c8a870','#b09060');
+
+  text('NEVADA TEST SITE — Aerial View',450,40,'#654',13);
+  text('928 tests — the most-bombed place on Earth',450,60,'#987',10);
+
+  // craters appearing over time
+  const craters=[
+    [150,200,25],[250,250,20],[180,320,15],[350,180,30],[400,280,22],
+    [500,200,28],[550,300,18],[450,380,20],[300,350,16],[600,250,24],
+    [650,180,15],[200,400,20],[700,350,22],[150,450,18],[500,420,25],
+    [350,450,12],[750,280,20],[800,200,15],[680,400,18],[100,280,14],
+    [280,160,18],[520,150,12],[420,170,16],[620,350,14],[780,400,16]
+  ];
+
+  const numVisible=Math.floor(t*craters.length)+1;
+  for(let i=0;i<Math.min(numVisible,craters.length);i++){
+    const [cx,cy,r]=craters[i];
+    const p=Math.min(1,(t*craters.length-i)*3);
+    const cr=r*ease(p);
+    // crater shadow
+    ctx.fillStyle='rgba(80,60,40,0.6)';ctx.beginPath();ctx.arc(cx,cy,cr,0,Math.PI*2);ctx.fill();
+    // crater rim
+    ctx.strokeStyle='rgba(200,170,120,0.5)';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(cx,cy,cr+2,0,Math.PI*2);ctx.stroke();
+    // inner shadow
+    ctx.fillStyle='rgba(50,35,20,0.4)';ctx.beginPath();ctx.arc(cx+2,cy+2,cr*0.7,0,Math.PI*2);ctx.fill();
+  }
+
+  // Sedan crater (biggest)
+  if(t>0.5){
+    const p=Math.min(1,(t-0.5)*3);
+    ctx.fillStyle='rgba(60,40,25,0.8)';ctx.beginPath();ctx.arc(430,300,40*ease(p),0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle=`rgba(255,200,100,${p*0.6})`;ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(470,280);ctx.lineTo(530,250);ctx.stroke();ctx.setLineDash([]);
+    text('Sedan Crater',560,250,`rgba(255,200,100,${p})`,10,'left');
+    text('(National Historic Landmark)',560,264,`rgba(200,160,80,${p})`,8,'left');
+  }
+
+  // Las Vegas direction
+  text('← Las Vegas, 65 mi',80,H-20,'#876',9,'left');
+
+  // scale
+  ctx.strokeStyle='#876';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(700,H-30);ctx.lineTo(800,H-30);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(700,H-35);ctx.lineTo(700,H-25);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(800,H-35);ctx.lineTo(800,H-25);ctx.stroke();
+  text('~5 miles',750,H-15,'#876',9);
+}
+
+function drawBikini(t){
+  sky('#4aa0d0','#80c0e0',130);
+  // ocean
+  ctx.fillStyle='#1070a0';ctx.fillRect(0,130,W,H-130);
+
+  text('BIKINI ATOLL — 23 Nuclear Tests (1946-1958)',450,35,'#eee',13);
+
+  // atoll shape (roughly circular reef)
+  ctx.strokeStyle='#c0a060';ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(450,320,180,100,0,0,Math.PI*2);ctx.stroke();
+  // islands on reef
+  const islands=[[280,300,12,'Bikini Island'],[350,240,8,''],[500,235,10,''],[620,290,9,''],[600,370,8,''],[500,400,10,''],[380,400,7,'']];
+  islands.forEach(([x,y,r,name])=>{
+    ctx.fillStyle='#90b060';ctx.beginPath();ctx.ellipse(x,y,r,r*0.6,0,0,Math.PI*2);ctx.fill();
+    if(name){text(name,x,y-r-5,'#b0d080',8)}
+  });
+  // lagoon
+  text('Lagoon',450,320,'rgba(100,180,220,0.5)',10);
+
+  // tests appearing
+  const tests=[
+    {t:0.1,x:400,y:300,r:20,name:'Baker (1946)',c:'rgba(255,200,100,'},
+    {t:0.2,x:500,y:280,r:15,name:'',c:'rgba(255,180,80,'},
+    {t:0.3,x:350,y:350,r:18,name:'',c:'rgba(255,180,80,'},
+    {t:0.5,x:450,y:270,r:40,name:'Castle Bravo',c:'rgba(255,100,50,'},
+    {t:0.6,x:520,y:330,r:15,name:'',c:'rgba(255,180,80,'},
+    {t:0.7,x:380,y:280,r:12,name:'',c:'rgba(255,180,80,'},
+  ];
+
+  tests.forEach(test=>{
+    if(t>test.t){
+      const p=Math.min(1,(t-test.t)*5);
+      const fr=test.r*ease(p);
+      ctx.fillStyle=test.c+`${0.4*(1-p*0.5)})`;ctx.beginPath();ctx.arc(test.x,test.y,fr,0,Math.PI*2);ctx.fill();
+      if(test.name&&p>0.5) text(test.name,test.x,test.y-test.r-8,`rgba(255,200,150,${(p-0.5)*2})`,9);
+    }
+  });
+
+  // displaced people
+  if(t>0.8){
+    const a=Math.min(1,(t-0.8)*5);
+    text('167 Bikinians displaced — still cannot return home',450,H-25,`rgba(255,200,150,${a})`,11);
+  }
+}
+
+function drawNovaya(t){
+  // Arctic setting
+  sky('#1a2a4a','#3a5a7a',180);stars(30);
+  // snow/ice
+  ground(180,'#c8d0d8','#a0a8b0');
+  // arctic ocean
+  ctx.fillStyle='#2a4a6a';ctx.fillRect(0,180,W,40);
+  // ice
+  ctx.fillStyle='rgba(200,220,240,0.3)';for(let i=0;i<10;i++){ctx.fillRect(i*90,182,60,8)}
+
+  text('NOVAYA ZEMLYA — Soviet Nuclear Test Site',450,40,'#d0d8e0',13);
+  text('224 tests — 265 megatons total yield',450,60,'#8898a8',10);
+
+  // archipelago shape
+  ctx.fillStyle='#8898a0';
+  ctx.beginPath();ctx.moveTo(400,220);ctx.quadraticCurveTo(420,280,440,350);ctx.quadraticCurveTo(460,420,480,470);ctx.lineTo(500,470);ctx.quadraticCurveTo(480,400,470,340);ctx.quadraticCurveTo(450,260,430,220);ctx.closePath();ctx.fill();
+
+  // Tsar Bomba ground zero
+  if(t>0.2){
+    const p=Math.min(1,(t-0.2)/0.6);
+    // massive explosion
+    const fr=p*200;
+    const fg=ctx.createRadialGradient(450,300,0,450,300,fr);
+    fg.addColorStop(0,`rgba(255,255,220,${0.8*(1-p*0.5)})`);fg.addColorStop(0.4,`rgba(255,180,60,${0.5*(1-p*0.3)})`);fg.addColorStop(1,'rgba(255,60,0,0)');
+    ctx.fillStyle=fg;ctx.beginPath();ctx.arc(450,300,fr,0,Math.PI*2);ctx.fill();
+    if(p>0.3) mushroom(450,320,(p-0.3)/0.7,250,130,'rgba(240,180,80,0.7)');
+
+    // label
+    if(p>0.5){
+      text('Tsar Bomba — 50 MT',650,280,`rgba(255,200,100,${(p-0.5)*2})`,11,'left');
+      text('Oct 30, 1961',650,296,`rgba(200,160,80,${(p-0.5)*2})`,9,'left');
+    }
+  }
+
+  // scale comparison
+  if(t>0.7){
+    const a=Math.min(1,(t-0.7)*3);
+    text('Combined yield: more than all other nuclear tests worldwide',450,H-15,`rgba(200,200,220,${a})`,11);
+  }
+}
+
+function drawFireball(t){
+  sky('#1a1a2e','#2a2040',H);
+  const cx=450,cy=300;
+
+  text('NUCLEAR FIREBALL FORMATION',cx,40,'#f0e68c',14);
+
+  const p=ease(t);
+  // phase labels
+  const phases=[
+    [0,'0.1 μs — X-ray emission'],[0.15,'1 μs — Fireball forms'],[0.35,'0.01s — Hydrodynamic phase'],
+    [0.6,'1s — Maximum size'],[0.8,'10s — Buoyant rise']
+  ];
+  phases.forEach(([th,label])=>{
+    if(t>th) text(label,cx,70+phases.indexOf([th,label])*0,`rgba(200,200,200,${t>th+0.15?0.4:1})`,10);
+  });
+
+  // current phase label
+  let phaseLabel='';
+  if(t<0.15) phaseLabel='X-ray emission phase';
+  else if(t<0.35) phaseLabel='Fireball expansion (radiation-driven)';
+  else if(t<0.6) phaseLabel='Hydrodynamic growth (blast-driven)';
+  else if(t<0.8) phaseLabel='Maximum luminosity';
+  else phaseLabel='Buoyant rise — mushroom forming';
+  text(phaseLabel,cx,80,'#f0e68c',11);
+
+  const r=5+p*150;
+  const riseY=t>0.6?(t-0.6)*100:0;
+
+  // outer glow
+  const og=ctx.createRadialGradient(cx,cy-riseY,r*0.3,cx,cy-riseY,r*1.5);
+  og.addColorStop(0,'rgba(255,200,100,0)');og.addColorStop(0.5,`rgba(255,150,50,${0.1*(1-p*0.3)})`);og.addColorStop(1,'rgba(255,50,0,0)');
+  ctx.fillStyle=og;ctx.beginPath();ctx.arc(cx,cy-riseY,r*1.5,0,Math.PI*2);ctx.fill();
+
+  // fireball layers
+  const colors=t<0.5?
+    [['rgba(255,255,255,0.9)',0],['rgba(255,255,200,0.8)',0.3],['rgba(255,200,50,0.7)',0.6],['rgba(255,100,0,0.4)',0.85],['rgba(200,50,0,0)',1]]:
+    [['rgba(255,220,150,0.7)',0],['rgba(255,150,50,0.6)',0.3],['rgba(220,100,30,0.5)',0.6],['rgba(180,60,20,0.3)',0.85],['rgba(150,40,10,0)',1]];
+
+  const fg=ctx.createRadialGradient(cx,cy-riseY,0,cx,cy-riseY,r);
+  colors.forEach(([c,s])=>fg.addColorStop(s,c));
+  ctx.fillStyle=fg;ctx.beginPath();ctx.arc(cx,cy-riseY,r,0,Math.PI*2);ctx.fill();
+
+  // temperature label
+  const temp=t<0.3?'~100,000,000°C':t<0.6?'~10,000,000°C':'~1,000,000°C';
+  text(temp,cx,cy-riseY,`rgba(255,255,255,${0.7})`,10);
+
+  // shockwave separating from fireball
+  if(t>0.3){const sw=(t-0.3)*400;ctx.strokeStyle=`rgba(200,200,255,${0.3*Math.max(0,1-(t-0.3)*2)})`;ctx.lineWidth=2;ctx.beginPath();ctx.arc(cx,cy,sw,0,Math.PI*2);ctx.stroke()}
+}
+
+function drawShockwave(t){
+  sky('#87CEEB','#B0C4DE',200);
+  ground(200,'#9a9a8a','#7a7a6a');
+  // buildings at various distances
+  const buildings=[];
+  for(let i=0;i<25;i++){buildings.push({x:50+i*35,h:15+((i*17)%30),w:22})}
+
+  text('NUCLEAR BLAST SHOCKWAVE',450,30,'#333',14);
+
+  const blastX=50;// blast from left
+  const waveX=blastX+t*W*1.3;
+
+  // draw fireball at left
+  const fr=30;
+  const fg=ctx.createRadialGradient(blastX,200,0,blastX,200,fr);
+  fg.addColorStop(0,'rgba(255,200,100,0.6)');fg.addColorStop(1,'rgba(255,80,0,0)');
+  ctx.fillStyle=fg;ctx.beginPath();ctx.arc(blastX,200,fr,0,Math.PI*2);ctx.fill();
+
+  // shockwave front
+  if(t>0){
+    ctx.strokeStyle='rgba(200,200,255,0.6)';ctx.lineWidth=3;
+    ctx.beginPath();ctx.moveTo(waveX,0);ctx.lineTo(waveX,H);ctx.stroke();
+    // compressed air ahead
+    ctx.fillStyle='rgba(200,200,255,0.05)';ctx.fillRect(waveX-30,0,30,H);
+
+    // pressure label
+    const dist=waveX-blastX;
+    let psi='';
+    if(dist<100) psi='20+ psi — total destruction';
+    else if(dist<250) psi='10 psi — reinforced concrete damaged';
+    else if(dist<400) psi='5 psi — most buildings collapse';
+    else if(dist<600) psi='2 psi — windows shatter, walls crack';
+    else psi='<1 psi — windows break';
+    text(psi,waveX,50,'rgba(100,100,200,0.8)',10);
+  }
+
+  // buildings reacting to wave
+  buildings.forEach(b=>{
+    const dist=b.x-blastX;
+    const destroyed=waveX>b.x;
+    if(destroyed){
+      const severity=1-Math.min(1,dist/(W*0.8));
+      const remaining=b.h*(1-severity*0.9);
+      // rubble
+      ctx.fillStyle='#6a6a5a';
+      ctx.fillRect(b.x,200-remaining,b.w,remaining);
+      if(severity>0.5){for(let d=0;d<3;d++){ctx.fillStyle='#8a8a7a';ctx.fillRect(b.x+d*8-5,200-3,6,3)}}
+    } else {
+      ctx.fillStyle='#7a7a6a';ctx.fillRect(b.x,200-b.h,b.w,b.h);
+      // windows
+      for(let wy=0;wy<b.h-5;wy+=8){ctx.fillStyle='#9ab';ctx.fillRect(b.x+4,200-b.h+wy+3,5,4);ctx.fillRect(b.x+13,200-b.h+wy+3,5,4)}
+    }
+  });
+
+  // overpressure graph at bottom
+  const graphY=H-120,graphH=80,graphW=W-100;
+  ctx.strokeStyle='#555';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(50,graphY);ctx.lineTo(50,graphY+graphH);ctx.lineTo(50+graphW,graphY+graphH);ctx.stroke();
+  text('Overpressure (psi)',50,graphY-8,'#888',9,'left');
+  text('Distance →',W-60,graphY+graphH+15,'#888',9);
+  // curve
+  ctx.strokeStyle='#e74c3c';ctx.lineWidth=2;ctx.beginPath();
+  for(let x=0;x<graphW;x++){
+    const pres=graphH*Math.exp(-x/150);
+    ctx.lineTo(50+x,graphY+graphH-pres);
+  }
+  ctx.stroke();
+  // wave position on graph
+  const gx=50+(waveX-blastX)/W*graphW*0.8;
+  ctx.strokeStyle='rgba(100,100,255,0.6)';ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(gx,graphY);ctx.lineTo(gx,graphY+graphH);ctx.stroke();ctx.setLineDash([]);
+}
+
+function drawFallout(t){
+  sky('#87CEEB','#c0d0e0',100);ground(100,'#8aaa6a','#6a8a4a');
+
+  text('RADIOACTIVE FALLOUT PATTERN',450,25,'#333',14);
+  text('Ground burst — wind carrying fallout northeast',450,45,'#777',10);
+
+  // ground zero
+  const gzX=150,gzY=280;
+  ctx.fillStyle='#e74c3c';ctx.beginPath();ctx.arc(gzX,gzY,8,0,Math.PI*2);ctx.fill();
+  text('Ground Zero',gzX,gzY+20,'#c33',9);
+
+  // fallout plume expanding with time
+  if(t>0.05){
+    const p=Math.min(1,(t-0.05)/0.95);
+    // plume shape - elongated ellipse downwind
+    const plumeLen=p*600;
+    const plumeW=p*80;
+
+    // lethal zone
+    ctx.fillStyle=`rgba(255,50,0,${0.25*Math.min(1,p*3)})`;
+    ctx.beginPath();ctx.ellipse(gzX+plumeLen*0.15,gzY-20,plumeLen*0.2,plumeW*0.4,- 0.15,0,Math.PI*2);ctx.fill();
+
+    // severe zone
+    ctx.fillStyle=`rgba(255,150,0,${0.2*Math.min(1,p*2)})`;
+    ctx.beginPath();ctx.ellipse(gzX+plumeLen*0.3,gzY-30,plumeLen*0.4,plumeW*0.6,-0.15,0,Math.PI*2);ctx.fill();
+
+    // moderate zone
+    ctx.fillStyle=`rgba(255,220,0,${0.15*Math.min(1,p*1.5)})`;
+    ctx.beginPath();ctx.ellipse(gzX+plumeLen*0.45,gzY-40,plumeLen*0.6,plumeW*0.8,-0.15,0,Math.PI*2);ctx.fill();
+
+    // light zone
+    ctx.fillStyle=`rgba(200,200,100,${0.1*Math.min(1,p)})`;
+    ctx.beginPath();ctx.ellipse(gzX+plumeLen*0.55,gzY-50,plumeLen*0.8,plumeW,-0.15,0,Math.PI*2);ctx.fill();
+
+    // particles drifting
+    for(let i=0;i<40*p;i++){
+      const px=gzX+Math.random()*plumeLen*1.2;
+      const py=gzY-50+Math.random()*plumeW*2-plumeW;
+      ctx.fillStyle=`rgba(200,180,100,${0.2*Math.random()})`;ctx.beginPath();ctx.arc(px,py,1+Math.random(),0,Math.PI*2);ctx.fill();
+    }
+
+    // wind arrow
+    ctx.strokeStyle='#555';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(gzX+50,gzY-70);ctx.lineTo(gzX+120,gzY-80);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(gzX+115,gzY-86);ctx.lineTo(gzX+120,gzY-80);ctx.lineTo(gzX+112,gzY-76);ctx.fill();
+    text('Wind →',gzX+85,gzY-90,'#555',9);
+
+    // legend
+    if(p>0.3){
+      const la=Math.min(1,(p-0.3)*2);
+      const ly=H-100;
+      [[gzX+plumeLen*0.1,ly,'> 1000 rad/hr','#ff3232'],[gzX+plumeLen*0.25,ly+18,'100-1000 rad/hr','#ff9632'],[gzX+plumeLen*0.4,ly+36,'10-100 rad/hr','#ffdc32'],[gzX+plumeLen*0.55,ly+54,'1-10 rad/hr','#c8c864']].forEach(([x,y,label,c])=>{
+        ctx.fillStyle=c;ctx.globalAlpha=la;ctx.fillRect(x,y,10,10);ctx.globalAlpha=1;
+        text(label,x+15,y+9,`rgba(200,200,200,${la})`,9,'left');
+      });
+    }
+
+    // distance scale
+    if(p>0.5){
+      const da=Math.min(1,(p-0.5)*2);
+      text('0 mi',gzX,H-15,`rgba(150,150,150,${da})`,8);
+      text('50 mi',gzX+plumeLen*0.4,H-15,`rgba(150,150,150,${da})`,8);
+      text('100+ mi',gzX+plumeLen*0.8,H-15,`rgba(150,150,150,${da})`,8);
+    }
+  }
+
+  // 7-10 rule
+  if(t>0.7){
+    const a=Math.min(1,(t-0.7)*3);
+    text('7-10 Rule: Every 7× increase in time → radiation drops 10×',450,H-5,`rgba(200,200,150,${a})`,10);
+  }
+}
+
+function drawYieldCompare(t){
+  sky('#1a1a2e','#1a1a2e',H);
+
+  text('NUCLEAR YIELD COMPARISON — Relative Fireball Sizes',450,35,'#f0e68c',14);
+
+  const weapons=[
+    {name:'Davy Crockett',yield:0.02,color:'#4a9',note:'Tactical'},
+    {name:'Hiroshima',yield:15,color:'#e74c3c',note:'15 KT'},
+    {name:'Castle Bravo',yield:15000,color:'#e67e22',note:'15 MT'},
+    {name:'Tsar Bomba',yield:50000,color:'#f1c40f',note:'50 MT'}
+  ];
+
+  // fireball radius scales as cube root of yield
+  const maxR=180;
+  const maxYield=Math.pow(50000,1/3);
+
+  const baseY=350;
+  const spacing=W/(weapons.length+1);
+
+  weapons.forEach((w,i)=>{
+    const cx=spacing*(i+1);
+    const r=Math.max(3,Math.pow(w.yield,1/3)/maxYield*maxR);
+    const p=ease(Math.min(1,t*3-i*0.3));
+    const cr=r*p;
+
+    if(p>0){
+      // glow
+      const gg=ctx.createRadialGradient(cx,baseY,0,cx,baseY,cr*1.3);
+      gg.addColorStop(0,w.color);gg.addColorStop(0.6,w.color+'88');gg.addColorStop(1,w.color+'00');
+      ctx.fillStyle=gg;ctx.beginPath();ctx.arc(cx,baseY,cr*1.3,0,Math.PI*2);ctx.fill();
+
+      // fireball
+      ctx.fillStyle=w.color+'cc';ctx.beginPath();ctx.arc(cx,baseY,cr,0,Math.PI*2);ctx.fill();
+
+      text(w.name,cx,baseY+cr+20,'#ddd',11);
+      text(w.note,cx,baseY+cr+35,'#888',9);
+      text(`${w.yield>=1000?(w.yield/1000)+' MT':w.yield+' KT'}`,cx,baseY+cr+50,'#666',9);
+    }
+  });
+
+  // scale note
+  if(t>0.5){
+    const a=Math.min(1,(t-0.5)*2);
+    text('Fireball radius scales as ³√yield — 8× yield = 2× radius',450,H-25,`rgba(200,200,150,${a})`,10);
+    text('Tsar Bomba fireball was 5 miles wide — nearly touched the ground from 13,000 ft',450,H-10,`rgba(200,200,150,${a*0.7})`,9);
+  }
+}
+
+function drawEMP(t){
+  // Earth from space
+  sky('#000008','#000015',H);stars(100);
+
+  // Earth
+  const earthCx=450,earthCy=H+100,earthR=350;
+  const eg=ctx.createRadialGradient(earthCx-50,earthCy-100,50,earthCx,earthCy,earthR);
+  eg.addColorStop(0,'#2a5a3a');eg.addColorStop(0.3,'#1a4a2a');eg.addColorStop(0.8,'#0a2a1a');eg.addColorStop(1,'#050f08');
+  ctx.fillStyle=eg;ctx.beginPath();ctx.arc(earthCx,earthCy,earthR,0,Math.PI*2);ctx.fill();
+
+  // atmosphere
+  ctx.strokeStyle='rgba(100,150,255,0.2)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(earthCx,earthCy,earthR+5,Math.PI,0);ctx.stroke();
+
+  // continent outlines (simplified US)
+  ctx.fillStyle='rgba(60,100,60,0.5)';
+  ctx.beginPath();ctx.moveTo(250,earthCy-earthR+50);ctx.quadraticCurveTo(350,earthCy-earthR+30,500,earthCy-earthR+45);ctx.quadraticCurveTo(550,earthCy-earthR+60,600,earthCy-earthR+80);ctx.quadraticCurveTo(500,earthCy-earthR+100,350,earthCy-earthR+90);ctx.closePath();ctx.fill();
+
+  // city lights
+  const cities=[[320,earthCy-earthR+60],[380,earthCy-earthR+55],[450,earthCy-earthR+50],[520,earthCy-earthR+65],[400,earthCy-earthR+75],[340,earthCy-earthR+80]];
+
+  text('NUCLEAR EMP — High-Altitude Detonation',450,25,'#f0e68c',14);
+  text('Single weapon at 300 km blankets the continental US',450,45,'#888',11);
+
+  // detonation point
+  const detY=earthCy-earthR-80;
+  text('300 km altitude',380,detY-8,'#558',9);
+
+  if(t<0.1){ctx.fillStyle='#e74c3c';ctx.beginPath();ctx.arc(450,detY,3,0,Math.PI*2);ctx.fill()}
+
+  if(t>=0.1){
+    const p=(t-0.1)/0.9;
+    // detonation flash
+    if(p<0.2){const fr=5+p*60;const fg=ctx.createRadialGradient(450,detY,0,450,detY,fr);fg.addColorStop(0,`rgba(255,200,255,${0.8*(1-p/0.2)})`);fg.addColorStop(1,'rgba(100,50,200,0)');ctx.fillStyle=fg;ctx.beginPath();ctx.arc(450,detY,fr,0,Math.PI*2);ctx.fill()}
+
+    // gamma rays hitting atmosphere
+    if(p>0.05&&p<0.4){
+      const ga=Math.min(1,(p-0.05)/0.15);
+      for(let i=0;i<8;i++){
+        const a=Math.PI+i/8*Math.PI;
+        const dx=450+Math.cos(a)*earthR*0.6*ga;
+        const dy=detY+Math.sin(a)*earthR*0.6*ga;
+        ctx.strokeStyle=`rgba(200,100,255,${0.3*(1-p)})`;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(450,detY);ctx.lineTo(dx,dy);ctx.stroke();
+      }
+      text('Gamma rays →',550,detY+40,`rgba(200,150,255,${0.5*(1-p)})`,9);
+    }
+
+    // EMP field expanding along Earth's surface
+    if(p>0.15){
+      const ep=(p-0.15)/0.85;
+      const empAngle=ep*Math.PI*0.6;
+      ctx.strokeStyle=`rgba(100,200,255,${0.5*Math.min(1,ep*3)})`;ctx.lineWidth=2;
+      ctx.beginPath();ctx.arc(earthCx,earthCy,earthR+15,Math.PI+Math.PI/2-empAngle,Math.PI+Math.PI/2+empAngle);ctx.stroke();
+
+      // E1 pulse label
+      if(ep>0.1&&ep<0.5) text('E1 pulse (nanoseconds) — fries electronics',450,detY+100,`rgba(100,200,255,${(0.5-ep)*2})`,10);
+
+      // cities going dark
+      cities.forEach((c,i)=>{
+        const cityAngle=Math.atan2(c[1]-earthCy,c[0]-earthCx);
+        const hitAngle=Math.PI+Math.PI/2;
+        const angleDiff=Math.abs(cityAngle-hitAngle);
+        if(angleDiff<empAngle){
+          // dark city
+          ctx.fillStyle=`rgba(50,50,50,${ep})`;ctx.beginPath();ctx.arc(c[0],c[1],4,0,Math.PI*2);ctx.fill();
+        } else {
+          // lit city
+          ctx.fillStyle='rgba(255,220,100,0.7)';ctx.beginPath();ctx.arc(c[0],c[1],3,0,Math.PI*2);ctx.fill();
+        }
+      });
+
+      // grid failure
+      if(ep>0.4){
+        const ga=Math.min(1,(ep-0.4)*2);
+        text('⚡ Power grid failure across continent',450,earthCy-earthR+120,`rgba(255,200,100,${ga})`,11);
+        text('E3 pulse (seconds-minutes) — overloads transformers',450,earthCy-earthR+140,`rgba(200,180,150,${ga*0.7})`,9);
+      }
+    }
+  }
+}
+
+// Load first sim
+loadSim('trinity');
+</script>
+</body>
+</html>

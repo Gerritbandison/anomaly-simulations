@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Underground Nuclear Test - Visual Demonstration</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #1a1a2e; color: #eee; font-family: 'Segoe UI', system-ui, sans-serif; overflow-x: hidden; }
+
+  .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+
+  h1 { text-align: center; font-size: 1.8rem; margin: 20px 0 5px; color: #f0e68c; }
+  .subtitle { text-align: center; font-size: 0.95rem; color: #aaa; margin-bottom: 25px; }
+
+  .canvas-wrap { position: relative; width: 100%; max-width: 860px; margin: 0 auto; }
+  canvas { display: block; width: 100%; border-radius: 8px; border: 1px solid #333; }
+
+  .controls { display: flex; justify-content: center; gap: 12px; margin: 20px 0; flex-wrap: wrap; }
+  .btn { padding: 10px 22px; border: none; border-radius: 6px; font-size: 0.95rem; cursor: pointer; transition: all 0.2s; font-weight: 600; }
+  .btn-play { background: #e74c3c; color: white; }
+  .btn-play:hover { background: #c0392b; }
+  .btn-reset { background: #34495e; color: white; }
+  .btn-reset:hover { background: #2c3e50; }
+  .btn-speed { background: #2c3e50; color: #ddd; font-size: 0.85rem; padding: 8px 14px; }
+  .btn-speed.active { background: #e67e22; color: white; }
+
+  .phase-indicator { text-align: center; margin: 10px 0; min-height: 60px; }
+  .phase-title { font-size: 1.2rem; font-weight: bold; color: #f39c12; }
+  .phase-desc { font-size: 0.9rem; color: #bbb; margin-top: 4px; max-width: 600px; margin-left: auto; margin-right: auto; }
+
+  .timeline { display: flex; justify-content: space-between; max-width: 700px; margin: 15px auto 10px; padding: 0 10px; position: relative; }
+  .timeline::before { content: ''; position: absolute; top: 12px; left: 30px; right: 30px; height: 3px; background: #333; }
+  .timeline-dot { display: flex; flex-direction: column; align-items: center; z-index: 1; cursor: pointer; }
+  .timeline-dot .dot { width: 24px; height: 24px; border-radius: 50%; background: #333; border: 2px solid #555; transition: all 0.3s; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; color: #888; }
+  .timeline-dot .dot.active { background: #e74c3c; border-color: #f39c12; color: white; box-shadow: 0 0 12px rgba(231,76,60,0.5); }
+  .timeline-dot .dot.completed { background: #27ae60; border-color: #2ecc71; color: white; }
+  .timeline-dot .label { font-size: 0.7rem; color: #777; margin-top: 5px; text-align: center; max-width: 80px; }
+
+  .legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin: 15px 0; font-size: 0.8rem; }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-swatch { width: 14px; height: 14px; border-radius: 3px; }
+
+  .depth-label { font-size: 0.85rem; color: #999; text-align: center; margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Underground Nuclear Test</h1>
+  <p class="subtitle">Cross-section visualization of a typical Nevada Test Site detonation</p>
+
+  <div class="timeline" id="timeline"></div>
+
+  <div class="phase-indicator">
+    <div class="phase-title" id="phaseTitle">Phase 1: Preparation</div>
+    <div class="phase-desc" id="phaseDesc">A vertical shaft is drilled 600–5,000 ft into the desert floor. The device and diagnostic instruments are lowered to the bottom.</div>
+  </div>
+
+  <div class="canvas-wrap">
+    <canvas id="canvas" width="860" height="580"></canvas>
+  </div>
+  <p class="depth-label">Cross-section view — not to scale</p>
+
+  <div class="controls">
+    <button class="btn btn-play" id="playBtn" onclick="togglePlay()">▶ Play Animation</button>
+    <button class="btn btn-reset" onclick="resetAnimation()">↺ Reset</button>
+    <button class="btn btn-speed active" data-speed="1" onclick="setSpeed(1, this)">1×</button>
+    <button class="btn btn-speed" data-speed="2" onclick="setSpeed(2, this)">2×</button>
+    <button class="btn btn-speed" data-speed="0.5" onclick="setSpeed(0.5, this)">0.5×</button>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-swatch" style="background:#c2956b"></div> Desert soil</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#8B7355"></div> Volcanic tuff</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#666"></div> Concrete/stemming</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#ff4500"></div> Molten rock/plasma</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#8B4513"></div> Rubble chimney</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#2a2a2a"></div> Cavity</div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const W = 860, H = 580;
+
+const SURFACE_Y = 100;
+const SHAFT_X = W / 2;
+const SHAFT_W = 16;
+const SHAFT_DEPTH = 420;
+const DEVICE_Y = SURFACE_Y + SHAFT_DEPTH;
+const CAVITY_MAX_R = 90;
+const CHIMNEY_W = 100;
+const CRATER_DEPTH = 35;
+const CRATER_W = 140;
+
+const phases = [
+  { name: "Preparation", desc: "A vertical shaft is drilled 600–5,000 ft into the desert floor. The device and diagnostic instruments are lowered to the bottom, then the shaft is backfilled with sand, gravel, and concrete plugs." },
+  { name: "Detonation", desc: "The device fires. In microseconds, temperatures reach millions of degrees — vaporizing surrounding rock into a cavity of superheated plasma and gas." },
+  { name: "Cavity Expansion", desc: "The vaporized rock expands outward, melting and crushing surrounding geology. A spherical cavity of molten rock and gas forms around ground zero." },
+  { name: "Cavity Collapse", desc: "As the cavity cools, the roof can no longer support itself. Rock collapses inward, filling the void with rubble and creating a vertical 'chimney' structure." },
+  { name: "Subsidence Crater", desc: "The chimney collapse propagates upward to the surface, causing the ground to sink and form a visible crater — sometimes hundreds of feet across." },
+  { name: "Final State", desc: "The radioactive material is trapped in fused glass and rubble underground. A subsidence crater marks the surface. The Nevada Test Site has hundreds of these." }
+];
+
+let currentPhase = 0;
+let animProgress = 0;
+let playing = false;
+let speed = 1;
+let animFrame = null;
+let particles = [];
+let shakeOffset = { x: 0, y: 0 };
+let shakeIntensity = 0;
+
+function initTimeline() {
+  const tl = document.getElementById('timeline');
+  tl.innerHTML = '';
+  phases.forEach((p, i) => {
+    const div = document.createElement('div');
+    div.className = 'timeline-dot';
+    div.innerHTML = `<div class="dot ${i === 0 ? 'active' : ''}" id="dot${i}">${i + 1}</div><div class="label">${p.name}</div>`;
+    div.onclick = () => jumpToPhase(i);
+    tl.appendChild(div);
+  });
+}
+
+function updatePhaseUI() {
+  document.getElementById('phaseTitle').textContent = `Phase ${currentPhase + 1}: ${phases[currentPhase].name}`;
+  document.getElementById('phaseDesc').textContent = phases[currentPhase].desc;
+  phases.forEach((_, i) => {
+    const dot = document.getElementById(`dot${i}`);
+    dot.className = 'dot' + (i === currentPhase ? ' active' : i < currentPhase ? ' completed' : '');
+  });
+}
+
+function jumpToPhase(i) {
+  currentPhase = i;
+  animProgress = 0;
+  particles = [];
+  shakeIntensity = 0;
+  updatePhaseUI();
+  if (!playing) drawFrame();
+}
+
+function togglePlay() {
+  playing = !playing;
+  document.getElementById('playBtn').textContent = playing ? '⏸ Pause' : '▶ Play Animation';
+  if (playing) animate();
+  else cancelAnimationFrame(animFrame);
+}
+
+function resetAnimation() {
+  playing = false;
+  document.getElementById('playBtn').textContent = '▶ Play Animation';
+  cancelAnimationFrame(animFrame);
+  currentPhase = 0;
+  animProgress = 0;
+  particles = [];
+  shakeIntensity = 0;
+  updatePhaseUI();
+  drawFrame();
+}
+
+function setSpeed(s, btn) {
+  speed = s;
+  document.querySelectorAll('.btn-speed').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// Drawing helpers
+function drawSky() {
+  const grad = ctx.createLinearGradient(0, 0, 0, SURFACE_Y);
+  grad.addColorStop(0, '#1a1a3e');
+  grad.addColorStop(1, '#2d1f4e');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, SURFACE_Y);
+
+  // Stars
+  const seed = 42;
+  for (let i = 0; i < 40; i++) {
+    const x = ((seed * (i + 1) * 137) % W);
+    const y = ((seed * (i + 1) * 91) % (SURFACE_Y - 10));
+    const r = ((i * 7) % 3) * 0.4 + 0.5;
+    ctx.fillStyle = `rgba(255,255,255,${0.4 + (i % 5) * 0.12})`;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawSurface(craterProgress) {
+  // Desert surface
+  ctx.fillStyle = '#c2956b';
+  ctx.fillRect(0, SURFACE_Y - 4, W, 8);
+
+  // Surface features
+  ctx.fillStyle = '#b8895f';
+  for (let x = 0; x < W; x += 60) {
+    const h = 2 + (x * 7 % 5);
+    ctx.fillRect(x, SURFACE_Y - h, 30, h);
+  }
+
+  // Shrubs
+  ctx.fillStyle = '#5a7247';
+  [[80, 6], [200, 5], [650, 7], [760, 4]].forEach(([x, r]) => {
+    ctx.beginPath();
+    ctx.arc(x, SURFACE_Y - 2, r, Math.PI, 0);
+    ctx.fill();
+  });
+
+  // Crater
+  if (craterProgress > 0) {
+    const d = CRATER_DEPTH * craterProgress;
+    const w = CRATER_W * craterProgress;
+    ctx.fillStyle = '#1a1a2e';
+    ctx.beginPath();
+    ctx.moveTo(SHAFT_X - w, SURFACE_Y - 2);
+    ctx.quadraticCurveTo(SHAFT_X, SURFACE_Y + d, SHAFT_X + w, SURFACE_Y - 2);
+    ctx.fill();
+
+    // Crater rim
+    ctx.strokeStyle = '#a07850';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(SHAFT_X - w - 15, SURFACE_Y - 4);
+    ctx.quadraticCurveTo(SHAFT_X - w, SURFACE_Y - 8 * craterProgress, SHAFT_X - w + 10, SURFACE_Y - 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(SHAFT_X + w + 15, SURFACE_Y - 4);
+    ctx.quadraticCurveTo(SHAFT_X + w, SURFACE_Y - 8 * craterProgress, SHAFT_X + w - 10, SURFACE_Y - 2);
+    ctx.stroke();
+  }
+}
+
+function drawUnderground() {
+  // Layers
+  const grad = ctx.createLinearGradient(0, SURFACE_Y, 0, H);
+  grad.addColorStop(0, '#a0804a');
+  grad.addColorStop(0.15, '#8B7355');
+  grad.addColorStop(0.4, '#7a6248');
+  grad.addColorStop(0.7, '#6b5540');
+  grad.addColorStop(1, '#5a4535');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, SURFACE_Y + 4, W, H - SURFACE_Y);
+
+  // Rock texture
+  ctx.fillStyle = 'rgba(0,0,0,0.08)';
+  for (let i = 0; i < 120; i++) {
+    const x = (i * 173 + 31) % W;
+    const y = SURFACE_Y + 20 + (i * 97 + 17) % (H - SURFACE_Y - 30);
+    const w = 3 + (i * 13) % 8;
+    const h = 2 + (i * 7) % 4;
+    ctx.fillRect(x, y, w, h);
+  }
+
+  // Layer lines
+  ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+  ctx.lineWidth = 1;
+  [170, 260, 370].forEach(y => {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    for (let x = 0; x < W; x += 20) {
+      ctx.lineTo(x, y + Math.sin(x * 0.02) * 5);
+    }
+    ctx.stroke();
+  });
+
+  // Depth markers
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.font = '11px monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('~200 ft', 15, 180);
+  ctx.fillText('~800 ft', 15, 280);
+  ctx.fillText('~2000 ft', 15, 400);
+  ctx.fillText('~4000 ft', 15, 520);
+}
+
+function drawShaft(progress) {
+  // Shaft hole
+  ctx.fillStyle = '#2a2a2a';
+  ctx.fillRect(SHAFT_X - SHAFT_W/2, SURFACE_Y, SHAFT_W, SHAFT_DEPTH * progress);
+
+  // Shaft walls
+  ctx.strokeStyle = '#555';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(SHAFT_X - SHAFT_W/2, SURFACE_Y);
+  ctx.lineTo(SHAFT_X - SHAFT_W/2, SURFACE_Y + SHAFT_DEPTH * progress);
+  ctx.moveTo(SHAFT_X + SHAFT_W/2, SURFACE_Y);
+  ctx.lineTo(SHAFT_X + SHAFT_W/2, SURFACE_Y + SHAFT_DEPTH * progress);
+  ctx.stroke();
+}
+
+function drawStemming(progress) {
+  if (progress <= 0) return;
+  const stemmingH = SHAFT_DEPTH * 0.85 * progress;
+
+  // Concrete plugs
+  const plugPositions = [0.2, 0.45, 0.7, 0.85];
+  plugPositions.forEach(p => {
+    const py = SURFACE_Y + SHAFT_DEPTH * p;
+    if (py < SURFACE_Y + SHAFT_DEPTH - stemmingH + SURFACE_Y) return;
+    ctx.fillStyle = '#777';
+    ctx.fillRect(SHAFT_X - SHAFT_W/2, py - 4, SHAFT_W, 8);
+  });
+
+  // Fill material
+  ctx.fillStyle = '#666';
+  for (let y = DEVICE_Y - 20; y > DEVICE_Y - stemmingH; y -= 6) {
+    const alpha = 0.4 + ((y * 3) % 30) / 100;
+    ctx.fillStyle = `rgba(120,110,100,${alpha})`;
+    ctx.fillRect(SHAFT_X - SHAFT_W/2 + 1, y, SHAFT_W - 2, 4);
+  }
+}
+
+function drawDevice() {
+  // Device
+  ctx.fillStyle = '#e74c3c';
+  ctx.beginPath();
+  ctx.arc(SHAFT_X, DEVICE_Y, 8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#c0392b';
+  ctx.beginPath();
+  ctx.arc(SHAFT_X, DEVICE_Y, 5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Cable
+  ctx.strokeStyle = '#e74c3c';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([4, 3]);
+  ctx.beginPath();
+  ctx.moveTo(SHAFT_X, DEVICE_Y - 8);
+  ctx.lineTo(SHAFT_X, SURFACE_Y);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Label
+  ctx.fillStyle = '#ff6b6b';
+  ctx.font = 'bold 11px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('DEVICE', SHAFT_X + 15, DEVICE_Y + 4);
+  ctx.fillStyle = '#aaa';
+  ctx.font = '10px sans-serif';
+  ctx.fillText('+ diagnostics', SHAFT_X + 15, DEVICE_Y + 18);
+}
+
+function drawDetonation(progress) {
+  const r = 15 + progress * 35;
+
+  // White flash
+  if (progress < 0.3) {
+    const flashAlpha = (1 - progress / 0.3) * 0.6;
+    ctx.fillStyle = `rgba(255,255,255,${flashAlpha})`;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  // Fireball
+  const grad = ctx.createRadialGradient(SHAFT_X, DEVICE_Y, 0, SHAFT_X, DEVICE_Y, r);
+  grad.addColorStop(0, `rgba(255,255,200,${0.9})`);
+  grad.addColorStop(0.3, `rgba(255,200,50,${0.8})`);
+  grad.addColorStop(0.6, `rgba(255,100,0,${0.6})`);
+  grad.addColorStop(1, `rgba(255,50,0,0)`);
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(SHAFT_X, DEVICE_Y, r, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawCavity(progress) {
+  const r = CAVITY_MAX_R * progress;
+
+  // Molten rock ring
+  const grad = ctx.createRadialGradient(SHAFT_X, DEVICE_Y, r * 0.6, SHAFT_X, DEVICE_Y, r);
+  grad.addColorStop(0, 'rgba(40,20,10,0.95)');
+  grad.addColorStop(0.5, 'rgba(180,60,0,0.8)');
+  grad.addColorStop(0.8, 'rgba(255,80,0,0.6)');
+  grad.addColorStop(1, 'rgba(255,120,0,0)');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(SHAFT_X, DEVICE_Y, r, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Inner cavity (void)
+  ctx.fillStyle = '#1a1010';
+  ctx.beginPath();
+  ctx.arc(SHAFT_X, DEVICE_Y, r * 0.55, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Glow effect
+  const glow = ctx.createRadialGradient(SHAFT_X, DEVICE_Y, 0, SHAFT_X, DEVICE_Y, r * 0.55);
+  glow.addColorStop(0, 'rgba(255,150,50,0.15)');
+  glow.addColorStop(1, 'rgba(255,100,0,0)');
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(SHAFT_X, DEVICE_Y, r * 0.55, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Label
+  if (progress > 0.5) {
+    ctx.fillStyle = `rgba(255,200,150,${Math.min(1, (progress - 0.5) * 2)})`;
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Molten cavity', SHAFT_X, DEVICE_Y + r + 20);
+    ctx.fillText(`~${Math.round(r * 2)} ft radius`, SHAFT_X, DEVICE_Y + r + 34);
+  }
+}
+
+function drawChimney(progress) {
+  const cavR = CAVITY_MAX_R;
+  const chimneyTop = DEVICE_Y - cavR - (DEVICE_Y - cavR - SURFACE_Y - 10) * progress;
+  const chimneyHalfW = CHIMNEY_W / 2;
+
+  // Chimney column of rubble
+  ctx.fillStyle = '#5a3a25';
+  ctx.beginPath();
+  ctx.moveTo(SHAFT_X - chimneyHalfW, DEVICE_Y - cavR * 0.4);
+  ctx.lineTo(SHAFT_X - chimneyHalfW * 0.8, chimneyTop);
+  ctx.lineTo(SHAFT_X + chimneyHalfW * 0.8, chimneyTop);
+  ctx.lineTo(SHAFT_X + chimneyHalfW, DEVICE_Y - cavR * 0.4);
+  ctx.closePath();
+  ctx.fill();
+
+  // Rubble texture
+  ctx.fillStyle = 'rgba(90,50,30,0.8)';
+  for (let i = 0; i < 60 * progress; i++) {
+    const x = SHAFT_X - chimneyHalfW * 0.7 + (i * 137 % (chimneyHalfW * 1.4));
+    const y = chimneyTop + (i * 97 % (DEVICE_Y - cavR * 0.4 - chimneyTop));
+    const s = 3 + (i * 11) % 8;
+    ctx.fillStyle = `rgba(${80 + i % 40},${40 + i % 30},${20 + i % 20},0.6)`;
+    ctx.fillRect(x, y, s, s * 0.7);
+  }
+
+  // Remaining cavity (partially collapsed)
+  ctx.fillStyle = '#1a1010';
+  ctx.beginPath();
+  ctx.ellipse(SHAFT_X, DEVICE_Y + cavR * 0.3, cavR * 0.7, cavR * 0.4, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Fused glass layer at bottom
+  ctx.fillStyle = 'rgba(100,140,80,0.4)';
+  ctx.beginPath();
+  ctx.ellipse(SHAFT_X, DEVICE_Y + cavR * 0.5, cavR * 0.6, cavR * 0.15, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Labels
+  if (progress > 0.3) {
+    const a = Math.min(1, (progress - 0.3) * 2);
+    ctx.fillStyle = `rgba(200,180,150,${a})`;
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('Rubble chimney', SHAFT_X + chimneyHalfW + 10, (chimneyTop + DEVICE_Y) / 2);
+
+    ctx.fillStyle = `rgba(150,200,130,${a})`;
+    ctx.fillText('Fused trinitite glass', SHAFT_X + cavR * 0.7 + 10, DEVICE_Y + cavR * 0.55);
+
+    ctx.fillStyle = `rgba(200,150,100,${a})`;
+    ctx.fillText('Trapped radioactive', SHAFT_X + cavR * 0.7 + 10, DEVICE_Y + cavR * 0.55 + 15);
+    ctx.fillText('material', SHAFT_X + cavR * 0.7 + 10, DEVICE_Y + cavR * 0.55 + 29);
+  }
+}
+
+function drawSubsidenceCrater(progress) {
+  drawChimney(1);
+
+  // Crater on surface
+  const d = CRATER_DEPTH * progress;
+  const w = CRATER_W * progress;
+
+  // Disturbed surface
+  if (progress > 0) {
+    ctx.fillStyle = '#8a6a40';
+    ctx.beginPath();
+    ctx.moveTo(SHAFT_X - w - 30, SURFACE_Y);
+    ctx.quadraticCurveTo(SHAFT_X, SURFACE_Y + d + 5, SHAFT_X + w + 30, SURFACE_Y);
+    ctx.fill();
+  }
+}
+
+function drawDustCloud(progress) {
+  if (progress <= 0) return;
+  for (let i = 0; i < 8; i++) {
+    const angle = (i / 8) * Math.PI * 2 + progress * 0.5;
+    const dist = 30 + progress * 80;
+    const x = SHAFT_X + Math.cos(angle) * dist;
+    const y = SURFACE_Y - 20 - progress * 40 + Math.sin(angle * 2) * 10;
+    const r = 10 + progress * 25;
+    const a = Math.max(0, 0.3 - progress * 0.25);
+    ctx.fillStyle = `rgba(180,160,130,${a})`;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawLabels() {
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText('SURFACE', W - 15, SURFACE_Y - 8);
+
+  // Surface structure label for phase 0
+  if (currentPhase === 0) {
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Equipment trailers', 180, SURFACE_Y - 15);
+    ctx.fillText('(miles away)', 180, SURFACE_Y - 3);
+
+    // Tiny trailer icons
+    ctx.fillStyle = 'rgba(200,200,200,0.4)';
+    ctx.fillRect(160, SURFACE_Y - 26, 15, 8);
+    ctx.fillRect(180, SURFACE_Y - 26, 15, 8);
+  }
+}
+
+function drawFrame() {
+  ctx.save();
+  ctx.translate(shakeOffset.x, shakeOffset.y);
+
+  ctx.clearRect(-10, -10, W + 20, H + 20);
+
+  let craterProgress = 0;
+
+  drawSky();
+  drawUnderground();
+
+  switch (currentPhase) {
+    case 0: // Preparation
+      const shaftP = Math.min(1, animProgress * 2);
+      const stemP = Math.max(0, (animProgress - 0.5) * 2);
+      drawShaft(shaftP);
+      if (shaftP >= 1) drawDevice();
+      drawStemming(stemP);
+      drawSurface(0);
+      break;
+
+    case 1: // Detonation
+      drawShaft(1);
+      drawStemming(1);
+      drawDetonation(animProgress);
+      shakeIntensity = Math.sin(animProgress * Math.PI) * 4;
+      drawSurface(0);
+      break;
+
+    case 2: // Cavity expansion
+      drawShaft(1);
+      drawCavity(animProgress);
+      shakeIntensity = Math.max(0, (1 - animProgress) * 2);
+      drawSurface(0);
+      break;
+
+    case 3: // Collapse
+      drawShaft(1);
+      drawChimney(animProgress);
+      shakeIntensity = animProgress * 1.5;
+      drawSurface(0);
+      break;
+
+    case 4: // Subsidence
+      drawShaft(1);
+      drawSubsidenceCrater(animProgress);
+      craterProgress = animProgress;
+      shakeIntensity = Math.sin(animProgress * Math.PI) * 3;
+      drawSurface(craterProgress);
+      drawDustCloud(animProgress);
+      break;
+
+    case 5: // Final state
+      drawShaft(1);
+      drawSubsidenceCrater(1);
+      drawSurface(1);
+
+      // Annotation lines
+      if (animProgress > 0.3) {
+        const a = Math.min(1, (animProgress - 0.3) * 2);
+        ctx.strokeStyle = `rgba(255,200,100,${a * 0.5})`;
+        ctx.setLineDash([3, 3]);
+        ctx.lineWidth = 1;
+
+        // Crater label line
+        ctx.beginPath();
+        ctx.moveTo(SHAFT_X + CRATER_W + 10, SURFACE_Y + 5);
+        ctx.lineTo(SHAFT_X + CRATER_W + 60, SURFACE_Y - 25);
+        ctx.stroke();
+
+        ctx.fillStyle = `rgba(255,200,100,${a})`;
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText('Subsidence crater', SHAFT_X + CRATER_W + 65, SURFACE_Y - 22);
+        ctx.font = '10px sans-serif';
+        ctx.fillText('Visible from aerial photos', SHAFT_X + CRATER_W + 65, SURFACE_Y - 8);
+
+        ctx.setLineDash([]);
+      }
+      break;
+  }
+
+  drawLabels();
+
+  ctx.restore();
+
+  // Shake
+  if (shakeIntensity > 0) {
+    shakeOffset.x = (Math.random() - 0.5) * shakeIntensity;
+    shakeOffset.y = (Math.random() - 0.5) * shakeIntensity;
+  } else {
+    shakeOffset.x = 0;
+    shakeOffset.y = 0;
+  }
+}
+
+function animate() {
+  if (!playing) return;
+
+  animProgress += 0.004 * speed;
+
+  if (animProgress >= 1) {
+    animProgress = 0;
+    if (currentPhase < phases.length - 1) {
+      currentPhase++;
+      updatePhaseUI();
+    } else {
+      animProgress = 1;
+      playing = false;
+      document.getElementById('playBtn').textContent = '▶ Play Animation';
+      drawFrame();
+      return;
+    }
+  }
+
+  drawFrame();
+  animFrame = requestAnimationFrame(animate);
+}
+
+// Init
+initTimeline();
+updatePhaseUI();
+drawFrame();
+</script>
+
+</body>
+</html>

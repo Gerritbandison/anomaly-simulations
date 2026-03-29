@@ -1,0 +1,1539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exotic Propulsion Systems — Simulation Laboratory</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0a12; color: #e0e0e8; font-family: 'Segoe UI', system-ui, sans-serif; overflow-x: hidden; }
+
+  .header { text-align: center; padding: 30px 20px 10px; background: linear-gradient(180deg, #12122a 0%, #0a0a12 100%); }
+  .header h1 { font-size: 1.8em; background: linear-gradient(90deg, #00d4ff, #7b5ea7, #ff6ec7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .header p { color: #8888aa; margin-top: 6px; font-size: 0.9em; }
+
+  .nav-bar { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; padding: 16px 10px; background: #0e0e1a; border-bottom: 1px solid #1a1a2e; position: sticky; top: 0; z-index: 100; }
+  .nav-btn { padding: 6px 12px; border: 1px solid #2a2a4a; border-radius: 20px; background: #14142a; color: #9999bb; cursor: pointer; font-size: 0.75em; transition: all 0.3s; }
+  .nav-btn:hover { border-color: #5555aa; color: #ccccee; }
+  .nav-btn.active { background: linear-gradient(135deg, #2a1a5e, #1a3a6e); border-color: #6666cc; color: #fff; box-shadow: 0 0 12px rgba(100,100,255,0.3); }
+
+  .sim-container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  .sim-panel { display: none; }
+  .sim-panel.active { display: block; }
+
+  .sim-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 10px; }
+  @media (max-width: 800px) { .sim-grid { grid-template-columns: 1fr; } }
+
+  .card { background: #12122a; border: 1px solid #1e1e3a; border-radius: 12px; padding: 20px; }
+  .card h3 { color: #7ba4ff; font-size: 1em; margin-bottom: 10px; }
+  .card p, .card li { font-size: 0.85em; line-height: 1.6; color: #aaaacc; }
+  .card ul { padding-left: 18px; }
+
+  canvas { width: 100%; border-radius: 10px; background: #08081a; border: 1px solid #1a1a2e; }
+
+  .info-banner { background: linear-gradient(135deg, #1a1040, #0a2040); border: 1px solid #2a2a5a; border-radius: 10px; padding: 16px 20px; margin-bottom: 16px; }
+  .info-banner h2 { font-size: 1.2em; color: #8fb8ff; margin-bottom: 6px; }
+  .info-banner .subtitle { font-size: 0.8em; color: #ff9d5c; margin-bottom: 8px; }
+  .info-banner p { font-size: 0.82em; color: #9999bb; line-height: 1.6; }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 12px 0; }
+  .ctrl-group { display: flex; flex-direction: column; gap: 3px; }
+  .ctrl-group label { font-size: 0.7em; color: #7777aa; text-transform: uppercase; letter-spacing: 1px; }
+  .ctrl-group input[type=range] { width: 140px; accent-color: #6666cc; }
+  .ctrl-group .val { font-size: 0.75em; color: #aaaadd; text-align: center; }
+
+  .metric-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .metric { background: #0e0e20; border: 1px solid #1e1e3a; border-radius: 8px; padding: 8px 14px; min-width: 120px; }
+  .metric .label { font-size: 0.65em; color: #6666aa; text-transform: uppercase; letter-spacing: 1px; }
+  .metric .value { font-size: 1.1em; color: #00d4ff; font-weight: 600; margin-top: 2px; }
+
+  .eq { background: #0a0a1e; border: 1px solid #1a1a3a; border-radius: 6px; padding: 10px 14px; margin: 8px 0; font-family: 'Courier New', monospace; font-size: 0.82em; color: #ccaaff; overflow-x: auto; white-space: pre-wrap; }
+
+  .patent-tag { display: inline-block; background: #2a1a0a; border: 1px solid #cc8833; color: #ffaa55; font-size: 0.7em; padding: 2px 8px; border-radius: 10px; margin-bottom: 8px; }
+
+  .run-btn { padding: 8px 20px; border: none; border-radius: 20px; background: linear-gradient(135deg, #4040aa, #6030a0); color: #fff; cursor: pointer; font-size: 0.85em; transition: all 0.3s; }
+  .run-btn:hover { box-shadow: 0 0 20px rgba(100,60,200,0.5); transform: scale(1.03); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Exotic Propulsion Simulation Laboratory</h1>
+  <p>10 Theoretical Drive Systems — Interactive Physics Models</p>
+</div>
+
+<div class="nav-bar" id="navBar"></div>
+
+<div class="sim-container" id="simContainer"></div>
+
+<script>
+const METHODS = [
+  {
+    id: "pais-ief",
+    name: "1. Pais Inertial Mass Reduction",
+    short: "Pais IEF Drive",
+    patent: "US Patent 10,144,532 — Craft Using an Inertial Mass Reduction Device",
+    subtitle: "US Navy — Salvatore Cezar Pais (2018)",
+    desc: `The Pais Effect proposes that by spinning electrically charged matter at extreme angular velocities within a rapidly rotating cavity, the resulting high-energy electromagnetic field interactions can locally reduce the inertial mass of the craft. This exploits the quantum vacuum fluctuation energy density to create an asymmetric polarization of the local vacuum, effectively decoupling inertial mass from gravitational mass. The craft would experience dramatically reduced resistance to acceleration, enabling instantaneous velocity changes and hypersonic flight without inertial effects on occupants.`,
+    equations: [
+      "F_drive = m₀·a · (1 − η_reduction)",
+      "η_reduction = (μ₀·σ·ω²·r⁴·E²) / (8·m₀·c⁴)",
+      "E_vacuum = ℏω³ / (2π²c³)  — Zero-point energy density",
+      "Δm_inertial = m₀ · [1 − exp(−α·B²·ω/c²)]",
+      "Where: σ = charge density, ω = angular velocity",
+      "r = cavity radius, B = magnetic flux density"
+    ],
+    params: [
+      { name: "Angular Velocity (rad/s)", key: "omega", min: 1e4, max: 1e8, init: 1e6, log: true },
+      { name: "Cavity Radius (m)", key: "radius", min: 0.5, max: 5, init: 2, log: false },
+      { name: "Charge Density (C/m³)", key: "sigma", min: 1e3, max: 1e8, init: 1e5, log: true },
+      { name: "Magnetic Field (T)", key: "B", min: 1, max: 50, init: 10, log: false }
+    ],
+    simulate: function(p, canvas) {
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+      const cx = W/2, cy = H/2;
+
+      const c = 3e8, mu0 = 1.2566e-6, hbar = 1.0546e-34;
+      const m0 = 5000; // craft mass kg
+      const alpha = 1e-18;
+      const eta = Math.min(0.999, (mu0 * p.sigma * p.omega*p.omega * Math.pow(p.radius,4) * p.B*p.B) / (8 * m0 * Math.pow(c,4)));
+      const effectiveMass = m0 * (1 - eta);
+      const maxAccel = eta > 0.01 ? (1e6 / effectiveMass) : (1e6 / m0);
+      const maxG = maxAccel / 9.81;
+
+      let t = 0;
+      function draw() {
+        ctx.fillStyle = 'rgba(8,8,26,0.15)';
+        ctx.fillRect(0,0,W,H);
+
+        t += 0.02;
+
+        // Draw vacuum energy field
+        for (let i = 0; i < 60; i++) {
+          const angle = (i / 60) * Math.PI * 2 + t * 0.3;
+          const dist = 80 + Math.sin(t * 2 + i * 0.5) * 20 * eta * 100;
+          const x = cx + Math.cos(angle) * dist;
+          const y = cy + Math.sin(angle) * dist;
+          const intensity = eta * 200;
+          ctx.beginPath();
+          ctx.arc(x, y, 1.5 + eta * 3, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(100,150,255,${0.2 + intensity/400})`;
+          ctx.fill();
+        }
+
+        // Rotating cavity visualization
+        const rings = 5;
+        for (let r = 0; r < rings; r++) {
+          const rad = 30 + r * 18;
+          const rotSpeed = (p.omega / 1e6) * (1 + r * 0.3);
+          ctx.beginPath();
+          ctx.strokeStyle = `rgba(${100 + r*30}, ${100 + eta*200}, 255, ${0.3 + eta * 0.5})`;
+          ctx.lineWidth = 1.5 + eta * 2;
+          for (let a = 0; a < Math.PI * 2; a += 0.05) {
+            const wobble = Math.sin(a * 8 + t * rotSpeed) * (3 + eta * 10);
+            const px = cx + Math.cos(a) * (rad + wobble);
+            const py = cy + Math.sin(a) * (rad + wobble);
+            if (a === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+          }
+          ctx.closePath();
+          ctx.stroke();
+        }
+
+        // Central craft
+        const glow = 15 + eta * 60;
+        const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, glow);
+        grad.addColorStop(0, `rgba(200,220,255,${0.8 + eta * 0.2})`);
+        grad.addColorStop(0.5, `rgba(100,140,255,${0.4 * eta})`);
+        grad.addColorStop(1, 'rgba(50,80,200,0)');
+        ctx.beginPath();
+        ctx.arc(cx, cy, glow, 0, Math.PI * 2);
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        // Craft triangle
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(t * (p.omega / 1e7));
+        ctx.beginPath();
+        ctx.moveTo(0, -18);
+        ctx.lineTo(15, 12);
+        ctx.lineTo(-15, 12);
+        ctx.closePath();
+        ctx.fillStyle = '#c0c8e0';
+        ctx.fill();
+        ctx.strokeStyle = '#6688cc';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.restore();
+
+        // Mass reduction visualization — particle ejection
+        if (eta > 0.01) {
+          for (let i = 0; i < Math.floor(eta * 30); i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const dist = 100 + Math.random() * 80;
+            const x = cx + Math.cos(angle + t) * dist;
+            const y = cy + Math.sin(angle + t) * dist;
+            ctx.beginPath();
+            ctx.arc(x, y, 0.8, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255,180,100,${0.1 + Math.random() * 0.3})`;
+            ctx.fill();
+          }
+        }
+
+        requestAnimationFrame(draw);
+      }
+
+      draw();
+      return {
+        metrics: [
+          { label: "Mass Reduction", value: (eta * 100).toFixed(4) + "%" },
+          { label: "Effective Mass", value: effectiveMass.toFixed(1) + " kg" },
+          { label: "Max Acceleration", value: maxAccel.toExponential(2) + " m/s²" },
+          { label: "Max G-Force Equiv", value: maxG.toExponential(2) + " g" },
+          { label: "Vacuum Energy Coupling", value: (eta * 1e15).toExponential(2) + " J/m³" }
+        ]
+      };
+    }
+  },
+  {
+    id: "pais-hfgw",
+    name: "2. Pais High-Freq Gravitational Wave Generator",
+    short: "HFGW Generator",
+    patent: "US Patent 10,322,827 — High Frequency Gravitational Wave Generator",
+    subtitle: "US Navy — Salvatore Cezar Pais (2019)",
+    desc: `This patent describes generating high-frequency gravitational waves (HFGWs) through controlled vibration of an electrically charged mass at extremely high frequencies. By accelerating an electrified gas or plasma in a rapid, controlled manner inside an accelerator cavity, the resulting gravitational wave emissions could theoretically create a propulsive pressure gradient. The device uses a microwave emitter to vibrate a charged medium, generating gravitational radiation at GHz frequencies — far beyond anything detectable by LIGO. This could create localized spacetime curvature gradients for propulsion.`,
+    equations: [
+      "P_gw = (G/5c⁵) · (d³Q_ij/dt³)²  — Quadrupole radiation",
+      "h_strain = (4G·M·ω²·r²) / (c⁴·R)",
+      "F_prop = (c²/16πG) · ∫ (∂h/∂z)² dA",
+      "ω_gw = 2π·f_microwave · N_harmonics",
+      "E_input = P_microwave · Q_cavity · τ_coherence"
+    ],
+    params: [
+      { name: "Frequency (GHz)", key: "freq", min: 1, max: 300, init: 50, log: false },
+      { name: "Cavity Q-Factor", key: "Q", min: 1e3, max: 1e9, init: 1e6, log: true },
+      { name: "Input Power (MW)", key: "power", min: 0.1, max: 1000, init: 10, log: true },
+      { name: "Charge Mass (kg)", key: "mass", min: 0.01, max: 10, init: 0.5, log: true }
+    ],
+    simulate: function(p, canvas) {
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+      const cx = W/2, cy = H/2;
+      const G = 6.674e-11, c = 3e8;
+
+      const omega = 2 * Math.PI * p.freq * 1e9;
+      const Pgw = (G / (5 * Math.pow(c, 5))) * Math.pow(p.mass * omega * omega * 0.1, 2) * p.Q;
+      const strain = Math.min(1e-10, (4 * G * p.mass * omega * omega * 0.01) / (Math.pow(c, 4) * 1));
+      const strainNorm = Math.log10(strain + 1e-40) / -10;
+
+      let t = 0;
+      function draw() {
+        ctx.fillStyle = 'rgba(8,8,26,0.12)';
+        ctx.fillRect(0,0,W,H);
+        t += 0.03;
+
+        // Gravitational wave rings
+        const numWaves = 12;
+        for (let i = 0; i < numWaves; i++) {
+          const phase = (t * p.freq / 10 + i / numWaves * Math.PI * 2) % (Math.PI * 2);
+          const radius = (phase / (Math.PI * 2)) * Math.max(W, H) * 0.6;
+          const alpha = Math.max(0, 0.6 - radius / (W * 0.5));
+
+          ctx.beginPath();
+          for (let a = 0; a < Math.PI * 2; a += 0.03) {
+            const stretch = 1 + 0.15 * Math.sin(2 * a) * Math.exp(-radius / 200) * (p.power / 10);
+            const px = cx + Math.cos(a) * radius * stretch;
+            const py = cy + Math.sin(a) * radius / stretch;
+            if (a === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+          }
+          ctx.closePath();
+          ctx.strokeStyle = `rgba(180,120,255,${alpha})`;
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        }
+
+        // Central cavity
+        const cavGlow = 20 + p.power * 0.5;
+        const cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, cavGlow);
+        cg.addColorStop(0, `rgba(255,200,100,0.9)`);
+        cg.addColorStop(0.4, `rgba(200,100,255,0.4)`);
+        cg.addColorStop(1, 'rgba(100,50,200,0)');
+        ctx.beginPath();
+        ctx.arc(cx, cy, cavGlow, 0, Math.PI * 2);
+        ctx.fillStyle = cg;
+        ctx.fill();
+
+        // Vibrating charged particles inside cavity
+        for (let i = 0; i < 20; i++) {
+          const angle = (i / 20) * Math.PI * 2;
+          const vibr = Math.sin(t * p.freq / 5 + i * 3) * 8;
+          const px = cx + Math.cos(angle) * (12 + vibr);
+          const py = cy + Math.sin(angle) * (12 + vibr);
+          ctx.beginPath();
+          ctx.arc(px, py, 1.5, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255,255,200,${0.5 + Math.sin(t*5+i)*0.3})`;
+          ctx.fill();
+        }
+
+        // Spacetime grid distortion
+        ctx.strokeStyle = 'rgba(60,80,120,0.15)';
+        ctx.lineWidth = 0.5;
+        const gridSize = 30;
+        for (let gx = 0; gx < W; gx += gridSize) {
+          ctx.beginPath();
+          for (let gy = 0; gy < H; gy += 3) {
+            const dx = gx - cx, dy = gy - cy;
+            const dist = Math.sqrt(dx*dx + dy*dy) + 1;
+            const warp = Math.sin(t * 3 - dist / 30) * (p.power / dist) * 5;
+            const px = gx + warp * (dx / dist);
+            if (gy === 0) ctx.moveTo(px, gy); else ctx.lineTo(px, gy);
+          }
+          ctx.stroke();
+        }
+
+        requestAnimationFrame(draw);
+      }
+      draw();
+      return {
+        metrics: [
+          { label: "GW Power Output", value: Pgw.toExponential(2) + " W" },
+          { label: "Strain Amplitude", value: strain.toExponential(2) },
+          { label: "Wave Frequency", value: (p.freq).toFixed(1) + " GHz" },
+          { label: "Cavity Energy", value: (p.power * 1e6 * p.Q / (p.freq * 1e9)).toExponential(2) + " J" }
+        ]
+      };
+    }
+  },
+  {
+    id: "pais-plasma",
+    name: "3. Pais Plasma Compression Fusion",
+    short: "Plasma Fusion",
+    patent: "US Patent 11,313,243 — Plasma Compression Fusion Device",
+    subtitle: "US Navy — Salvatore Cezar Pais (2021)",
+    desc: `This Navy patent describes a compact fusion reactor using a combination of electromagnetic and electrostatic fields to confine and compress plasma to fusion conditions. Unlike tokamak or stellarator designs, this device uses a dynamic shell of counter-rotating plasma layers that self-compress through their own electromagnetic interactions. The extreme energy density achieved could power the other Pais-effect devices. The patent claims the ability to achieve fusion breakeven in a device small enough to fit inside an aircraft, potentially producing terawatts of power for mass reduction and gravitational wave generation.`,
+    equations: [
+      "n·τ·T > 5×10²¹ keV·s/m³  — Lawson criterion",
+      "P_fusion = n²·⟨σv⟩·E_reaction·V / 4",
+      "B_confinement = √(2μ₀·n·k_B·T)",
+      "β_plasma = 2μ₀·n·k_B·T / B²",
+      "τ_E = W_plasma / P_loss",
+      "Compression ratio: ρ/ρ₀ = (B/B₀)² × (r₀/r)⁴"
+    ],
+    params: [
+      { name: "Plasma Temp (keV)", key: "temp", min: 1, max: 200, init: 50, log: false },
+      { name: "Magnetic Field (T)", key: "B", min: 5, max: 200, init: 50, log: false },
+      { name: "Density (×10²⁰/m³)", key: "density", min: 1, max: 1000, init: 100, log: true },
+      { name: "Chamber Radius (m)", key: "radius", min: 0.1, max: 2, init: 0.5, log: false }
+    ],
+    simulate: function(p, canvas) {
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+      const cx = W/2, cy = H/2;
+
+      const n = p.density * 1e20;
+      const T_kelvin = p.temp * 1.16e7;
+      const kB = 1.38e-23;
+      const mu0 = 1.2566e-6;
+      const beta = (2 * mu0 * n * kB * T_kelvin) / (p.B * p.B);
+      const volume = (4/3) * Math.PI * Math.pow(p.radius, 3);
+      // D-T fusion cross section estimate
+      const sigmaV = 3.68e-18 * Math.exp(-19.94 / Math.sqrt(p.temp)) * 1e-6;
+      const Pfusion = n * n * sigmaV * 17.6 * 1.6e-13 * volume / 4;
+      const Wplasma = 1.5 * n * kB * T_kelvin * volume;
+      const lawson = n * (Wplasma / Math.max(Pfusion, 1)) * p.temp;
+
+      let t = 0;
+      let particles = [];
+      for (let i = 0; i < 200; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const r = Math.random() * 60;
+        particles.push({ angle, r, speed: 0.5 + Math.random() * 2, vr: (Math.random() - 0.5) * 2, layer: Math.floor(Math.random() * 3) });
+      }
+
+      function draw() {
+        ctx.fillStyle = 'rgba(8,8,26,0.15)';
+        ctx.fillRect(0,0,W,H);
+        t += 0.02;
+
+        // Magnetic confinement field lines
+        for (let i = 0; i < 8; i++) {
+          const angle = (i / 8) * Math.PI * 2 + t * 0.1;
+          ctx.beginPath();
+          ctx.strokeStyle = `rgba(60,100,200,${0.15 + beta * 0.1})`;
+          ctx.lineWidth = 1;
+          for (let s = 0; s < 100; s++) {
+            const frac = s / 100;
+            const r = 90 * frac;
+            const a = angle + frac * Math.PI * 2;
+            const px = cx + Math.cos(a) * r;
+            const py = cy + Math.sin(a) * r * 0.6;
+            if (s === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+          }
+          ctx.stroke();
+        }
+
+        // Counter-rotating plasma layers
+        const layers = [
+          { r: 65, color: [255, 80, 60], dir: 1 },
+          { r: 45, color: [255, 180, 40], dir: -1 },
+          { r: 25, color: [255, 255, 200], dir: 1 }
+        ];
+        layers.forEach((layer, li) => {
+          const comprR = layer.r * (1 - beta * 0.3);
+          for (let i = 0; i < 30; i++) {
+            const a = (i / 30) * Math.PI * 2 + t * layer.dir * (1 + li * 0.5);
+            const wobble = Math.sin(a * 5 + t * 3) * 3;
+            const px = cx + Math.cos(a) * (comprR + wobble);
+            const py = cy + Math.sin(a) * (comprR + wobble) * 0.7;
+            ctx.beginPath();
+            ctx.arc(px, py, 1.5 + (2 - li), 0, Math.PI * 2);
+            const alpha = 0.4 + Math.sin(t * 5 + i) * 0.2;
+            ctx.fillStyle = `rgba(${layer.color[0]},${layer.color[1]},${layer.color[2]},${alpha})`;
+            ctx.fill();
+          }
+        });
+
+        // Fusion events (flashes)
+        if (Pfusion > 1e6) {
+          const flashCount = Math.min(10, Math.log10(Pfusion) - 5);
+          for (let i = 0; i < flashCount; i++) {
+            const a = Math.random() * Math.PI * 2;
+            const r = Math.random() * 20;
+            const fx = cx + Math.cos(a) * r;
+            const fy = cy + Math.sin(a) * r * 0.7;
+            const fg = ctx.createRadialGradient(fx, fy, 0, fx, fy, 8);
+            fg.addColorStop(0, 'rgba(255,255,255,0.8)');
+            fg.addColorStop(0.5, 'rgba(255,200,100,0.3)');
+            fg.addColorStop(1, 'rgba(255,100,50,0)');
+            ctx.beginPath();
+            ctx.arc(fx, fy, 8, 0, Math.PI * 2);
+            ctx.fillStyle = fg;
+            ctx.fill();
+          }
+        }
+
+        // Core glow
+        const coreR = 15 + beta * 20;
+        const cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, coreR);
+        cg.addColorStop(0, `rgba(255,255,240,${0.3 + Math.min(0.7, Pfusion/1e12)})`);
+        cg.addColorStop(0.5, `rgba(255,180,60,${0.2 + beta * 0.3})`);
+        cg.addColorStop(1, 'rgba(200,80,30,0)');
+        ctx.beginPath();
+        ctx.arc(cx, cy, coreR, 0, Math.PI * 2);
+        ctx.fillStyle = cg;
+        ctx.fill();
+
+        requestAnimationFrame(draw);
+      }
+      draw();
+      return {
+        metrics: [
+          { label: "Fusion Power", value: Pfusion.toExponential(2) + " W" },
+          { label: "Plasma Beta", value: beta.toFixed(4) },
+          { label: "Plasma Energy", value: Wplasma.toExponential(2) + " J" },
+          { label: "Lawson Parameter", value: lawson.toExponential(2) + " keV·s/m³" },
+          { label: "Breakeven", value: Pfusion > Wplasma / 0.1 ? "YES ✓" : "NO ✗" }
+        ]
+      };
+    }
+  },
+  {
+    id: "alcubierre",
+    name: "4. Alcubierre Warp Drive",
+    short: "Warp Drive",
+    patent: "",
+    subtitle: "Miguel Alcubierre (1994) — Modified with Lentz/Van Den Broeck optimizations",
+    desc: `The Alcubierre metric describes a spacetime geometry where a bubble of flat space is propelled through spacetime by contracting space ahead and expanding it behind. The craft inside the bubble remains in inertial free-fall while the bubble itself can translate at arbitrary velocities, including superluminal. Recent work by Lentz (2021) showed that positive-energy warp solutions may exist, and by Bobrick & Martire that warp geometries can be analyzed as shells. Energy requirements have been reduced from Jupiter-mass equivalent to sub-solar-mass, with theoretical paths to further reduction via bubble thickness optimization.`,
+    equations: [
+      "ds² = −c²dt² + (dx − v_s·f(r_s)·dt)² + dy² + dz²",
+      "f(r_s) = [tanh(σ(r_s+R)) − tanh(σ(r_s−R))] / 2tanh(σR)",
+      "E_bubble = −(c⁴/8πG) · v_s² · ∫ (∂f/∂r)² dV",
+      "E ≈ −(v_s²·c²·R²) / (G·σ)  — Thin-wall approx",
+      "Optimized: E_Lentz ~ M_sun·c² × (v/c)² × (δ/R)"
+    ],
+    params: [
+      { name: "Warp Factor (v/c)", key: "warp", min: 0.1, max: 10, init: 1, log: false },
+      { name: "Bubble Radius (m)", key: "R", min: 5, max: 200, init: 50, log: false },
+      { name: "Wall Thickness σ⁻¹ (m)", key: "sigma_inv", min: 0.01, max: 10, init: 1, log: true },
+      { name: "Optimization Factor", key: "optim", min: 0.001, max: 1, init: 0.1, log: true }
+    ],
+    simulate: function(p, canvas) {
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+      const cx = W/2, cy = H/2;
+      const G = 6.674e-11, c = 3e8, Msun = 1.989e30;
+
+      const vs = p.warp * c;
+      const sigma = 1 / p.sigma_inv;
+      const E_naive = vs * vs * c * c * p.R * p.R / (G * sigma);
+      const E_optimized = E_naive * p.optim;
+      const E_solar = E_optimized / (Msun * c * c);
+
+      let t = 0;
+      let stars = [];
+      for (let i = 0; i < 150; i++) {
+        stars.push({ x: Math.random() * W, y: Math.random() * H, s: Math.random() * 1.5 + 0.5 });
+      }
+
+      function draw() {
+        ctx.fillStyle = 'rgba(8,8,26,0.2)';
+        ctx.fillRect(0,0,W,H);
+        t += 0.02;
+
+        // Starfield with warp distortion
+        stars.forEach(star => {
+          const dx = star.x - cx, dy = star.y - cy;
+          const dist = Math.sqrt(dx*dx + dy*dy);
+          const bubbleR = 80;
+
+          let drawX = star.x, drawY = star.y;
+          let stretch = 1;
+
+          if (dist < bubbleR * 2) {
+            const factor = Math.max(0, 1 - dist / (bubbleR * 2));
+            const push = factor * p.warp * 20;
+            drawX = star.x + (dx / dist) * push * Math.sign(dx);
+            stretch = 1 + factor * p.warp * 3;
+          }
+
+          // Star streaks at high warp
+          if (p.warp > 0.5 && dist > bubbleR * 0.8) {
+            const angle = Math.atan2(dy, dx);
+            const streakLen = stretch * p.warp * 2;
+            ctx.beginPath();
+            ctx.moveTo(drawX, drawY);
+            ctx.lineTo(drawX + Math.cos(angle) * streakLen, drawY + Math.sin(angle) * streakLen);
+            ctx.strokeStyle = `rgba(200,220,255,${0.3 + star.s * 0.2})`;
+            ctx.lineWidth = star.s * 0.5;
+            ctx.stroke();
+          }
+
+          ctx.beginPath();
+          ctx.arc(drawX, drawY, star.s * 0.7, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(200,220,255,${0.5 + star.s * 0.2})`;
+          ctx.fill();
+        });
+
+        // Warp bubble — spacetime curvature visualization
+        // Contraction ahead (blue)
+        for (let a = -0.5; a < 0.5; a += 0.03) {
+          const angle = a * Math.PI;
+          const pulse = Math.sin(t * 4 + a * 10) * 3 * p.warp;
+          const bR = 80 + pulse;
+          ctx.beginPath();
+          const x1 = cx + Math.cos(angle) * bR;
+          const y1 = cy + Math.sin(angle) * bR;
+          const x2 = cx + Math.cos(angle) * (bR + 10 + p.warp * 5);
+          const y2 = cy + Math.sin(angle) * (bR + 10 + p.warp * 5);
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          ctx.strokeStyle = `rgba(100,150,255,${0.3 + p.warp * 0.05})`;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+
+        // Expansion behind (red)
+        for (let a = 0.5; a < 1.5; a += 0.03) {
+          const angle = a * Math.PI;
+          const pulse = Math.sin(t * 4 + a * 10) * 3 * p.warp;
+          const bR = 80 + pulse;
+          ctx.beginPath();
+          const x1 = cx + Math.cos(angle) * bR;
+          const y1 = cy + Math.sin(angle) * bR;
+          const x2 = cx + Math.cos(angle) * (bR + 10 + p.warp * 5);
+          const y2 = cy + Math.sin(angle) * (bR + 10 + p.warp * 5);
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          ctx.strokeStyle = `rgba(255,100,80,${0.3 + p.warp * 0.05})`;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+
+        // Bubble shell
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, 82, 82, 0, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(150,200,255,0.25)`;
+        ctx.lineWidth = 6 / (p.sigma_inv + 0.1);
+        ctx.stroke();
+
+        // Flat space interior — craft
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.beginPath();
+        ctx.moveTo(-12, 8);
+        ctx.lineTo(0, -14);
+        ctx.lineTo(12, 8);
+        ctx.closePath();
+        ctx.fillStyle = '#b0b8d0';
+        ctx.fill();
+        ctx.restore();
+
+        requestAnimationFrame(draw);
+      }
+      draw();
+      return {
+        metrics: [
+          { label: "Bubble Velocity", value: (p.warp).toFixed(2) + " c" },
+          { label: "Energy Required", value: E_optimized.toExponential(2) + " J" },
+          { label: "Solar Mass Equiv", value: E_solar.toExponential(2) + " M☉" },
+          { label: "Wall Thickness", value: (p.sigma_inv * 100).toFixed(1) + " cm" },
+          { label: "Effective Speed", value: (vs / 1000).toExponential(2) + " km/s" }
+        ]
+      };
+    }
+  },
+  {
+    id: "emqvt",
+    name: "5. Quantum Vacuum Thruster (Q-Thruster)",
+    short: "Q-Thruster",
+    patent: "",
+    subtitle: "NASA Eagleworks — Harold \"Sonny\" White et al.",
+    desc: `The Quantum Vacuum Thruster (Q-Thruster) concept, explored at NASA's Eagleworks lab, proposes extracting momentum from quantum vacuum fluctuations. The quantum vacuum is not empty but teems with virtual particle-antiparticle pairs constantly appearing and annihilating. The Q-thruster uses asymmetric resonant cavities (similar to the controversial EmDrive concept but with a proposed physical mechanism) to create a net momentum transfer from the quantum vacuum. By inducing an asymmetric Casimir-like effect within a resonant cavity, a directional force could theoretically be generated without expelling propellant. NASA Eagleworks reported micro-Newton level thrusts in laboratory tests, though results remain debated.`,
+    equations: [
+      "F_Casimir = −(π²ℏc) / (240·d⁴) · A  — Casimir force",
+      "ρ_vacuum = ℏω³ / (2π²c³)  — ZPE density per mode",
+      "F_thrust = (Q·P_input) / c · Δ(ε_vacuum)",
+      "Δp = ℏ·Δk = ℏ·(k₁ − k₂)  — Momentum asymmetry",
+      "η_coupling = (α_fine/π) · (ω/ω_plasma)² · Q_cavity"
+    ],
+    params: [
+      { name: "Input Power (W)", key: "power", min: 1, max: 10000, init: 100, log: true },
+      { name: "Cavity Q-Factor", key: "Q", min: 1e3, max: 1e8, init: 1e5, log: true },
+      { name: "Frequency (GHz)", key: "freq", min: 1, max: 30, init: 2.45, log: false },
+      { name: "Asymmetry Ratio", key: "asym", min: 1.01, max: 3, init: 1.5, log: false }
+    ],
+    simulate: function(p, canvas) {
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+      const cx = W/2, cy = H/2;
+      const hbar = 1.0546e-34, c_light = 3e8;
+
+      const thrust = (p.Q * p.power / c_light) * (p.asym - 1) * 1e-6;
+      const thrustMicroN = thrust * 1e6;
+      const specImpulse = thrust > 0 ? c_light / 9.81 : 0;
+
+      let t = 0;
+      let vacuumParticles = [];
+      for (let i = 0; i < 100; i++) {
+        vacuumParticles.push({
+          x: Math.random() * W, y: Math.random() * H,
+          life: Math.random() * 100, maxLife: 50 + Math.random() * 100
+        });
+      }
+
+      function draw() {
+        ctx.fillStyle = 'rgba(8,8,26,0.15)';
+        ctx.fillRect(0,0,W,H);
+        t += 0.03;
+
+        // Virtual particle-antiparticle pairs (vacuum fluctuations)
+        vacuumParticles.forEach(vp => {
+          vp.life++;
+          if (vp.life > vp.maxLife) {
+            vp.x = Math.random() * W;
+            vp.y = Math.random() * H;
+            vp.life = 0;
+            vp.maxLife = 50 + Math.random() * 100;
+          }
+          const frac = vp.life / vp.maxLife;
+          const alpha = frac < 0.5 ? frac * 2 : (1 - frac) * 2;
+          const sep = Math.sin(frac * Math.PI) * 5;
+          ctx.beginPath();
+          ctx.arc(vp.x - sep, vp.y, 1.2, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(100,200,255,${alpha * 0.3})`;
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(vp.x + sep, vp.y, 1.2, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255,100,150,${alpha * 0.3})`;
+          ctx.fill();
+        });
+
+        // Truncated cone cavity
+        const topW = 25, botW = 25 * p.asym, height = 80;
+        const topY = cy - height/2, botY = cy + height/2;
+
+        ctx.beginPath();
+        ctx.moveTo(cx - topW, topY);
+        ctx.lineTo(cx + topW, topY);
+        ctx.lineTo(cx + botW, botY);
+        ctx.lineTo(cx - botW, botY);
+        ctx.closePath();
+        ctx.strokeStyle = '#556688';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(30,40,60,0.5)';
+        ctx.fill();
+
+        // Standing wave modes inside cavity
+        const modes = 5;
+        for (let m = 1; m <= modes; m++) {
+          ctx.beginPath();
+          ctx.strokeStyle = `rgba(100,${150 + m*20},255,${0.2 + (p.Q/1e8) * 0.3})`;
+          ctx.lineWidth = 1;
+          for (let y = topY; y < botY; y += 2) {
+            const frac = (y - topY) / height;
+            const localW = topW + (botW - topW) * frac;
+            const amp = Math.sin(m * Math.PI * frac) * localW * 0.6 * Math.sin(t * p.freq + m);
+            const px = cx + amp;
+            if (y === topY) ctx.moveTo(px, y); else ctx.lineTo(px, y);
+          }
+          ctx.stroke();
+        }
+
+        // Thrust vector
+        if (thrustMicroN > 0.001) {
+          const arrowLen = Math.min(60, thrustMicroN * 5);
+          ctx.beginPath();
+          ctx.moveTo(cx, topY - 5);
+          ctx.lineTo(cx, topY - 5 - arrowLen);
+          ctx.strokeStyle = `rgba(100,255,150,${0.5 + thrustMicroN * 0.05})`;
+          ctx.lineWidth = 3;
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(cx - 6, topY - arrowLen + 5);
+          ctx.lineTo(cx, topY - 5 - arrowLen - 5);
+          ctx.lineTo(cx + 6, topY - arrowLen + 5);
+          ctx.fillStyle = `rgba(100,255,150,0.7)`;
+          ctx.fill();
+
+          ctx.fillStyle = '#88ddaa';
+          ctx.font = '10px monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText('F_thrust', cx, topY - arrowLen - 10);
+        }
+
+        requestAnimationFrame(draw);
+      }
+      draw();
+      return {
+        metrics: [
+          { label: "Thrust", value: thrustMicroN.toFixed(4) + " μN" },
+          { label: "Specific Impulse", value: specImpulse.toExponential(2) + " s" },
+          { label: "Thrust/Power", value: (thrustMicroN / p.power * 1000).toFixed(4) + " μN/kW" },
+          { label: "Cavity Energy", value: (p.power * p.Q / (p.freq * 1e9 * 2 * Math.PI)).toExponential(2) + " J" }
+        ]
+      };
+    }
+  },
+  {
+    id: "emdrive",
+    name: "6. Magnetohydrodynamic Plasma Drive",
+    short: "MHD Plasma Drive",
+    patent: "",
+    subtitle: "Based on electrohydrodynamic / MHD atmospheric propulsion concepts",
+    desc: `Magnetohydrodynamic (MHD) propulsion ionizes the surrounding air into plasma and then accelerates it using crossed electric and magnetic fields (the Lorentz force: F = J × B). For atmospheric UAP-like flight, the craft would generate a dense plasma sheath around its surface using microwave or RF ionization, then drive this plasma at enormous velocities using superconducting magnets and high-voltage electrodes. This creates thrust without moving parts, explains the observed luminous glow around UAPs, enables sharp turns (by reconfiguring field geometry), and can reduce drag by creating a thin plasma boundary layer. At extreme powers, the surrounding air effectively becomes the propellant.`,
+    equations: [
+      "F_Lorentz = J × B · V_plasma  — Body force density",
+      "J = σ_plasma · (E + v × B)  — Ohm's law for plasma",
+      "P_thrust = ½ · ṁ · v_exhaust²",
+      "σ_plasma = (n_e · e²) / (m_e · ν_collision)",
+      "T_ionization ~ 10,000-30,000 K for air plasma",
+      "Drag reduction: C_d(MHD) ≈ C_d₀ · exp(−β·B²/ρ·v²)"
+    ],
+    params: [
+      { name: "Magnetic Field (T)", key: "B", min: 0.5, max: 30, init: 5, log: false },
+      { name: "Current Density (A/m²)", key: "J", min: 1e3, max: 1e7, init: 1e5, log: true },
+      { name: "Plasma Conductivity (S/m)", key: "sigma", min: 10, max: 1e5, init: 1000, log: true },
+      { name: "Vehicle Radius (m)", key: "radius", min: 1, max: 20, init: 5, log: false }
+    ],
+    simulate: function(p, canvas) {
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+      const cx = W/2, cy = H/2;
+
+      const area = Math.PI * p.radius * p.radius;
+      const force = p.J * p.B * area * p.radius; // volume force
+      const power = p.J * p.J * area * p.radius / p.sigma;
+      const accel = force / 5000; // 5000kg craft
+      const vExhaust = Math.sqrt(2 * force / (1.225 * area));
+
+      let t = 0;
+      let plasmaParticles = [];
+      for (let i = 0; i < 300; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const r = 50 + Math.random() * 30;
+        plasmaParticles.push({ a, r, va: (Math.random() - 0.5) * 0.1, vr: Math.random() * 0.5, life: Math.random() * 100 });
+      }
+
+      function draw() {
+        ctx.fillStyle = 'rgba(8,8,26,0.12)';
+        ctx.fillRect(0,0,W,H);
+        t += 0.02;
+
+        // Magnetic field lines (B-field)
+        ctx.strokeStyle = 'rgba(60,60,150,0.15)';
+        ctx.lineWidth = 0.8;
+        for (let i = 0; i < 12; i++) {
+          ctx.beginPath();
+          const baseA = (i / 12) * Math.PI * 2;
+          for (let s = 0; s < 100; s++) {
+            const frac = s / 100;
+            const r = 20 + frac * 100;
+            const spiral = baseA + frac * Math.PI * 0.5 + t * 0.2;
+            const px = cx + Math.cos(spiral) * r;
+            const py = cy + Math.sin(spiral) * r;
+            if (s === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+          }
+          ctx.stroke();
+        }
+
+        // Plasma sheath particles
+        const plasmaSpeed = p.J * p.B / 1e6;
+        plasmaParticles.forEach(pp => {
+          pp.a += pp.va * plasmaSpeed * 0.01;
+          pp.life++;
+          if (pp.life > 120) {
+            pp.a = Math.random() * Math.PI * 2;
+            pp.r = 45 + Math.random() * 10;
+            pp.life = 0;
+          }
+          pp.r += pp.vr * plasmaSpeed * 0.1;
+          if (pp.r > 110) pp.r = 50;
+
+          const px = cx + Math.cos(pp.a) * pp.r;
+          const py = cy + Math.sin(pp.a) * pp.r;
+          const alpha = Math.min(0.8, plasmaSpeed * 0.1) * (1 - pp.life / 120);
+          const hue = pp.r < 60 ? '180,220,255' : (pp.r < 80 ? '150,180,255' : '120,140,220');
+          ctx.beginPath();
+          ctx.arc(px, py, 1 + plasmaSpeed * 0.3, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${hue},${alpha})`;
+          ctx.fill();
+        });
+
+        // Plasma glow
+        const glowR = 55 + plasmaSpeed * 5;
+        const pg = ctx.createRadialGradient(cx, cy, 30, cx, cy, glowR);
+        pg.addColorStop(0, 'rgba(40,60,100,0)');
+        pg.addColorStop(0.6, `rgba(80,120,255,${Math.min(0.15, plasmaSpeed * 0.02)})`);
+        pg.addColorStop(0.85, `rgba(120,160,255,${Math.min(0.25, plasmaSpeed * 0.04)})`);
+        pg.addColorStop(1, 'rgba(80,120,255,0)');
+        ctx.beginPath();
+        ctx.arc(cx, cy, glowR, 0, Math.PI * 2);
+        ctx.fillStyle = pg;
+        ctx.fill();
+
+        // Craft (disc shape)
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, 35, 14, 0, 0, Math.PI * 2);
+        ctx.fillStyle = '#383850';
+        ctx.fill();
+        ctx.strokeStyle = '#5555aa';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        // Dome
+        ctx.beginPath();
+        ctx.ellipse(cx, cy - 6, 15, 10, 0, Math.PI, 0);
+        ctx.fillStyle = '#404060';
+        ctx.fill();
+
+        // J × B force arrows
+        for (let i = 0; i < 8; i++) {
+          const angle = (i / 8) * Math.PI * 2 + t;
+          const r1 = 55;
+          const r2 = r1 + 15 + plasmaSpeed * 3;
+          const x1 = cx + Math.cos(angle) * r1;
+          const y1 = cy + Math.sin(angle) * r1;
+          const x2 = cx + Math.cos(angle) * r2;
+          const y2 = cy + Math.sin(angle) * r2;
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          ctx.strokeStyle = `rgba(255,180,80,${0.3 + plasmaSpeed * 0.05})`;
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        }
+
+        requestAnimationFrame(draw);
+      }
+      draw();
+      return {
+        metrics: [
+          { label: "Thrust Force", value: force.toExponential(2) + " N" },
+          { label: "Acceleration", value: (accel / 9.81).toFixed(1) + " g" },
+          { label: "Power Required", value: (power / 1e6).toFixed(1) + " MW" },
+          { label: "Exhaust Velocity", value: (vExhaust / 1000).toFixed(1) + " km/s" },
+          { label: "Efficiency", value: ((force * vExhaust / (2 * power)) * 100).toFixed(1) + "%" }
+        ]
+      };
+    }
+  },
+  {
+    id: "woodward",
+    name: "7. Woodward Mach Effect Thruster (MEGA)",
+    short: "Mach Effect",
+    patent: "",
+    subtitle: "James F. Woodward — Mach Effect Gravitational Assist",
+    desc: `The Mach Effect Thruster exploits transient mass fluctuations predicted by Mach's Principle as formulated in general relativity. When an object undergoes acceleration while its internal energy changes, Woodward's derivation from the Hoyle-Narlikar theory of gravitation predicts brief fluctuations in its rest mass. By synchronizing mechanical oscillations of a piezoelectric stack with electrostrictive pulses (the "push" phase occurs when mass is momentarily higher, the "pull" phase when lower), a net time-averaged thrust is produced without expelling propellant. The effect depends on the cosmological gravitational potential of all matter in the universe — the craft literally pushes against the rest of the cosmos.`,
+    equations: [
+      "δm/m₀ = −(1/4πGρ₀c²) · (∂²E₀/∂t² − (1/ρ₀c²)(∂E₀/∂t)²)",
+      "F_thrust = ⟨F_push(m₀+δm) − F_pull(m₀−δm)⟩_time_avg",
+      "δm ≈ −(P₀·ω²) / (4πGρ₀c²) · sin(2ωt)",
+      "F_net = (P₀²·ω²) / (2·m₀·c²·V_piezo)",
+      "Where P₀ = peak power, ω = drive frequency"
+    ],
+    params: [
+      { name: "Drive Frequency (kHz)", key: "freq", min: 10, max: 200, init: 40, log: false },
+      { name: "Peak Power (W)", key: "power", min: 10, max: 10000, init: 500, log: true },
+      { name: "PZT Mass (kg)", key: "mass", min: 0.01, max: 1, init: 0.1, log: true },
+      { name: "Stack Layers", key: "layers", min: 1, max: 50, init: 10, log: false }
+    ],
+    simulate: function(p, canvas) {
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+      const cx = W/2, cy = H/2;
+      const G = 6.674e-11, c_light = 3e8;
+
+      const omega = 2 * Math.PI * p.freq * 1000;
+      const rho0 = p.mass / (1e-5 * p.layers);
+      const dm = (p.power * omega * omega) / (4 * Math.PI * G * rho0 * c_light * c_light);
+      const F_net = (p.power * p.power * omega * omega) / (2 * p.mass * c_light * c_light * 1e-5) * p.layers * 1e-12;
+      const F_microN = F_net * 1e6;
+
+      let t = 0;
+      function draw() {
+        ctx.fillStyle = 'rgba(8,8,26,0.18)';
+        ctx.fillRect(0,0,W,H);
+        t += 0.04;
+
+        // PZT stack visualization
+        const stackW = 40, layerH = 6;
+        const stackH = p.layers * layerH;
+        const stackTop = cy - stackH / 2;
+
+        for (let i = 0; i < p.layers; i++) {
+          const y = stackTop + i * layerH;
+          const phase = Math.sin(omega * t * 0.00001 + i * 0.3);
+          const displacement = phase * 3 * (p.power / 1000);
+          const massPhase = Math.cos(omega * t * 0.00001 + i * 0.3);
+          const massColor = massPhase > 0 ? [80, 130, 255] : [255, 130, 80];
+
+          ctx.fillStyle = `rgba(${massColor[0]},${massColor[1]},${massColor[2]},0.7)`;
+          ctx.fillRect(cx - stackW/2 + displacement, y, stackW, layerH - 1);
+          ctx.strokeStyle = '#556';
+          ctx.lineWidth = 0.5;
+          ctx.strokeRect(cx - stackW/2 + displacement, y, stackW, layerH - 1);
+        }
+
+        // Electrodes
+        ctx.fillStyle = '#aaa';
+        ctx.fillRect(cx - stackW/2 - 5, stackTop - 5, stackW + 10, 3);
+        ctx.fillRect(cx - stackW/2 - 5, stackTop + stackH + 2, stackW + 10, 3);
+
+        // Mass fluctuation wave
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(200,150,255,0.4)';
+        ctx.lineWidth = 1.5;
+        for (let x = cx - 120; x < cx + 120; x++) {
+          const dx = x - cx;
+          const wave = Math.sin(dx * 0.05 + t * p.freq * 0.01) * 15 * (dm / 1e-20);
+          const envelope = Math.exp(-dx * dx / 5000);
+          const py = cy - stackH/2 - 30 + wave * envelope;
+          if (x === cx - 120) ctx.moveTo(x, py); else ctx.lineTo(x, py);
+        }
+        ctx.stroke();
+
+        ctx.fillStyle = '#9988cc';
+        ctx.font = '9px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('δm(t) — mass fluctuation', cx, cy - stackH/2 - 50);
+
+        // Gravitational interaction lines (connection to cosmos)
+        for (let i = 0; i < 16; i++) {
+          const angle = (i / 16) * Math.PI * 2 + t * 0.05;
+          const dist = 100 + Math.sin(t + i) * 20;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          const lx = cx + Math.cos(angle) * dist;
+          const ly = cy + Math.sin(angle) * dist;
+          ctx.lineTo(lx, ly);
+          ctx.strokeStyle = `rgba(100,80,160,${0.05 + F_microN * 0.001})`;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(lx, ly, 1.5, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(150,120,200,0.3)`;
+          ctx.fill();
+        }
+
+        // Net thrust arrow
+        if (F_microN > 0.001) {
+          const aLen = Math.min(50, F_microN * 100);
+          ctx.beginPath();
+          ctx.moveTo(cx, stackTop - 10);
+          ctx.lineTo(cx, stackTop - 10 - aLen);
+          ctx.strokeStyle = `rgba(100,255,150,0.6)`;
+          ctx.lineWidth = 2.5;
+          ctx.stroke();
+          ctx.fillStyle = '#88ddaa';
+          ctx.font = '10px monospace';
+          ctx.fillText(F_microN.toFixed(3) + ' μN', cx, stackTop - 15 - aLen);
+        }
+
+        requestAnimationFrame(draw);
+      }
+      draw();
+      return {
+        metrics: [
+          { label: "Net Thrust", value: F_microN.toFixed(4) + " μN" },
+          { label: "Mass Fluctuation", value: dm.toExponential(2) + " kg" },
+          { label: "Δm/m₀", value: (dm / p.mass).toExponential(2) },
+          { label: "Drive Frequency", value: p.freq + " kHz" }
+        ]
+      };
+    }
+  },
+  {
+    id: "biefeld-brown",
+    name: "8. Biefeld-Brown Electrogravitics",
+    short: "Electrogravitics",
+    patent: "US Patent 3,187,206 — Electrokinetic Apparatus (T. Townsend Brown, 1965)",
+    subtitle: "T. Townsend Brown — Asymmetric capacitor propulsion",
+    desc: `Electrogravitics originates from Thomas Townsend Brown's discovery in the 1920s that asymmetric capacitors, when charged to high voltages, exhibit a net force toward the smaller electrode. Brown's research (some classified under Project Winterhaven in the 1950s) suggested this wasn't merely ion wind but a coupling between high-voltage electric fields and gravitation. Modern interpretations range from ionic electrohydrodynamic (EHD) thrust to speculative dielectric-gravitational coupling. The asymmetric capacitor (or "lifter") effect is reproducible, with recent research exploring whether any anomalous (non-ionic) force component exists at higher voltages and in vacuum conditions. If a true gravitational coupling exists, scaling to megavolt potentials with advanced dielectrics could produce significant thrust.`,
+    equations: [
+      "F_EHD = (ε₀·A·V²) / (2·d²) · (1/r₁ − 1/r₂)  — Asymmetric force",
+      "F_ion = n_ion · q · E_drift · μ_mobility",
+      "F_anomalous = κ · (ε·ε₀·E²/c²) · g  — Brown's conjecture",
+      "V_threshold ≈ 30 kV/cm × d  — Breakdown onset",
+      "P = V · I_leakage + ½CV²·f_cycle"
+    ],
+    params: [
+      { name: "Voltage (kV)", key: "voltage", min: 10, max: 5000, init: 100, log: true },
+      { name: "Plate Separation (cm)", key: "d", min: 1, max: 50, init: 5, log: false },
+      { name: "Plate Area (m²)", key: "area", min: 0.01, max: 10, init: 0.5, log: true },
+      { name: "Dielectric Constant", key: "epsilon", min: 1, max: 10000, init: 100, log: true }
+    ],
+    simulate: function(p, canvas) {
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+      const cx = W/2, cy = H/2;
+      const eps0 = 8.854e-12;
+
+      const d = p.d / 100;
+      const E = p.voltage * 1000 / d;
+      const F_ehd = (eps0 * p.epsilon * p.area * Math.pow(p.voltage * 1000, 2)) / (2 * d * d) * 0.1;
+      const F_ion = 0.001 * p.voltage * p.area;
+      const F_anom = 1e-10 * p.epsilon * eps0 * E * E / (9e16) * 9.81 * p.area * 5000;
+      const F_total = F_ehd + F_ion + F_anom;
+      const power = p.voltage * 1000 * 0.001 * p.voltage;
+
+      let t = 0;
+      let ions = [];
+      for (let i = 0; i < 80; i++) {
+        ions.push({ x: cx + (Math.random() - 0.5) * 80, y: cy + (Math.random() - 0.5) * 60, vy: -Math.random() * 2 });
+      }
+
+      function draw() {
+        ctx.fillStyle = 'rgba(8,8,26,0.15)';
+        ctx.fillRect(0,0,W,H);
+        t += 0.03;
+
+        const plateGap = 50 + p.d;
+        const topPlateY = cy - plateGap / 2;
+        const botPlateY = cy + plateGap / 2;
+
+        // Top plate (small electrode — anode)
+        ctx.fillStyle = '#aa8844';
+        ctx.fillRect(cx - 15, topPlateY - 2, 30, 4);
+        ctx.fillStyle = '#ff8888';
+        ctx.font = '9px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('+' + p.voltage + 'kV', cx, topPlateY - 8);
+
+        // Bottom plate (large electrode — cathode)
+        ctx.fillStyle = '#4488aa';
+        ctx.fillRect(cx - 50, botPlateY - 2, 100, 4);
+        ctx.fillStyle = '#88aaff';
+        ctx.fillText('GND', cx, botPlateY + 14);
+
+        // Electric field lines
+        const fieldIntensity = Math.min(1, E / 1e6);
+        for (let i = 0; i < 10; i++) {
+          const x = cx - 40 + i * 9;
+          ctx.beginPath();
+          ctx.moveTo(x, botPlateY - 3);
+          for (let y = botPlateY - 3; y > topPlateY + 3; y -= 3) {
+            const frac = (botPlateY - y) / plateGap;
+            const wobble = Math.sin(y * 0.1 + t * 3) * 2 * fieldIntensity;
+            ctx.lineTo(x + wobble, y);
+          }
+          ctx.strokeStyle = `rgba(255,200,100,${0.1 + fieldIntensity * 0.2})`;
+          ctx.lineWidth = 0.8;
+          ctx.stroke();
+        }
+
+        // Ion wind particles
+        ions.forEach(ion => {
+          ion.y += ion.vy * fieldIntensity;
+          ion.x += Math.sin(t * 5 + ion.x * 0.1) * 0.3;
+          if (ion.y < topPlateY) {
+            ion.y = botPlateY - 5;
+            ion.x = cx + (Math.random() - 0.5) * 80;
+          }
+          const alpha = fieldIntensity * 0.5;
+          ctx.beginPath();
+          ctx.arc(ion.x, ion.y, 1, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(150,200,255,${alpha})`;
+          ctx.fill();
+        });
+
+        // Anomalous force glow (if significant)
+        if (F_anom > 1e-6) {
+          const ag = ctx.createRadialGradient(cx, cy, 0, cx, cy, 60);
+          ag.addColorStop(0, `rgba(255,200,100,${Math.min(0.15, F_anom * 1e3)})`);
+          ag.addColorStop(1, 'rgba(255,200,100,0)');
+          ctx.beginPath();
+          ctx.arc(cx, cy, 60, 0, Math.PI * 2);
+          ctx.fillStyle = ag;
+          ctx.fill();
+        }
+
+        // Force arrow
+        if (F_total > 0.001) {
+          const aLen = Math.min(40, Math.log10(F_total + 1) * 20);
+          ctx.beginPath();
+          ctx.moveTo(cx + 70, cy);
+          ctx.lineTo(cx + 70, cy - aLen);
+          ctx.strokeStyle = 'rgba(100,255,180,0.6)';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          ctx.fillStyle = '#88ddaa';
+          ctx.font = '9px monospace';
+          ctx.textAlign = 'left';
+          ctx.fillText('F=' + F_total.toExponential(1) + 'N', cx + 78, cy - aLen/2);
+        }
+
+        requestAnimationFrame(draw);
+      }
+      draw();
+      return {
+        metrics: [
+          { label: "EHD Force", value: F_ehd.toExponential(2) + " N" },
+          { label: "Ion Wind", value: F_ion.toExponential(2) + " N" },
+          { label: "Anomalous Force", value: F_anom.toExponential(2) + " N" },
+          { label: "Total Force", value: F_total.toExponential(2) + " N" },
+          { label: "Electric Field", value: (E / 1e6).toFixed(1) + " MV/m" },
+          { label: "Power", value: (power / 1000).toFixed(1) + " kW" }
+        ]
+      };
+    }
+  },
+  {
+    id: "podkletnov",
+    name: "9. Podkletnov Gravitational Shielding",
+    short: "Gravity Shield",
+    patent: "",
+    subtitle: "Eugene Podkletnov (1992) — Rotating superconductor gravity anomaly",
+    desc: `In 1992, Finnish researcher Eugene Podkletnov reported a 0.05-2% reduction in gravitational weight above a rapidly spinning (5,000 RPM) superconducting YBCO disc subjected to RF electromagnetic fields. The effect allegedly increased with rotation speed and disc size. Though never independently replicated at the claimed magnitudes, the concept sparked significant interest including NASA's Breakthrough Propulsion Physics program. The theoretical mechanism, if real, might involve Cooper pair mass anomalies in the rotating superconductor creating a gravitomagnetic-like field enhancement far beyond GR predictions. Boeing's Phantom Works and ESA both reportedly investigated. A related 2001 claim involved an "impulse gravity generator" using a Marx generator discharge through a superconductor.`,
+    equations: [
+      "Δg/g = −α · (n_Cooper · ω · R²) / (m_pair · c²)",
+      "B_gravitomagnetic = −(4G/c²) · ρ · ω · R²  — GR prediction",
+      "Enhancement: B_gm(SC) = B_gm(GR) × (λ_London/r_coherence)²",
+      "F_shield = m_object · g · η_shielding",
+      "η ∝ ω² · T_c · σ_SC · R⁴ (empirical fit to claims)"
+    ],
+    params: [
+      { name: "Rotation (RPM)", key: "rpm", min: 100, max: 50000, init: 5000, log: true },
+      { name: "Disc Radius (m)", key: "radius", min: 0.05, max: 1, init: 0.15, log: false },
+      { name: "SC Temperature (K)", key: "temp", min: 4, max: 90, init: 77, log: false },
+      { name: "RF Power (W)", key: "rf_power", min: 1, max: 10000, init: 100, log: true }
+    ],
+    simulate: function(p, canvas) {
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+      const cx = W/2, cy = H/2;
+
+      const omega = p.rpm * 2 * Math.PI / 60;
+      const alpha = 1e-15;
+      const nCooper = 1e28;
+      const mPair = 2 * 9.109e-31 * 100;
+      const eta = Math.min(0.5, alpha * nCooper * omega * p.radius * p.radius / (mPair * 9e16) * (p.rf_power / 100));
+      const dgPercent = eta * 100;
+      const liftForce = eta * 9.81 * 1000; // for 1000kg
+
+      let t = 0;
+      function draw() {
+        ctx.fillStyle = 'rgba(8,8,26,0.15)';
+        ctx.fillRect(0,0,W,H);
+        t += 0.02;
+
+        // Gravity field lines (being deflected)
+        for (let i = 0; i < 15; i++) {
+          const x = cx - 100 + i * 14;
+          ctx.beginPath();
+          for (let y = 0; y < H; y += 3) {
+            const dy = y - cy;
+            const dx = x - cx;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            let deflection = 0;
+            if (dist < 80 && dy < 30 && dy > -60) {
+              deflection = eta * 40 * Math.exp(-dy*dy / 2000) * Math.sign(dx) * (1 - dist / 80);
+            }
+            const px = x + deflection;
+            if (y === 0) ctx.moveTo(px, y); else ctx.lineTo(px, y);
+          }
+          ctx.strokeStyle = `rgba(100,200,100,${0.08 + eta * 0.3})`;
+          ctx.lineWidth = 0.8;
+          ctx.stroke();
+        }
+
+        // Shielded zone above disc
+        if (eta > 0.001) {
+          const sg = ctx.createRadialGradient(cx, cy - 40, 0, cx, cy - 40, 70);
+          sg.addColorStop(0, `rgba(100,255,200,${eta * 0.15})`);
+          sg.addColorStop(1, 'rgba(100,255,200,0)');
+          ctx.beginPath();
+          ctx.arc(cx, cy - 40, 70, 0, Math.PI * 2);
+          ctx.fillStyle = sg;
+          ctx.fill();
+
+          ctx.fillStyle = `rgba(100,255,200,${0.3 + eta})`;
+          ctx.font = '10px monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText('GRAVITY REDUCED ZONE', cx, cy - 80);
+          ctx.fillText('−' + dgPercent.toFixed(3) + '% g', cx, cy - 68);
+        }
+
+        // Superconducting disc (rotating)
+        ctx.save();
+        ctx.translate(cx, cy);
+
+        // Disc
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 60, 18, 0, 0, Math.PI * 2);
+        const discGrad = ctx.createLinearGradient(-60, 0, 60, 0);
+        discGrad.addColorStop(0, '#2a3a4a');
+        discGrad.addColorStop(0.5, '#4a6a8a');
+        discGrad.addColorStop(1, '#2a3a4a');
+        ctx.fillStyle = discGrad;
+        ctx.fill();
+        ctx.strokeStyle = '#6688aa';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Rotation markers on disc
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * Math.PI * 2 + t * omega * 0.0001;
+          const rx = Math.cos(a) * 45;
+          const ry = Math.sin(a) * 14;
+          ctx.beginPath();
+          ctx.arc(rx, ry, 2, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(100,180,255,0.5)`;
+          ctx.fill();
+        }
+
+        ctx.restore();
+
+        // RF field visualization
+        for (let i = 0; i < 20; i++) {
+          const angle = (i / 20) * Math.PI * 2 + t * 3;
+          const r = 65 + Math.sin(t * 10 + i * 2) * 5;
+          const px = cx + Math.cos(angle) * r;
+          const py = cy + Math.sin(angle) * r * 0.3;
+          ctx.beginPath();
+          ctx.arc(px, py, 1, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255,200,100,${0.2 + Math.sin(t*5+i)*0.2})`;
+          ctx.fill();
+        }
+
+        // Cryostat outline
+        ctx.strokeStyle = 'rgba(80,80,120,0.3)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(cx - 75, cy - 25, 150, 50);
+        ctx.fillStyle = '#555577';
+        ctx.font = '8px monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText('YBCO Disc @ ' + p.temp + 'K', cx - 70, cy + 40);
+        ctx.fillText(p.rpm + ' RPM', cx - 70, cy + 50);
+
+        requestAnimationFrame(draw);
+      }
+      draw();
+      return {
+        metrics: [
+          { label: "Gravity Reduction", value: dgPercent.toFixed(4) + "%" },
+          { label: "Shield Efficiency", value: (eta * 100).toFixed(4) + "%" },
+          { label: "Lift Force (1T craft)", value: liftForce.toFixed(2) + " N" },
+          { label: "Angular Velocity", value: omega.toFixed(1) + " rad/s" },
+          { label: "Disc Tip Speed", value: (omega * p.radius).toFixed(1) + " m/s" }
+        ]
+      };
+    }
+  },
+  {
+    id: "metamaterial",
+    name: "10. Metamaterial Spacetime Cloak Drive",
+    short: "Metamaterial Drive",
+    patent: "",
+    subtitle: "Based on spacetime cloaking & negative-index metamaterial propulsion theory",
+    desc: `This speculative drive combines advances in electromagnetic metamaterials (materials with engineered negative refractive index, negative permittivity, or negative permeability) with spacetime metric engineering. Metamaterials that exhibit negative electromagnetic parameters can, in certain theoretical frameworks, also exhibit anomalous gravitational interactions. A craft skinned in active, tunable metamaterial panels could locally manipulate the effective refractive index of spacetime itself — creating regions where light (and potentially gravitational waves) are bent, redirected, or "cloaked." This could achieve: (a) electromagnetic stealth (radar invisibility), (b) drag elimination via spacetime index matching, (c) apparent teleportation through "spacetime corridors" of modified metric, and (d) inertial decoupling via negative-index gravitational response. This combines real metamaterial physics with speculative extensions to gravity.`,
+    equations: [
+      "n_eff = √(ε_eff · μ_eff)  — Effective refractive index",
+      "ε_eff = 1 − ω_p² / (ω² + iγω)  — Drude model",
+      "g_μν(meta) = g_μν(vacuum) × n_tensor(r,t)",
+      "F_propulsive = −∇(½ ε₀ E² (ε−1)) — Gradient force",
+      "v_phase = c / |n_eff|  (can exceed c for n < 1)",
+      "Cloaking condition: det(g_μν − g_μν(background)) → 0"
+    ],
+    params: [
+      { name: "ε_eff (permittivity)", key: "eps", min: -10, max: 10, init: -1, log: false },
+      { name: "μ_eff (permeability)", key: "mu", min: -10, max: 10, init: -1, log: false },
+      { name: "Operating Freq (THz)", key: "freq", min: 0.1, max: 1000, init: 10, log: true },
+      { name: "Panel Power (MW)", key: "power", min: 0.1, max: 1000, init: 10, log: true }
+    ],
+    simulate: function(p, canvas) {
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+      const cx = W/2, cy = H/2;
+
+      const n_eff = Math.sqrt(Math.abs(p.eps * p.mu)) * Math.sign(p.eps * p.mu);
+      const isNegative = p.eps < 0 && p.mu < 0;
+      const isSingleNeg = (p.eps < 0) !== (p.mu < 0);
+      const cloakStrength = isNegative ? Math.min(1, Math.abs(n_eff + 1) < 0.5 ? 1 - Math.abs(n_eff + 1) * 2 : 0) : 0;
+
+      let t = 0;
+      let rays = [];
+      for (let i = 0; i < 20; i++) {
+        rays.push({ x: -10, y: 30 + i * (H - 60) / 20, angle: 0 });
+      }
+
+      function draw() {
+        ctx.fillStyle = 'rgba(8,8,26,0.15)';
+        ctx.fillRect(0,0,W,H);
+        t += 0.02;
+
+        // Incoming EM rays being bent by metamaterial
+        rays.forEach((ray, ri) => {
+          ctx.beginPath();
+          const startX = 0;
+          const startY = ray.y;
+          ctx.moveTo(startX, startY);
+
+          let prevX = startX, prevY = startY;
+          for (let step = 0; step < 200; step++) {
+            const x = startX + step * (W / 200);
+            const dx = x - cx, dy = startY - cy;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            const craftR = 50;
+
+            let curveY = startY;
+            if (dist < craftR * 3 && x > cx - craftR * 2 && x < cx + craftR * 2) {
+              const proximity = Math.max(0, 1 - dist / (craftR * 3));
+              if (isNegative) {
+                // Negative refraction — rays bend the wrong way
+                curveY = startY + proximity * n_eff * 30 * Math.sign(dy);
+              } else if (isSingleNeg) {
+                // Evanescent — rays blocked
+                const fade = Math.exp(-proximity * 5);
+                curveY = startY;
+                ctx.globalAlpha = fade;
+              } else {
+                // Normal bending
+                curveY = startY - proximity * (n_eff - 1) * 15 * Math.sign(dy);
+              }
+            }
+            ctx.lineTo(x, curveY);
+          }
+          const rayColor = isNegative ? '100,200,255' : (isSingleNeg ? '255,100,100' : '200,200,100');
+          ctx.strokeStyle = `rgba(${rayColor},0.25)`;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          ctx.globalAlpha = 1;
+        });
+
+        // Metamaterial craft body
+        const craftR = 40;
+        const panels = 24;
+        for (let i = 0; i < panels; i++) {
+          const angle = (i / panels) * Math.PI * 2 + t * 0.5;
+          const nextAngle = ((i + 1) / panels) * Math.PI * 2 + t * 0.5;
+
+          const x1 = cx + Math.cos(angle) * craftR;
+          const y1 = cy + Math.sin(angle) * craftR;
+          const x2 = cx + Math.cos(nextAngle) * craftR;
+          const y2 = cy + Math.sin(nextAngle) * craftR;
+
+          const panelPhase = Math.sin(t * 3 + i * 0.5);
+          const r = isNegative ? 50 + panelPhase * 50 : 100;
+          const g = isNegative ? 150 + panelPhase * 80 : (isSingleNeg ? 60 : 150);
+          const b = isNegative ? 200 : (isSingleNeg ? 60 : 100);
+
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          ctx.closePath();
+          ctx.fillStyle = `rgba(${r},${g},${b},${0.3 + panelPhase * 0.15})`;
+          ctx.fill();
+        }
+
+        // Cloak effect
+        if (cloakStrength > 0.1) {
+          ctx.beginPath();
+          ctx.arc(cx, cy, craftR + 10, 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(100,255,200,${cloakStrength * 0.4 * (0.5 + Math.sin(t * 2) * 0.5)})`;
+          ctx.lineWidth = 3;
+          ctx.stroke();
+
+          ctx.fillStyle = `rgba(100,255,200,${cloakStrength * 0.3})`;
+          ctx.font = '10px monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText('CLOAKED', cx, cy - craftR - 20);
+        }
+
+        // n_eff indicator
+        const nColor = isNegative ? '#66ccff' : (isSingleNeg ? '#ff6666' : '#cccc66');
+        ctx.fillStyle = nColor;
+        ctx.font = '11px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('n_eff = ' + n_eff.toFixed(3), cx, H - 20);
+
+        // Status
+        const status = isNegative ? 'NEGATIVE INDEX (Left-handed)' : (isSingleNeg ? 'SINGLE-NEGATIVE (Opaque)' : 'POSITIVE INDEX (Normal)');
+        ctx.fillStyle = nColor;
+        ctx.font = '9px monospace';
+        ctx.fillText(status, cx, H - 8);
+
+        requestAnimationFrame(draw);
+      }
+      draw();
+      return {
+        metrics: [
+          { label: "Refractive Index", value: n_eff.toFixed(4) },
+          { label: "Phase Velocity", value: (1 / Math.abs(n_eff || 0.001)).toFixed(2) + " c" },
+          { label: "Regime", value: isNegative ? "Negative Index" : (isSingleNeg ? "Evanescent" : "Normal") },
+          { label: "Cloak Strength", value: (cloakStrength * 100).toFixed(1) + "%" },
+          { label: "Panel Power", value: p.power + " MW" }
+        ]
+      };
+    }
+  }
+];
+
+// Build nav
+const navBar = document.getElementById('navBar');
+METHODS.forEach((m, idx) => {
+  const btn = document.createElement('div');
+  btn.className = 'nav-btn' + (idx === 0 ? ' active' : '');
+  btn.textContent = m.short;
+  btn.onclick = () => selectMethod(idx);
+  navBar.appendChild(btn);
+});
+
+const container = document.getElementById('simContainer');
+
+// Build panels
+METHODS.forEach((m, idx) => {
+  const panel = document.createElement('div');
+  panel.className = 'sim-panel' + (idx === 0 ? ' active' : '');
+  panel.id = 'panel-' + m.id;
+
+  let patentHtml = m.patent ? `<span class="patent-tag">${m.patent}</span><br>` : '';
+
+  panel.innerHTML = `
+    <div class="info-banner">
+      ${patentHtml}
+      <h2>${m.name}</h2>
+      <div class="subtitle">${m.subtitle}</div>
+      <p>${m.desc}</p>
+    </div>
+    <div class="eq">${m.equations.join('\n')}</div>
+    <div class="controls" id="controls-${m.id}"></div>
+    <div class="sim-grid">
+      <div class="card">
+        <h3>Simulation</h3>
+        <canvas id="canvas-${m.id}" width="500" height="350"></canvas>
+      </div>
+      <div>
+        <div class="card">
+          <h3>Computed Metrics</h3>
+          <div class="metric-row" id="metrics-${m.id}"></div>
+        </div>
+      </div>
+    </div>
+  `;
+  container.appendChild(panel);
+
+  // Build controls
+  const controlsDiv = document.getElementById('controls-' + m.id);
+  const paramValues = {};
+  m.params.forEach(param => {
+    paramValues[param.key] = param.init;
+    const group = document.createElement('div');
+    group.className = 'ctrl-group';
+    const label = document.createElement('label');
+    label.textContent = param.name;
+    const input = document.createElement('input');
+    input.type = 'range';
+    input.min = 0;
+    input.max = 1000;
+    input.value = param.log
+      ? ((Math.log10(param.init) - Math.log10(param.min)) / (Math.log10(param.max) - Math.log10(param.min))) * 1000
+      : ((param.init - param.min) / (param.max - param.min)) * 1000;
+
+    const valSpan = document.createElement('div');
+    valSpan.className = 'val';
+    valSpan.textContent = formatVal(param.init);
+
+    input.oninput = () => {
+      const frac = input.value / 1000;
+      let val;
+      if (param.log) {
+        val = Math.pow(10, Math.log10(param.min) + frac * (Math.log10(param.max) - Math.log10(param.min)));
+      } else {
+        val = param.min + frac * (param.max - param.min);
+      }
+      paramValues[param.key] = val;
+      valSpan.textContent = formatVal(val);
+    };
+
+    group.appendChild(label);
+    group.appendChild(input);
+    group.appendChild(valSpan);
+    controlsDiv.appendChild(group);
+  });
+
+  const runBtn = document.createElement('button');
+  runBtn.className = 'run-btn';
+  runBtn.textContent = '▶ Run Simulation';
+  runBtn.onclick = () => {
+    const canvas = document.getElementById('canvas-' + m.id);
+    const result = m.simulate(paramValues, canvas);
+    const metricsDiv = document.getElementById('metrics-' + m.id);
+    metricsDiv.innerHTML = '';
+    result.metrics.forEach(met => {
+      const md = document.createElement('div');
+      md.className = 'metric';
+      md.innerHTML = `<div class="label">${met.label}</div><div class="value">${met.value}</div>`;
+      metricsDiv.appendChild(md);
+    });
+  };
+  controlsDiv.appendChild(runBtn);
+});
+
+// Auto-run first
+setTimeout(() => {
+  document.querySelector('.run-btn').click();
+}, 100);
+
+function selectMethod(idx) {
+  document.querySelectorAll('.nav-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
+  document.querySelectorAll('.sim-panel').forEach((p, i) => p.classList.toggle('active', i === idx));
+  // Auto-run when switching
+  setTimeout(() => {
+    const panel = document.querySelectorAll('.sim-panel')[idx];
+    const btn = panel.querySelector('.run-btn');
+    if (btn) btn.click();
+  }, 50);
+}
+
+function formatVal(v) {
+  if (Math.abs(v) >= 1e6) return v.toExponential(2);
+  if (Math.abs(v) >= 1000) return v.toFixed(0);
+  if (Math.abs(v) >= 1) return v.toFixed(2);
+  if (Math.abs(v) >= 0.01) return v.toFixed(4);
+  return v.toExponential(2);
+}
+</script>
+</body>
+</html>
