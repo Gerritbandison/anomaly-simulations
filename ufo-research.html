@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UFO/UAP Deep Research Dossier — The Complete Record</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #12121a;
+    --bg3: #1a1a28;
+    --accent: #00e5ff;
+    --accent2: #7c4dff;
+    --accent3: #ff4081;
+    --accent4: #ffa726;
+    --text: #e0e0e0;
+    --text-dim: #8888aa;
+    --border: #2a2a3a;
+    --glow: rgba(0,229,255,0.15);
+    --glow2: rgba(124,77,255,0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  .stars { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+  .star { position: absolute; border-radius: 50%; background: white; animation: twinkle 3s ease-in-out infinite alternate; }
+  @keyframes twinkle { 0% { opacity: 0.2; } 100% { opacity: 0.8; } }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+  header {
+    text-align: center; padding: 80px 24px 40px;
+    background: linear-gradient(180deg, rgba(0,229,255,0.05) 0%, transparent 100%);
+    border-bottom: 1px solid var(--border);
+    position: relative; z-index: 1;
+  }
+  header h1 {
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 12px; letter-spacing: -1px;
+  }
+  header .subtitle { color: var(--text-dim); font-size: 1.05rem; max-width: 750px; margin: 0 auto 16px; }
+  header .stat-bar { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
+  header .stat {
+    font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
+    color: var(--accent); padding: 6px 14px;
+    border: 1px solid rgba(0,229,255,0.2); border-radius: 20px;
+    background: rgba(0,229,255,0.05);
+  }
+
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(10,10,15,0.95); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border); padding: 0 24px;
+  }
+  nav .container { display: flex; gap: 0; overflow-x: auto; scrollbar-width: none; }
+  nav .container::-webkit-scrollbar { display: none; }
+  nav a {
+    display: block; padding: 14px 16px;
+    color: var(--text-dim); text-decoration: none;
+    font-size: 0.78rem; font-weight: 500;
+    white-space: nowrap; transition: all 0.2s;
+    border-bottom: 2px solid transparent;
+  }
+  nav a:hover, nav a.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  section { padding: 60px 0; border-bottom: 1px solid var(--border); }
+  section:last-of-type { border-bottom: none; }
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem; font-weight: 500;
+    color: var(--accent); text-transform: uppercase;
+    letter-spacing: 3px; margin-bottom: 8px;
+  }
+  h2 { font-size: 1.8rem; font-weight: 600; margin-bottom: 24px; }
+  h3 { font-size: 1.2rem; font-weight: 600; margin: 28px 0 12px; color: var(--accent); }
+  h4 { font-size: 1rem; font-weight: 600; margin: 20px 0 8px; color: var(--accent2); }
+  p { margin-bottom: 16px; color: var(--text); }
+  .dim { color: var(--text-dim); }
+  strong { color: #fff; }
+
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin: 24px 0; }
+  .card-grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin: 24px 0; }
+  .card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 24px; transition: all 0.3s;
+  }
+  .card:hover { border-color: var(--accent); box-shadow: 0 0 30px var(--glow); transform: translateY(-2px); }
+  .card-tag {
+    display: inline-block; font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem; font-weight: 500; padding: 3px 10px;
+    border-radius: 20px; margin-bottom: 12px;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+  .tag-blue { background: rgba(0,229,255,0.12); color: var(--accent); }
+  .tag-purple { background: rgba(124,77,255,0.12); color: var(--accent2); }
+  .tag-red { background: rgba(255,64,129,0.12); color: var(--accent3); }
+  .tag-green { background: rgba(0,230,118,0.12); color: #00e676; }
+  .tag-orange { background: rgba(255,167,38,0.12); color: var(--accent4); }
+  .tag-white { background: rgba(255,255,255,0.08); color: #ccc; }
+  .card h4 { font-size: 1.05rem; margin-bottom: 8px; margin-top: 0; color: var(--text); }
+  .card p { font-size: 0.9rem; color: var(--text-dim); margin-bottom: 0; }
+  .card .card-meta { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--text-dim); margin-top: 10px; }
+
+  .timeline { position: relative; padding-left: 32px; margin: 24px 0; }
+  .timeline::before {
+    content: ''; position: absolute; left: 8px; top: 0; bottom: 0;
+    width: 2px; background: linear-gradient(180deg, var(--accent), var(--accent2), var(--accent3));
+  }
+  .tl-item { position: relative; margin-bottom: 32px; }
+  .tl-item::before {
+    content: ''; position: absolute; left: -28px; top: 6px;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: var(--accent); box-shadow: 0 0 12px var(--accent);
+  }
+  .tl-date { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--accent); margin-bottom: 4px; }
+  .tl-title { font-weight: 600; font-size: 1rem; margin-bottom: 6px; }
+  .tl-body { font-size: 0.9rem; color: var(--text-dim); }
+
+  .vallee-table { width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 0.88rem; }
+  .vallee-table th {
+    text-align: left; padding: 12px 16px;
+    background: var(--bg3); border: 1px solid var(--border);
+    color: var(--accent); font-weight: 600;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+  .vallee-table td { padding: 12px 16px; border: 1px solid var(--border); color: var(--text-dim); vertical-align: top; }
+  .vallee-table tr:hover td { background: rgba(0,229,255,0.03); }
+
+  .tab-bar { display: flex; gap: 4px; margin-bottom: 24px; flex-wrap: wrap; }
+  .tab-btn {
+    padding: 8px 18px; border: 1px solid var(--border);
+    background: transparent; color: var(--text-dim);
+    border-radius: 8px; cursor: pointer; font-family: inherit;
+    font-size: 0.85rem; transition: all 0.2s;
+  }
+  .tab-btn:hover { border-color: var(--accent); color: var(--text); }
+  .tab-btn.active { background: rgba(0,229,255,0.1); border-color: var(--accent); color: var(--accent); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .verdict {
+    background: var(--bg2); border-left: 3px solid var(--accent2);
+    padding: 20px 24px; border-radius: 0 12px 12px 0; margin: 24px 0;
+  }
+  .verdict.warn { border-left-color: #ffa726; }
+  .verdict.danger { border-left-color: var(--accent3); }
+  .verdict.info { border-left-color: var(--accent); }
+  .verdict-label {
+    font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
+    text-transform: uppercase; letter-spacing: 2px;
+    color: var(--accent2); margin-bottom: 8px;
+  }
+  .verdict.warn .verdict-label { color: #ffa726; }
+  .verdict.danger .verdict-label { color: var(--accent3); }
+  .verdict.info .verdict-label { color: var(--accent); }
+
+  blockquote {
+    border-left: 3px solid var(--accent2); padding: 16px 24px;
+    margin: 20px 0; background: rgba(124,77,255,0.05);
+    border-radius: 0 8px 8px 0; font-style: italic; color: var(--text);
+  }
+  blockquote cite { display: block; margin-top: 8px; font-style: normal; font-size: 0.85rem; color: var(--text-dim); }
+
+  .sources { margin-top: 16px; }
+  .sources a {
+    display: inline-block; color: var(--accent); text-decoration: none;
+    font-size: 0.82rem; margin-right: 16px; margin-bottom: 8px;
+    border-bottom: 1px dotted rgba(0,229,255,0.3); transition: border-color 0.2s;
+  }
+  .sources a:hover { border-bottom-color: var(--accent); }
+
+  details { margin: 16px 0; }
+  summary {
+    cursor: pointer; padding: 12px 16px;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 8px; font-weight: 500; font-size: 0.95rem;
+    transition: all 0.2s; list-style: none;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::before { content: '\25B8 '; color: var(--accent); }
+  details[open] summary::before { content: '\25BE '; }
+  details[open] summary { border-radius: 8px 8px 0 0; border-bottom-color: transparent; }
+  .details-body {
+    padding: 16px; background: var(--bg2);
+    border: 1px solid var(--border); border-top: none;
+    border-radius: 0 0 8px 8px; font-size: 0.9rem; color: var(--text-dim);
+  }
+  .details-body p { margin-bottom: 10px; }
+  .details-body p:last-child { margin-bottom: 0; }
+
+  .person-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin: 24px 0; }
+  .person-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 24px; transition: all 0.3s;
+  }
+  .person-card:hover { border-color: var(--accent2); box-shadow: 0 0 30px var(--glow2); }
+  .person-card .name { font-size: 1.1rem; font-weight: 600; margin-bottom: 4px; }
+  .person-card .role { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--accent2); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+  .person-card .claims { font-size: 0.88rem; color: var(--text-dim); }
+  .person-card .claims li { margin-bottom: 6px; }
+
+  .incident-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 24px; margin-bottom: 20px; transition: all 0.3s;
+  }
+  .incident-card:hover { border-color: var(--accent3); box-shadow: 0 0 20px rgba(255,64,129,0.1); }
+  .incident-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+  .incident-header h4 { margin: 0; font-size: 1.15rem; color: var(--text); }
+  .incident-date { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--accent3); padding: 4px 12px; border: 1px solid rgba(255,64,129,0.3); border-radius: 20px; white-space: nowrap; }
+  .incident-card p { font-size: 0.9rem; color: var(--text-dim); }
+
+  .doc-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.85rem; }
+  .doc-table th {
+    text-align: left; padding: 10px 14px;
+    background: var(--bg3); border: 1px solid var(--border);
+    color: var(--accent); font-weight: 600;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+  .doc-table td { padding: 10px 14px; border: 1px solid var(--border); color: var(--text-dim); vertical-align: top; }
+  .doc-table tr:hover td { background: rgba(0,229,255,0.03); }
+
+  footer {
+    text-align: center; padding: 40px 24px;
+    color: var(--text-dim); font-size: 0.8rem;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 600px) {
+    section { padding: 40px 0; }
+    .card-grid, .person-grid { grid-template-columns: 1fr; }
+    nav a { padding: 12px 10px; font-size: 0.72rem; }
+    header .stat-bar { gap: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+
+<header>
+  <h1>UFO / UAP Deep Research Dossier</h1>
+  <p class="subtitle">The complete record: declassified documents, secret programs, whistleblowers, major incidents, the cover-up apparatus, and the science behind the phenomenon. Every claim sourced. Every source linked.</p>
+  <div class="stat-bar">
+    <span class="stat">11 Sections</span>
+    <span class="stat">25+ Key Figures</span>
+    <span class="stat">12 Major Incidents</span>
+    <span class="stat">8 Secret Programs</span>
+    <span class="stat">100+ Sources</span>
+  </div>
+</header>
+
+<nav>
+  <div class="container">
+    <a href="#timeline" class="active" onclick="setActive(this)">Timeline</a>
+    <a href="#vallee" onclick="setActive(this)">Vallee</a>
+    <a href="#analysis" onclick="setActive(this)">Analysis</a>
+    <a href="#documents" onclick="setActive(this)">Documents</a>
+    <a href="#programs" onclick="setActive(this)">Programs</a>
+    <a href="#incidents" onclick="setActive(this)">Incidents</a>
+    <a href="#whistleblowers" onclick="setActive(this)">Whistleblowers</a>
+    <a href="#skunkworks" onclick="setActive(this)">Contractors</a>
+    <a href="#coverup" onclick="setActive(this)">Cover-Up</a>
+    <a href="#science" onclick="setActive(this)">Science</a>
+    <a href="#sources" onclick="setActive(this)">Sources</a>
+  </div>
+</nav>
+
+<main class="container">
+
+  <!-- =================== SECTION 1: TIMELINE =================== -->
+  <section id="timeline">
+    <div class="section-label">01 — The Last Year</div>
+    <h2>Key UAP Developments (2024-2026)</h2>
+    <p>The past two years have been the most explosive in UAP disclosure history. Legislation was killed and revived, new whistleblowers emerged, a sitting president ordered disclosure, and the White House registered alien.gov.</p>
+
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-date">July 2023</div>
+        <div class="tl-title">David Grusch Testifies Under Oath Before Congress</div>
+        <div class="tl-body">Former intelligence officer David Grusch testified before the House Oversight Committee that the U.S. government operates a multi-decade crash retrieval and reverse-engineering program for craft of "non-human origin." He stated he was denied access despite his official UAP task force role. The ICIG deemed his complaint "credible and urgent."</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-date">December 2023</div>
+        <div class="tl-title">Schumer UAP Disclosure Act Gutted</div>
+        <div class="tl-body">The landmark UAP Disclosure Act — which included eminent domain over recovered alien technology and an independent review board with subpoena power — passed the Senate but was stripped of its key provisions during House-Senate conference. Key opponents: Reps. Mike Turner and Mike Rogers, the two largest recipients of defense contractor funding in Congress.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-date">March 2024</div>
+        <div class="tl-title">AARO Historical Report: "No Evidence"</div>
+        <div class="tl-body">The All-domain Anomaly Resolution Office released its Volume 1 historical report claiming "no empirical evidence" of crash retrievals or reverse-engineering programs. Multiple whistleblowers refused to cooperate with AARO, calling it a controlled disclosure mechanism. Director Sean Kirkpatrick resigned amid controversy.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-date">November 2024</div>
+        <div class="tl-title">"Immaculate Constellation" Revealed</div>
+        <div class="tl-body">Journalist Michael Shellenberger testified before Congress about a 12-page whistleblower document naming a previously unknown USAP called "Immaculate Constellation" — an alleged program that collects and quarantines classified UAP imagery from 1991-2022. The Pentagon denied its existence.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-date">May 2025</div>
+        <div class="tl-title">New UAP Legislation Drafted</div>
+        <div class="tl-body">Congress began drafting new UAP-specific legislation with additional hearing plans. Multiple bills aimed at compelling disclosure from defense contractors and intelligence agencies.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-date">September 2025</div>
+        <div class="tl-title">Military Whistleblowers Share New Evidence</div>
+        <div class="tl-body">The House Oversight Declassification Task Force held a landmark hearing. New evidence included MQ-9 Reaper drone footage from October 2024 allegedly showing a glowing orb struck by a Hellfire missile with no apparent effect. Witnesses testified about encounters with orbs and craft eclipsing existing weapons. Dylan Borland described career destruction after reporting a triangular craft at Langley AFB.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-date">December 2025</div>
+        <div class="tl-title">FY2026 NDAA Mandates Pentagon UAP Briefings</div>
+        <div class="tl-body">The FY2026 NDAA requires the Pentagon to brief lawmakers on all UAP intercept operations since 2004, including the number, location, nature, and data collected during intercepts by NORAD and USNORTHCOM. Grusch's classified testimony reportedly revealed the Trump administration had been "fully briefed" on crash retrieval programs.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-date">February 2026</div>
+        <div class="tl-title">Trump Orders UFO Disclosure</div>
+        <div class="tl-body">President Trump issued a directive to release government files related to UFOs/UAPs. Defense Secretary Hegseth ordered an update on AARO's caseload. David Grusch was appointed Special Advisor to Rep. Burlison on UAP matters.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-date">March 2026</div>
+        <div class="tl-title">White House Registers alien.gov Domains</div>
+        <div class="tl-body">The White House officially registered alien.gov and aliens.gov domain names, signaling an unprecedented level of government engagement with the topic. The purpose of the domains has not been publicly disclosed.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =================== SECTION 2: VALLEE FRAMEWORK =================== -->
+  <section id="vallee">
+    <div class="section-label">02 — The Framework</div>
+    <h2>Jacques Vallee's Classification & Hypothesis</h2>
+    <p>Jacques Vallee — French computer scientist, astronomer, and venture capitalist — developed what many consider the most rigorous UFO classification system ever created. More importantly, he rejected the simple "aliens visiting from another planet" hypothesis and proposed something far stranger.</p>
+
+    <h3>The Classification System</h3>
+    <p>Unlike Hynek's simpler three-tier system, Vallee created a matrix of four main categories, each with five severity levels:</p>
+
+    <table class="vallee-table">
+      <thead>
+        <tr><th>Type</th><th>Level 1</th><th>Level 2</th><th>Level 3</th><th>Level 4</th><th>Level 5</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="color:var(--accent);font-weight:600;">AN<br><span style="font-size:0.75rem;color:var(--text-dim)">Anomaly</span></td>
+          <td>Unusual light, no lasting effects</td><td>Physical effects on landscape, animals, or observers</td>
+          <td>Entities observed with anomalous lights</td><td>Witness reality transformation — time loss, altered perception</td><td>Permanent injury or death</td>
+        </tr>
+        <tr>
+          <td style="color:var(--accent2);font-weight:600;">MA<br><span style="font-size:0.75rem;color:var(--text-dim)">Maneuver</span></td>
+          <td>Discontinuous trajectory (drops, loops, sudden stops)</td><td>Maneuver + physical effects</td>
+          <td>Maneuver + entities observed</td><td>Reality transformation for observer</td><td>Permanent injury or death</td>
+        </tr>
+        <tr>
+          <td style="color:var(--accent3);font-weight:600;">FB<br><span style="font-size:0.75rem;color:var(--text-dim)">Fly-By</span></td>
+          <td>Simple sighting — straight-line trajectory</td><td>Fly-by + physical evidence</td>
+          <td>Entities observed aboard</td><td>Reality transformation</td><td>Permanent injury or death</td>
+        </tr>
+        <tr>
+          <td style="color:#00e676;font-weight:600;">CE<br><span style="font-size:0.75rem;color:var(--text-dim)">Close Encounter</span></td>
+          <td>Object within 150m, no interaction</td><td>Physical traces (burns, imprints, radiation)</td>
+          <td>Entities observed (occupants)</td><td>Abduction or direct interaction — altered consciousness</td><td>Permanent injury or death</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>The Interdimensional Hypothesis</h3>
+    <p>By 1969, Vallee publicly broke with the mainstream UFO community by arguing that the Extraterrestrial Hypothesis (ETH) was too narrow. His five key arguments:</p>
+
+    <div class="card-grid">
+      <div class="card">
+        <span class="card-tag tag-blue">Argument 1</span>
+        <h4>Too Many Encounters</h4>
+        <p>Close encounters are far more numerous than any physical survey of Earth would require. Thousands of landings — no scientific survey needs this volume.</p>
+      </div>
+      <div class="card">
+        <span class="card-tag tag-blue">Argument 2</span>
+        <h4>Humanoid Form</h4>
+        <p>The reported humanoid body structure is unlikely to have evolved on another planet and is not suited for space travel. They look suspiciously like us.</p>
+      </div>
+      <div class="card">
+        <span class="card-tag tag-blue">Argument 3</span>
+        <h4>Absurd Behavior</h4>
+        <p>Bizarre experiments, nonsensical communication in abduction accounts — contradicts what an advanced scientific civilization would do.</p>
+      </div>
+      <div class="card">
+        <span class="card-tag tag-blue">Argument 4</span>
+        <h4>Historical Continuity</h4>
+        <p>The phenomenon extends throughout recorded human history — medieval fairy encounters, religious visions, airship sightings — something far older than space-age aliens.</p>
+      </div>
+      <div class="card">
+        <span class="card-tag tag-purple">Argument 5</span>
+        <h4>Space-Time Manipulation</h4>
+        <p>The ability to manipulate space and time suggests operation outside standard physics — interdimensional rather than interstellar.</p>
+      </div>
+      <div class="card">
+        <span class="card-tag tag-purple">The Control System</span>
+        <h4>A Thermostat for Consciousness</h4>
+        <p>Vallee proposes the phenomenon acts as a "control system" — functioning to influence human culture, belief, and consciousness over millennia.</p>
+      </div>
+    </div>
+
+    <h3>The Trinity Crash (1945)</h3>
+    <p>In his 2021 book <em>Trinity: The Best-Kept Secret</em>, Vallee and journalist Paola Harris documented an alleged UFO crash in San Antonio, New Mexico in August 1945 — <strong>two years before Roswell</strong> and just weeks after the first nuclear test at the nearby Trinity Site. Two young witnesses, Reme Baca and Jose Padilla, claimed to have discovered an avocado-shaped craft with occupants in a field. While the case is controversial due to the late emergence of testimony (no documentation before 2003), it aligns with Vallee's hypothesis that the phenomenon intensified around nuclear weapons development.</p>
+
+    <blockquote>
+      "I believe that the UFO phenomenon is one of the ways through which an alien form of intelligence of incredible complexity is communicating with us symbolically."
+      <cite>— Jacques Vallee, <em>Dimensions</em> (1988)</cite>
+    </blockquote>
+  </section>
+
+  <!-- =================== SECTION 3: ANALYSIS =================== -->
+  <section id="analysis">
+    <div class="section-label">03 — Analysis</div>
+    <h2>Do Recent Events Follow Vallee's Assessment?</h2>
+    <p>When we map the last two years' developments against Vallee's framework, the alignment is striking — but not total.</p>
+
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="showTab('supports')">Evidence Supporting Vallee</button>
+      <button class="tab-btn" onclick="showTab('contradicts')">Evidence Against Vallee</button>
+      <button class="tab-btn" onclick="showTab('verdict')">Overall Verdict</button>
+    </div>
+
+    <div id="tab-supports" class="tab-content active">
+      <div class="card-grid">
+        <div class="card"><span class="card-tag tag-green">Supports</span><h4>Non-Physical Behavior</h4><p>Orbs and craft described by 2025 military whistleblowers display physics-defying maneuvers — instantaneous acceleration, trans-medium travel — consistent with space-time manipulation rather than conventional propulsion.</p></div>
+        <div class="card"><span class="card-tag tag-green">Supports</span><h4>Absurd Volume</h4><p>NORAD's surge in UAP incursions near military sites follows Vallee's "too many for a survey" argument. 420+ incursions across 100+ bases in a single year.</p></div>
+        <div class="card"><span class="card-tag tag-green">Supports</span><h4>Historical Continuity</h4><p>Objects reported in 2025 hearings behave like Project Blue Book cases from the 1950s — same orbs, same impossible maneuvers. A persistent, decades-old phenomenon.</p></div>
+        <div class="card"><span class="card-tag tag-green">Supports</span><h4>Consciousness Effects</h4><p>Witnesses described altered perceptual states — time distortion, unreality. Maps directly to Vallee's MA4/CE4 categories. Dr. Kit Green's DIRD on biological tissue effects supports this.</p></div>
+        <div class="card"><span class="card-tag tag-green">Supports</span><h4>Nuclear Connection</h4><p>Malmstrom AFB (1967), ongoing base incursions — the phenomenon's consistent focus on nuclear facilities supports Vallee's "control system" concept, as if monitoring humanity's most dangerous technology.</p></div>
+      </div>
+    </div>
+
+    <div id="tab-contradicts" class="tab-content">
+      <div class="card-grid">
+        <div class="card"><span class="card-tag tag-red">Contradicts</span><h4>Physical Crash Retrievals</h4><p>Grusch's claims of physical craft recoveries and "non-human biologics" directly contradict the interdimensional hypothesis. Non-physical phenomena shouldn't leave tangible wreckage.</p></div>
+        <div class="card"><span class="card-tag tag-red">Contradicts</span><h4>Reverse Engineering Programs</h4><p>Alleged reverse-engineering at defense contractors implies physical technology amenable to conventional science — the nuts-and-bolts ET scenario Vallee argues against.</p></div>
+        <div class="card"><span class="card-tag tag-red">Contradicts</span><h4>Government Treats It Literally</h4><p>NDAA requirements and AARO treat UAPs as physical threats to airspace. The entire response framework assumes conventional physics applies.</p></div>
+        <div class="card"><span class="card-tag tag-red">Contradicts</span><h4>Metamaterials Are Real</h4><p>Dr. Garry Nolan at Stanford has analyzed materials with anomalous isotopic ratios. Art's Parts show manufactured micro-layered structure. Physical artifacts don't fit a purely interdimensional model.</p></div>
+      </div>
+    </div>
+
+    <div id="tab-verdict" class="tab-content">
+      <div class="verdict">
+        <div class="verdict-label">Assessment</div>
+        <p><strong>Partial alignment.</strong> Behavioral patterns strongly support Vallee — physics-defying maneuvers, historical consistency, consciousness effects, and sheer volume all fit his framework. But crash retrievals and metamaterials represent a serious challenge to a purely interdimensional model.</p>
+        <p style="margin-top:12px;">One reconciliation: Vallee himself notes "interdimensional" doesn't mean "non-physical." Entities operating across dimensions might produce physical artifacts — like a 3D object passing through a 2D plane leaves real traces. The debris could be a byproduct of dimensional intrusion, not proof of interstellar travel.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- =================== SECTION 4: DECLASSIFIED DOCUMENTS =================== -->
+  <section id="documents">
+    <div class="section-label">04 — Declassified</div>
+    <h2>CIA, DIA, NSA, FBI & International Documents</h2>
+    <p>Thousands of pages across multiple agencies and nations. Here is what they actually say — document by document.</p>
+
+    <h3>The Foundational Documents</h3>
+
+    <details>
+      <summary>The Twining Memo — September 23, 1947</summary>
+      <div class="details-body">
+        <p>Memorandum from <strong>Lt. General Nathan F. Twining</strong> (head of Air Materiel Command) to Brigadier General Schulgen. Subject: "AMC Opinion Concerning 'Flying Discs.'"</p>
+        <p><strong>Key quote:</strong> "The phenomenon reported is something real and not visionary or fictitious." Described "extreme rates of climb, maneuverability (particularly in roll), and action which must be considered evasive when sighted or contacted by friendly aircraft and radar."</p>
+        <p>This is the foundational U.S. military document acknowledging UFOs as real. Led directly to the creation of <strong>Project Sign</strong> on December 30, 1947.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Project Sign's "Estimate of the Situation" — Summer 1948</summary>
+      <div class="details-body">
+        <p>The classified "Estimate of the Situation" concluded that flying saucers were <strong>real craft, not Soviet or American, and likely extraterrestrial in origin</strong>.</p>
+        <p>Air Force Chief of Staff <strong>General Hoyt Vandenberg rejected it</strong>, citing lack of physical evidence. <strong>All copies were ordered destroyed.</strong> According to an unnamed colonel, Vandenberg allegedly ordered paragraphs referencing "metal recovered in New Mexico" removed before rejecting the final version — for lacking physical evidence.</p>
+        <p>Captain Edward Ruppelt (first director of Project Blue Book) confirmed the document's existence in his 1956 book. As late as 1960, the USAF claimed it never existed.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>The Chadwell Memoranda — 1952</summary>
+      <div class="details-body">
+        <p>Series of memos from <strong>H. Marshall Chadwell</strong>, CIA Assistant Director of Scientific Intelligence, to CIA Director Walter Bedell Smith.</p>
+        <p><strong>December 1952:</strong> "Reports of incidents convince us that there is something going on that must have immediate attention" and that "sightings of unexplained objects at great altitudes and traveling at high speeds in the vicinity of major U.S. defense installations" could not be "attributable to natural phenomena or any known types of aerial vehicles."</p>
+        <p>Led directly to the Robertson Panel.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Project Grudge — Technical Report No. 102 (1949)</summary>
+      <div class="details-body">
+        <p>406 pages, 244 sighting reports reviewed. <strong>23% left unexplained.</strong> Despite this, concluded reports were due to misidentification, "mass-hysteria," and "psychopathological persons." Captain Ruppelt later described Grudge as aimed at explaining away sightings rather than investigating them. Declassified July 23, 1997.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Project Blue Book — 12,618 Reports, 701 Unexplained</summary>
+      <div class="details-body">
+        <p>The Air Force's systematic UFO study (1952-1969). While many sightings were explained by U-2 and A-12 reconnaissance flights, <strong>701 cases remained completely unexplained</strong> after rigorous analysis. Headquartered at Wright-Patterson AFB — the same facility linked to alleged crash debris storage.</p>
+        <p><strong>Special Report No. 14</strong> by Battelle Memorial Institute analyzed ~3,200 cases with four independent scientific analysts: 69% identified, <strong>22% genuinely unidentified</strong>, 9% insufficient data. Despite these results, the summary paradoxically stated it was "highly improbable" that reports represented unknown technology.</p>
+      </div>
+    </details>
+
+    <h3>CIA Documents</h3>
+
+    <details>
+      <summary>The Robertson Panel — CIA's Debunking Blueprint (1953)</summary>
+      <div class="details-body">
+        <p>CIA-sponsored panel met January 14-18, 1953. Chaired by <strong>Dr. Howard Robertson</strong> (Caltech/CIA). Members included Nobel laureate <strong>Luis Alvarez</strong> and <strong>Samuel Goudsmit</strong>. Spent approximately 12 hours studying the phenomena.</p>
+        <p><strong>Recommendations:</strong></p>
+        <ul style="margin:10px 0 10px 20px;">
+          <li>Mass media debunking campaign using <strong>Walt Disney</strong> to create animations explaining away sightings</li>
+          <li>Recruit psychiatrists, astronomers, and celebrities to ridicule UFO belief</li>
+          <li><strong>Surveillance of civilian UFO groups</strong> for "subversive purposes"</li>
+          <li>Strip UFOs of "the aura of mystery they have unfortunately acquired"</li>
+        </ul>
+        <p>Codified into <strong>JANAP 146</strong> (December 1953): made it a <strong>crime</strong> for military to discuss UFO reports — up to 2 years prison and $10,000 fine. Report classified until 1975.</p>
+        <p><strong>Dr. Thornton Page</strong> later admitted he helped organize the 1966 CBS broadcast "UFOs: Friend, Foe, or Fantasy?" around the Robertson Panel conclusions — 13 years after the panel convened.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>CIA Director Hillenkoetter's Public Admission</summary>
+      <div class="details-body">
+        <p>Declassified CIA documents show the <strong>first CIA Director, Admiral Roscoe Hillenkoetter</strong>, publicly stated that the U.S. government knew UFOs were extraterrestrial and was withholding it from the public. As the first CIA director, his statements carry extraordinary weight.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>STAR GATE: Mars Exploration Session — May 22, 1984</summary>
+      <div class="details-body">
+        <p><strong>Document:</strong> CIA-RDP96-00788R001900760001-9. Approved for release August 2000.</p>
+        <p>Remote viewer (likely <strong>Joseph McMoneagle</strong>) was given a sealed envelope containing "The planet Mars. Time of interest approximately 1 million years B.C." He described an "okra-colored pyramid," large road structures, and "very tall, thin people" wearing fitted clothing — described as a dying "elder race" searching for survival.</p>
+        <p>The STAR GATE program ran from 1977-1995, cost ~$20M. In a separate 1973 session, <strong>Ingo Swann</strong> described Jupiter's rings before Voyager confirmed them in 1979.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Joint US-Australia Alien Invasion Study (1957-1971)</summary>
+      <div class="details-body">
+        <p>A 58-page document from the National Archives of Australia reveals a joint U.S.-Australian project evaluating the likelihood of an alien invasion, prompted by abnormally high UFO report volumes during the 1950s and '60s.</p>
+      </div>
+    </details>
+
+    <h3>NSA Documents</h3>
+
+    <details>
+      <summary>The Yeates Affidavit — 239 Classified UFO Documents (1980)</summary>
+      <div class="details-body">
+        <p>Originally stamped <strong>"Top Secret Umbra"</strong> — the highest classification. Filed in <em>CAUS v. NSA</em> (1980). Revealed <strong>239 UFO-related documents</strong> in NSA files, most being <strong>COMINT reports</strong> — intercepts of foreign governments' own communications about UFOs.</p>
+        <p>The NSA fought to the <strong>Supreme Court</strong> to keep these classified, arguing release would cause "exceptionally grave damage to national security." The world's premier signals intelligence agency had 239 UFO documents — and fought a Supreme Court case to hide them.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>NSA: "UFO Hypothesis and Survival Questions" (1968)</summary>
+      <div class="details-body">
+        <p>An NSA analyst argued that the ET hypothesis "cannot be disregarded" and had serious national survival implications: "Human history has repeatedly shown tragic results of confrontations between technologically superior civilizations and technologically inferior peoples."</p>
+      </div>
+    </details>
+
+    <h3>FBI Documents</h3>
+
+    <details>
+      <summary>The Guy Hottel Memo — March 22, 1950</summary>
+      <div class="details-body">
+        <p>The <strong>most viewed document in the entire FBI Vault</strong> (nearly a million views). Reports that "three so-called flying saucers had been recovered in New Mexico... circular in shape with raised centers, approximately 50 feet in diameter. Each one was occupied by three bodies of human shape but only 3 feet tall, dressed in metallic cloth."</p>
+        <p><strong>The FBI never even followed up.</strong> Either the source was unreliable, or the information was already known through other channels.</p>
+      </div>
+    </details>
+
+    <h3>International Documents</h3>
+
+    <div class="card-grid">
+      <div class="card">
+        <span class="card-tag tag-blue">France</span>
+        <h4>The COMETA Report (1999)</h4>
+        <p>"UFOs and Defense: What Should We Prepare For?" — authored by retired generals and intelligence officials. Concluded the extraterrestrial hypothesis was the <strong>"most probable"</strong> explanation. The only report by senior Western military officials to explicitly endorse ETH.</p>
+      </div>
+      <div class="card">
+        <span class="card-tag tag-blue">UK</span>
+        <h4>Project Condign (1997-2000)</h4>
+        <p>400+ page Secret report. Acknowledged UAPs had "an observable presence that was indisputable." Drew on ~10,000 sightings. Attributed unexplained cases to "Buoyant Plasma Formation." Recommended research into "novel military applications."</p>
+      </div>
+      <div class="card">
+        <span class="card-tag tag-blue">UK</span>
+        <h4>MoD UFO Files</h4>
+        <p>209 files, ~52,000 pages released by The National Archives. The UFO Desk, set up at Churchill's request, ran for 60+ years. One of the largest government UFO document releases in history.</p>
+      </div>
+      <div class="card">
+        <span class="card-tag tag-blue">Canada</span>
+        <h4>Project Magnet (1950-1954)</h4>
+        <p>Director <strong>Wilbert Smith</strong>'s 1952 report concluded UFOs "likely came from intelligent, extraterrestrial sources and almost certainly manipulated magnetism for flight." He built a detection station at Shirley's Bay, Ottawa — one of the first attempts at instrumental UFO detection.</p>
+      </div>
+    </div>
+
+    <h3>The Wilson-Davis Memo</h3>
+    <div class="verdict danger">
+      <div class="verdict-label">Critical Document</div>
+      <p>15 pages of notes from an October 16, 2002 meeting between <strong>Vice Admiral Thomas Wilson</strong> (former DIA Director) and <strong>Dr. Eric Davis</strong>. Wilson described discovering a deeply classified SAP managed by a private aerospace contractor studying <strong>a recovered intact craft of unknown/non-human origin</strong>. Despite being one of the highest-ranking intelligence officials in the country, Wilson was told he did not have "need to know" and was threatened when he demanded access.</p>
+      <p style="margin-top:12px;">If authentic, this describes a constitutional crisis: unelected defense contractors keeping secrets from the intelligence community's own leadership, with no Congressional oversight. The memo has been referenced in Congressional hearings since 2022 and aligns precisely with Grusch's later testimony.</p>
+    </div>
+  </section>
+
+  <!-- =================== SECTION 5: SECRET PROGRAMS =================== -->
+  <section id="programs">
+    <div class="section-label">05 — Black Programs</div>
+    <h2>Secret Government UAP Programs</h2>
+    <p>From the Pentagon's $22M study to alleged crash retrieval operations — the programs they didn't want you to know about.</p>
+
+    <div class="card-grid">
+      <div class="card">
+        <span class="card-tag tag-purple">2007-2012</span>
+        <h4>AATIP</h4>
+        <p>Advanced Aerospace Threat Identification Program. $22M DIA program run by <strong>Luis Elizondo</strong>. Revealed by the New York Times in December 2017 alongside the Gimbal, GoFast, and FLIR1 videos. Elizondo resigned in protest over excessive secrecy. Generated a 494-page report.</p>
+      </div>
+      <div class="card">
+        <span class="card-tag tag-purple">2008-2012</span>
+        <h4>AAWSAP</h4>
+        <p>Advanced Aerospace Weapon System Applications Program — the <strong>actual DIA contract</strong> behind AATIP. Contracted to Bigelow's BAASS for $22M. Extended into paranormal research at Skinwalker Ranch. Produced the 38 DIRDs on warp drives, wormholes, antigravity, and more. Started after DIA analyst <strong>James Lacatski</strong> had an encounter at Skinwalker Ranch.</p>
+      </div>
+      <div class="card">
+        <span class="card-tag tag-orange">2022-Present</span>
+        <h4>AARO</h4>
+        <p>All-domain Anomaly Resolution Office. 800+ reports received. March 2024 historical report found "no empirical evidence" — directly contradicting Grusch. Director Kirkpatrick resigned. Whistleblowers refused to cooperate, calling it a controlled disclosure mechanism designed to look transparent while lacking authority.</p>
+      </div>
+      <div class="card">
+        <span class="card-tag tag-red">Alleged — 2017+</span>
+        <h4>Immaculate Constellation</h4>
+        <p>Alleged USAP revealed via 12-page whistleblower document at November 2024 congressional hearing. Reportedly stores classified UAP imagery/video from 1991-2022. Pentagon denies its existence. The program was allegedly created after the 2017 NYT disclosure to quarantine leaked UAP data.</p>
+      </div>
+      <div class="card">
+        <span class="card-tag tag-red">1950s-?</span>
+        <h4>Project MOON DUST / Blue Fly</h4>
+        <p>USAF recovery programs with ~1,000 pages of declassified documents. A 1961 Air Force document explicitly links MOON DUST, Blue Fly, and "UFO" as related projects. After public exposure, the Air Force changed the code name but <strong>refused to reveal the new designation</strong>.</p>
+      </div>
+      <div class="card">
+        <span class="card-tag tag-orange">Proposed — Never Approved</span>
+        <h4>Kona Blue</h4>
+        <p>Proposed DHS program ($12-50M) for reverse-engineering alien technology. Never approved. AARO declassified the proposal in 2024 as evidence UAP believers lacked evidence. Critics counter: the proposal's existence shows <strong>senior DHS officials believed crash retrievals were real</strong> enough to request tens of millions in funding.</p>
+      </div>
+    </div>
+
+    <h3>The 38 Defense Intelligence Reference Documents (DIRDs)</h3>
+    <p>Commissioned under AAWSAP, these technical papers from top scientists were delivered to the DIA. 37 of 38 released via FOIA in March 2022. <strong>One remains classified.</strong></p>
+
+    <doc-table class="doc-table">
+      <table class="doc-table">
+        <thead><tr><th>#</th><th>Title</th><th>Author</th></tr></thead>
+        <tbody>
+          <tr><td>8</td><td>Traversable Wormholes, Stargates, and Negative Energy</td><td>Dr. Eric Davis, EarthTech</td></tr>
+          <tr><td>11</td><td>Antigravity for Aerospace Applications</td><td>Dr. Eric Davis, EarthTech</td></tr>
+          <tr><td>12</td><td>Field Effects on Biological Tissues</td><td>Dr. Kit Green, Wayne State</td></tr>
+          <tr><td>14</td><td>Concepts for Extracting Energy from the Quantum Vacuum</td><td>Dr. Eric Davis, EarthTech</td></tr>
+          <tr><td>18</td><td>Metamaterials for Aerospace Applications</td><td>Dr. G. Shvets, UT Austin</td></tr>
+          <tr><td>19</td><td>Warp Drive, Dark Energy, and Extra Dimensions</td><td>Dr. R. Obousy</td></tr>
+          <tr><td>37</td><td>Negative Mass Propulsion</td><td>Dr. F. Winterberg, UNR</td></tr>
+          <tr><td>38</td><td><em>CLASSIFIED</em></td><td><em>Unknown</em></td></tr>
+        </tbody>
+      </table>
+    </doc-table>
+
+    <div class="verdict info">
+      <div class="verdict-label">Why It Matters</div>
+      <p>These papers collectively form a research program that only makes sense if you're trying to understand and replicate technology exhibiting the "five observables" — warp drives, wormholes, antigravity, vacuum energy extraction, metamaterials, cloaking, and biological effects on witnesses. The U.S. government paid scientists to study exactly the physics needed to explain UAP performance.</p>
+    </div>
+  </section>
+
+  <!-- =================== SECTION 6: MAJOR INCIDENTS =================== -->
+  <section id="incidents">
+    <div class="section-label">06 — Case Files</div>
+    <h2>Major UFO/UAP Incidents</h2>
+    <p>The encounters that changed everything — from Roswell to the Nimitz Tic Tac to the mysterious drones over military bases.</p>
+
+    <div class="incident-card">
+      <div class="incident-header"><h4>Roswell, New Mexico</h4><span class="incident-date">July 1947</span></div>
+      <p>The foundational case. Something crashed on a ranch near Roswell. The Army initially announced recovery of a "flying disc," then retracted to "weather balloon." Intelligence officer <strong>Major Jesse Marcel</strong> later stated the debris had extraordinary properties — I-beam structures with purple hieroglyphics, metal that couldn't be cut, burned, or dented. The <strong>Ramey Memo</strong>, photographed in General Ramey's office, has been partially decoded to read "VICTIMS OF THE WRECK" — suggesting bodies were recovered. The Air Force's 1994 explanation (Project Mogul balloon) doesn't account for the initial "flying disc" press release or Marcel's testimony. <strong>Colonel Philip Corso</strong> claimed in his 1997 book that he personally distributed Roswell debris to defense contractors for reverse-engineering.</p>
+    </div>
+
+    <div class="incident-card">
+      <div class="incident-header"><h4>Malmstrom AFB — Nuclear Missiles Disabled</h4><span class="incident-date">March 1967</span></div>
+      <p>Echo and Oscar Flight incidents: <strong>20 nuclear ICBMs simultaneously disabled</strong> during UFO presence over Malmstrom Air Force Base, Montana. Captain <strong>Robert Salas</strong> testified that a glowing red object hovered over the front gate while missiles went into "No-Go" status one by one. The Pentagon's 2025 report attributed it to a classified EMP test — a claim Salas and other witnesses vigorously dispute. The connection between UAPs and nuclear weapons is one of the most consistent patterns in the phenomenon.</p>
+    </div>
+
+    <div class="incident-card">
+      <div class="incident-header"><h4>Colares, Brazil — Operation Saucer</h4><span class="incident-date">1977</span></div>
+      <p>The Brazilian Air Force conducted <strong>Operation Saucer</strong> to investigate UFOs that were <strong>attacking civilians with directed energy beams</strong> on Colares Island. The military produced a <strong>2,000-page report, 500 photos, and 16 hours of film</strong>. Victims suffered radiation burns and puncture wounds — locals called the objects "chupa-chupa" (suckers). Lead investigator <strong>Captain Aloizio Hollanda</strong> publicly confirmed the events in a 1997 interview. He was found dead three months later, officially by suicide.</p>
+    </div>
+
+    <div class="incident-card">
+      <div class="incident-header"><h4>Cash-Landrum Incident</h4><span class="incident-date">December 1980</span></div>
+      <p>Betty Cash, Vickie Landrum, and her grandson Colby encountered a diamond-shaped craft escorted by <strong>23 military helicopters</strong> (later identified as CH-47 Chinooks) near Houston, Texas. All three suffered severe radiation injuries — Cash developed breast cancer, lost hair, and was hospitalized repeatedly. Their federal lawsuit was dismissed in 1986 when the government denied owning the craft. <strong>Betty Cash died on December 29, 1998 — the 18th anniversary of the encounter.</strong></p>
+    </div>
+
+    <div class="incident-card">
+      <div class="incident-header"><h4>Rendlesham Forest — "Britain's Roswell"</h4><span class="incident-date">December 1980</span></div>
+      <p>Three nights of encounters near RAF Woodbridge, a nuclear weapons storage facility in Suffolk, England. USAF personnel observed a glowing craft in the forest. <strong>Lt. Col. Charles Halt</strong> led a patrol and recorded events in real-time on tape (the "Halt Tape," declassified). Staff Sergeant <strong>Jim Penniston</strong> claimed to have touched the craft and received a "binary code download" — later decoded to geographical coordinates pointing to Hy-Brasil (a mythical island) and other ancient sites. Ground traces showed radiation readings 25x background levels.</p>
+    </div>
+
+    <div class="incident-card">
+      <div class="incident-header"><h4>Ariel School, Zimbabwe</h4><span class="incident-date">September 1994</span></div>
+      <p><strong>62 children</strong> at the Ariel School witnessed a craft landing and beings emerging during morning recess. Investigated by BBC's Tim Leach and Harvard psychiatrist <strong>Dr. John Mack</strong>. The children described beings with large eyes communicating telepathic messages about environmental destruction. Their testimony has remained consistent for <strong>over 30 years</strong>. There is no conventional explanation that accounts for 62 independent, consistent witnesses.</p>
+    </div>
+
+    <div class="incident-card">
+      <div class="incident-header"><h4>Varginha, Brazil</h4><span class="incident-date">January 1996</span></div>
+      <p>Multiple witnesses reported creature sightings in Varginha. The Brazilian military allegedly captured at least one entity. Police officer <strong>Marco Chereze</strong>, who reportedly handled a creature, died weeks later from a rare aggressive bacterium — an infection his doctors could not explain. Animals at the local zoo exhibited unusual behavior and deaths. The Brazilian government denied all involvement despite witness testimony from military personnel.</p>
+    </div>
+
+    <div class="incident-card">
+      <div class="incident-header"><h4>Phoenix Lights</h4><span class="incident-date">March 1997</span></div>
+      <p>Two distinct events in one night: a massive V-shaped formation of lights traversed the state, followed by stationary lights (later attributed to military flares). Thousands of witnesses including <strong>Governor Fife Symington</strong>, who initially mocked the event at a press conference but in 2007 admitted he had witnessed "an enormous delta-shaped craft" and called it "otherworldly." Only the second event (flares) was explained. The V-formation remains unidentified.</p>
+    </div>
+
+    <div class="incident-card">
+      <div class="incident-header"><h4>USS Nimitz — The Tic Tac</h4><span class="incident-date">November 2004</span></div>
+      <p>The gold standard of military UAP encounters. <strong>Aegis radar</strong> tracked objects descending from 80,000 feet to sea level in under a second — an estimated <strong>5,370 g's</strong>. Commander <strong>David Fravor</strong> visually engaged a white, 40-foot "Tic Tac" that mirrored his maneuvers, then accelerated away instantaneously. FLIR video captured the encounter. The object traveled <strong>60 miles in seconds</strong> to Fravor's pre-designated CAP point — information it should not have had. Unknown personnel allegedly seized radar data and recordings from the ship. Multi-sensor corroboration across radar, IR, visual, and satellite makes this case nearly impossible to dismiss.</p>
+    </div>
+
+    <div class="incident-card">
+      <div class="incident-header"><h4>USS Roosevelt Encounters</h4><span class="incident-date">2014-2015</span></div>
+      <p>Navy pilots from the USS Theodore Roosevelt reported <strong>near-daily UAP encounters</strong> for months off the U.S. East Coast. Objects described as "cube inside a clear sphere." Lt. <strong>Ryan Graves</strong> testified these were persistent, multi-sensor contacts — visible on radar, IR, and by the naked eye. One object came within 200 feet of a Super Hornet, constituting a near-midair collision. Produced the "Gimbal" and "GoFast" videos released in 2017.</p>
+    </div>
+
+    <div class="incident-card">
+      <div class="incident-header"><h4>Drone Incursions Over U.S. Military Bases</h4><span class="incident-date">2023-2025</span></div>
+      <p><strong>17 nights of drones</strong> over Langley AFB forced the relocation of F-22 Raptors. <strong>420+ incursions across 100+ bases</strong> in one year. Objects demonstrated capabilities beyond known commercial or military drones. Despite FBI investigation, the origin remains unknown. General Glen VanHerck, head of NORAD/NORTHCOM, admitted the military could not identify many of these objects.</p>
+    </div>
+  </section>
+
+  <!-- =================== SECTION 7: WHISTLEBLOWERS =================== -->
+  <section id="whistleblowers">
+    <div class="section-label">07 — The Witnesses</div>
+    <h2>Whistleblowers & Key Figures</h2>
+    <p>The people who risked everything to tell the truth — from intelligence officers to Navy pilots to Stanford professors.</p>
+
+    <h3>Government Whistleblowers</h3>
+    <div class="person-grid">
+      <div class="person-card">
+        <div class="name">David Grusch</div>
+        <div class="role">NGA/NRO Intelligence Officer</div>
+        <div class="claims"><ul>
+          <li>Testified under oath: U.S. runs multi-decade crash retrieval and reverse-engineering programs</li>
+          <li>ICIG deemed complaint "credible and urgent"</li>
+          <li>Over 40 witnesses corroborated his claims</li>
+          <li>Appointed Special Advisor to Rep. Burlison (March 2025)</li>
+          <li>Reported "administrative terrorism" and feared for his life</li>
+        </ul></div>
+      </div>
+      <div class="person-card">
+        <div class="name">Luis "Lue" Elizondo</div>
+        <div class="role">Former AATIP Director / Counterintelligence</div>
+        <div class="claims"><ul>
+          <li>Ran Pentagon's UAP program; resigned in protest over secrecy</li>
+          <li>Defined the "Five Observables" framework</li>
+          <li>Book <em>Imminent</em> became #1 NYT bestseller</li>
+          <li>DOPSR censored his remote viewing content</li>
+          <li>DOD Inspector General found the Pentagon retaliated against him</li>
+        </ul></div>
+      </div>
+      <div class="person-card">
+        <div class="name">Colonel Karl Nell</div>
+        <div class="role">U.S. Army / UAPTF Liaison</div>
+        <div class="claims"><ul>
+          <li>Publicly stated "non-human intelligence exists" with "zero doubt"</li>
+          <li>Outlined 5-phase disclosure timeline (2024-2034+)</li>
+          <li>Warned 2026 would be a "tipping point"</li>
+          <li>Published white papers through the Sol Foundation</li>
+        </ul></div>
+      </div>
+      <div class="person-card">
+        <div class="name">Rear Admiral Tim Gallaudet</div>
+        <div class="role">Former NOAA Administrator / Flag Officer</div>
+        <div class="claims"><ul>
+          <li>Testified before Congress November 2024</li>
+          <li>Reported evidence of email scrubbing regarding UAP data</li>
+          <li>Warned about USO/transmedium threats to undersea infrastructure</li>
+          <li>Highest-ranking active whistleblower (flag officer)</li>
+        </ul></div>
+      </div>
+    </div>
+
+    <h3>Military Pilot Witnesses</h3>
+    <div class="person-grid">
+      <div class="person-card">
+        <div class="name">Commander David Fravor</div>
+        <div class="role">U.S. Navy — Nimitz Tic Tac (2004)</div>
+        <div class="claims"><ul>
+          <li>Visual encounter with 40-foot white "Tic Tac" object</li>
+          <li>Object mirrored his maneuvers, then accelerated instantaneously</li>
+          <li>Multi-sensor corroboration (Aegis radar, FLIR, visual)</li>
+          <li>Testified under oath before Congress, 2023</li>
+        </ul></div>
+      </div>
+      <div class="person-card">
+        <div class="name">Lt. Ryan Graves</div>
+        <div class="role">U.S. Navy / Americans for Safe Aerospace</div>
+        <div class="claims"><ul>
+          <li>Near-daily UAP encounters 2014-2015 off East Coast</li>
+          <li>Observed "cube inside clear sphere" at close range</li>
+          <li>First active-duty pilot to testify to Congress</li>
+          <li>Founded Americans for Safe Aerospace advocacy org</li>
+        </ul></div>
+      </div>
+    </div>
+
+    <h3>Scientists</h3>
+    <div class="person-grid">
+      <div class="person-card">
+        <div class="name">Dr. Eric Davis</div>
+        <div class="role">Astrophysicist / EarthTech International</div>
+        <div class="claims"><ul>
+          <li>Author of the Wilson-Davis memo (in Congressional Record since 2022)</li>
+          <li>Gave classified briefings to Senate/House Armed Services committees</li>
+          <li>May 2025: briefed Congress on recovered materials with anomalous isotope ratios</li>
+          <li>Authored multiple DIRDs on wormholes, antigravity, vacuum energy</li>
+        </ul></div>
+      </div>
+      <div class="person-card">
+        <div class="name">Dr. Hal Puthoff</div>
+        <div class="role">Physicist / STAR GATE Director / EarthTech</div>
+        <div class="claims"><ul>
+          <li>Directed the CIA/DIA remote viewing program</li>
+          <li>Pioneered zero-point energy and "metric engineering" research</li>
+          <li>AAWSAP DIRD author, BAASS chief scientist</li>
+          <li>Co-founded To The Stars Academy</li>
+        </ul></div>
+      </div>
+      <div class="person-card">
+        <div class="name">Dr. Garry Nolan</div>
+        <div class="role">Stanford Pathologist / Sol Foundation</div>
+        <div class="claims"><ul>
+          <li>330+ papers, 50 patents — one of Stanford's most published scientists</li>
+          <li>Analyzed materials with anomalous magnesium isotope ratios (Ubatuba sample)</li>
+          <li>Brain scans of UAP experiencers showing structural anomalies</li>
+          <li>Co-founded the Sol Foundation think tank</li>
+        </ul></div>
+      </div>
+      <div class="person-card">
+        <div class="name">Dr. Jacques Vallee</div>
+        <div class="role">Computer Scientist / Astronomer</div>
+        <div class="claims"><ul>
+          <li>Developed the interdimensional hypothesis and control system theory</li>
+          <li>Investigated the Trinity crash (1945 — pre-Roswell)</li>
+          <li>Maintains 50+ year database of UFO cases worldwide</li>
+          <li>Served as model for Lacombe in <em>Close Encounters of the Third Kind</em></li>
+        </ul></div>
+      </div>
+      <div class="person-card">
+        <div class="name">Dr. J. Allen Hynek</div>
+        <div class="role">Astronomer / Blue Book Advisor</div>
+        <div class="claims"><ul>
+          <li>The original debunker-to-believer arc</li>
+          <li>Created the Close Encounter classification system (CE1-CE3)</li>
+          <li>Eventually broke with the Air Force over suppression of data</li>
+          <li>Founded the Center for UFO Studies (CUFOS)</li>
+        </ul></div>
+      </div>
+    </div>
+
+    <h3>Political & Legal Figures</h3>
+    <div class="person-grid">
+      <div class="person-card">
+        <div class="name">Christopher Mellon</div>
+        <div class="role">Former Deputy Asst. Secretary of Defense for Intelligence</div>
+        <div class="claims"><ul>
+          <li>Personally provided Pentagon UAP videos to NYT/WashPost in 2017</li>
+          <li>Orchestrated the public disclosure that launched the modern UAP era</li>
+          <li>Claims knowledge of classified satellite imagery of non-human craft</li>
+        </ul></div>
+      </div>
+      <div class="person-card">
+        <div class="name">Senator Harry Reid</div>
+        <div class="role">Senate Majority Leader (Deceased)</div>
+        <div class="claims"><ul>
+          <li>Secured the $22M funding for AAWSAP/AATIP</li>
+          <li>Partnered with Senators Inouye and Stevens</li>
+          <li>Normalized UAP as a legitimate national security priority</li>
+          <li>Called Lockheed Martin's alleged UAP program "the most closely held secret in government"</li>
+        </ul></div>
+      </div>
+      <div class="person-card">
+        <div class="name">Daniel Sheehan</div>
+        <div class="role">Harvard-Trained Attorney</div>
+        <div class="claims"><ul>
+          <li>Legal counsel for Elizondo and other whistleblowers</li>
+          <li>Previously involved in Iran-Contra, Watergate, Silkwood cases</li>
+          <li>Founded New Paradigm Institute (2023) for UAP disclosure</li>
+        </ul></div>
+      </div>
+    </div>
+
+    <h3>Journalists & Researchers</h3>
+    <div class="person-grid">
+      <div class="person-card">
+        <div class="name">Ross Coulthart</div>
+        <div class="role">NewsNation Special Correspondent</div>
+        <div class="claims"><ul>
+          <li>Author of <em>In Plain Sight</em></li>
+          <li>Primary channel for new UAP whistleblowers (Jake Barber, others)</li>
+          <li>Broke multiple UAP stories on NewsNation</li>
+        </ul></div>
+      </div>
+      <div class="person-card">
+        <div class="name">John Greenewald Jr.</div>
+        <div class="role">FOIA Researcher / The Black Vault</div>
+        <div class="claims"><ul>
+          <li>Filed ~10,000 FOIA requests over 25+ years</li>
+          <li>Digitized complete Project Blue Book and CIA UFO archives</li>
+          <li>Most comprehensive public UFO document repository in the world</li>
+        </ul></div>
+      </div>
+    </div>
+
+    <h3>The Controversial Figure</h3>
+    <details>
+      <summary>Bob Lazar — Area 51 / S-4 (1989)</summary>
+      <div class="details-body">
+        <p>Claimed to have worked at "S-4" near Area 51 reverse-engineering alien craft powered by Element 115 (moscovium). He described the craft using gravity amplifiers to warp spacetime. Element 115 was later synthesized in 2003, though it does not exhibit the properties Lazar described. His claimed MIT and Caltech degrees cannot be verified. Employment records are disputed. His story has remained consistent for 35+ years, but credibility problems are extensive. Investigated and publicized by journalist <strong>George Knapp</strong> in 1989.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- =================== SECTION 8: CONTRACTORS =================== -->
+  <section id="skunkworks">
+    <div class="section-label">08 — The Contractors</div>
+    <h2>Defense Contractors & Reverse Engineering</h2>
+    <p>Multiple whistleblowers name specific companies as custodians of recovered technology — operating outside Congressional oversight behind corporate firewalls.</p>
+
+    <div class="card-grid">
+      <div class="card">
+        <span class="card-tag tag-red">Most Named</span>
+        <h4>Lockheed Martin / Skunk Works</h4>
+        <p>The most frequently named contractor. Ben Rich's ambiguous statements. Steve Justice left the directorship to join TTSA. Senator Reid called their alleged program "the most closely held secret in government." Lockheed has flatly denied all allegations.</p>
+      </div>
+      <div class="card">
+        <span class="card-tag tag-red">Named</span>
+        <h4>Northrop Grumman</h4>
+        <p>Repeatedly named in connection with "legacy programs." Has not responded to press requests for comment.</p>
+      </div>
+      <div class="card">
+        <span class="card-tag tag-red">Named</span>
+        <h4>Boeing / McDonnell Douglas</h4>
+        <p>Named by Elizondo and others. McDonnell Douglas was reportedly involved in crash retrieval analysis before its 1997 merger with Boeing.</p>
+      </div>
+      <div class="card">
+        <span class="card-tag tag-orange">Analysis</span>
+        <h4>Battelle Memorial Institute</h4>
+        <p>Conducted Project Stork and Blue Book Special Report #14. Name has surfaced in connection with materials analysis of recovered exotic materials, including memory metals potentially related to Roswell.</p>
+      </div>
+      <div class="card">
+        <span class="card-tag tag-purple">Key Figure</span>
+        <h4>Robert Bigelow / BAASS</h4>
+        <p>Billionaire who purchased Skinwalker Ranch, received the $22M AAWSAP contract, and built secure facilities to house program files and "a piece of unknown material." On <em>60 Minutes</em>: "There has been and is an existing presence, an ET presence."</p>
+      </div>
+      <div class="card">
+        <span class="card-tag tag-purple">Key Figure</span>
+        <h4>Tom DeLonge / TTSA</h4>
+        <p>Assembled the team (Elizondo, Mellon, Justice, Puthoff) that coordinated the 2017 NYT disclosure. TTSA acquired Art's Parts and signed a CRADA with the U.S. Army to test exotic materials.</p>
+      </div>
+    </div>
+
+    <h3>The Ben Rich Story — Myth vs. Reality</h3>
+    <div class="verdict">
+      <div class="verdict-label">Fact Check</div>
+      <p><strong>There was no deathbed confession.</strong> Rich's famous quotes — "We now have the technology to take ET home" — came from speeches he gave at UCLA and Wright-Patterson AFB in 1993, nearly two years before his death. He always used the ET line as a joke. In a 1986 letter to model-kit designer John Andrews, he wrote: "I'm a believer in both categories. I feel everything is possible." Many online versions are embellished. That said — the director of Skunk Works was making these jokes for a reason.</p>
+    </div>
+
+    <h3>The Contractor Firewall Problem</h3>
+    <div class="verdict danger">
+      <div class="verdict-label">Constitutional Crisis</div>
+      <p>By housing recovered technology with private companies, the government creates a legal firewall. Contractors aren't subject to FOIA. Corporate NDAs add another secrecy layer. Congress can't compel testimony from contractor employees the way it can from federal employees. The Schumer Amendment's eminent domain provision — designed to break this firewall — was the <strong>specific provision</strong> stripped by defense-contractor-funded Representatives. The fox is guarding the henhouse, and the foxes wrote the rules.</p>
+    </div>
+  </section>
+
+  <!-- =================== SECTION 9: THE COVER-UP =================== -->
+  <section id="coverup">
+    <div class="section-label">09 — Power & Secrecy</div>
+    <h2>The Cover-Up Apparatus</h2>
+    <p>Seven decades of coordinated suppression — from CIA debunking campaigns to criminalizing military witnesses to destroying careers. Here's how they built a machine to hide the truth.</p>
+
+    <h3>The Architecture of Denial</h3>
+    <div class="card-grid">
+      <div class="card">
+        <span class="card-tag tag-red">1953</span>
+        <h4>Robertson Panel</h4>
+        <p>CIA-sponsored panel recommended mass media debunking using Disney, surveillance of civilian UFO groups, and celebrity recruitment to ridicule witnesses. Led to JANAP 146: <strong>prison time</strong> for military discussing UFO reports. The blueprint for 70 years of suppression.</p>
+      </div>
+      <div class="card">
+        <span class="card-tag tag-red">1950s</span>
+        <h4>Operation Mockingbird</h4>
+        <p>CIA cultivated 400+ media assets including at NYT, WashPost, CBS, Newsweek. The debunking directive coincided with CIA's deepest media penetration. The infrastructure to suppress UFO coverage was already in place.</p>
+      </div>
+      <div class="card">
+        <span class="card-tag tag-red">1966-1968</span>
+        <h4>The Condon Committee</h4>
+        <p>The "$500,000 trick." Coordinator Robert Low's memo: "The trick would be to describe the project so that, to the public, it would appear totally objective." Despite 30%+ of their own cases remaining unexplained, the committee recommended ending UFO research. <strong>Used to shut down Project Blue Book in 1969. No official investigation for 50 years.</strong></p>
+      </div>
+      <div class="card">
+        <span class="card-tag tag-red">Ongoing</span>
+        <h4>USAP / WUSAP System</h4>
+        <p>Waived Unacknowledged SAPs are exempt from Congressional reporting. Even "Big Four" briefings allow no notes, no staff, no verification. Congress gets a codename and must take the executive branch at its word. De jure oversight, de facto none.</p>
+      </div>
+      <div class="card">
+        <span class="card-tag tag-red">2023</span>
+        <h4>Schumer Amendment Killed</h4>
+        <p>The eminent domain provision and independent review board stripped by Reps. Turner and Rogers. Turner received $174K+ from defense contributors; Rogers was the <strong>single largest recipient of defense sector funding</strong> at $400K+. The provisions with real teeth were the ones that died.</p>
+      </div>
+      <div class="card">
+        <span class="card-tag tag-red">Ongoing</span>
+        <h4>The Stigma Machine</h4>
+        <p>The Robertson Panel's self-reinforcing system: stigma prevents reporting; lack of reports creates the appearance of nonexistence; apparent nonexistence reinforces stigma. <strong>Dylan Borland</strong>: reported a UFO, faced career destruction, security clearance manipulation, phishing attacks. Now unemployed. This is by design.</p>
+      </div>
+    </div>
+
+    <h3>The Money Trail</h3>
+    <div class="verdict warn">
+      <div class="verdict-label">Follow The Money</div>
+      <p>The two Representatives who killed the Schumer Amendment's strongest provisions — Mike Turner (House Intelligence Chair) and Mike Rogers (House Armed Services Chair) — were the largest recipients of defense contractor money in Congress during the 2023-2024 cycle. The companies whose secrecy the amendment threatened are the same companies funding the politicians who stripped it. This is documented in FEC filings.</p>
+    </div>
+
+    <h3>The Fundamental Contradiction</h3>
+    <div class="verdict danger">
+      <div class="verdict-label">Something Is Lying</div>
+      <p>The U.S. government simultaneously: (a) established AARO, which says there's no evidence of crash retrievals; (b) passed legislation demanding the Pentagon brief Congress on UAP intercepts retroactive to 2004; (c) had military officials testify under oath about recovered craft and non-human biologics; and (d) registered alien.gov domains at the White House. These positions cannot all be true. The contradiction is the evidence.</p>
+    </div>
+  </section>
+
+  <!-- =================== SECTION 10: THE SCIENCE =================== -->
+  <section id="science">
+    <div class="section-label">10 — The Physics</div>
+    <h2>The Science Behind the Phenomenon</h2>
+    <p>From the five observables to warp drive physics to metamaterials analysis — what would it take for these craft to actually work?</p>
+
+    <h3>The Five Observables</h3>
+    <p>Compiled by Luis Elizondo from AATIP data — the consistent performance characteristics reported across military UAP encounters:</p>
+
+    <div class="card-grid-3">
+      <div class="card"><span class="card-tag tag-blue">1</span><h4>Anti-Gravity Lift</h4><p>No wings, engines, exhaust, or visible propulsion. Objects hover and maneuver with precision using no known means of generating lift.</p></div>
+      <div class="card"><span class="card-tag tag-blue">2</span><h4>Instantaneous Acceleration</h4><p>Nimitz Tic Tac: 80,000 feet to sea level in 0.78 seconds = <strong>5,370 g's</strong>. Instantly lethal and beyond any known material's structural limits.</p></div>
+      <div class="card"><span class="card-tag tag-blue">3</span><h4>Hypersonic Without Signatures</h4><p>Well above Mach 5 with <strong>no sonic boom, no contrails, no thermal signature</strong>. Conventional hypersonic flight produces massive signatures.</p></div>
+      <div class="card"><span class="card-tag tag-blue">4</span><h4>Trans-Medium Travel</h4><p>Seamless air-to-water-to-space transitions with no performance change. Current physics requires vehicles designed for one medium only.</p></div>
+      <div class="card"><span class="card-tag tag-blue">5</span><h4>Low Observability</h4><p>Resists identification across all sensor types. Radar returns often "nonsensical or jammed." Visual descriptions are difficult to articulate.</p></div>
+    </div>
+
+    <h3>Exotic Materials</h3>
+    <details>
+      <summary>Art's Parts — The Bismuth-Magnesium Metamaterial</summary>
+      <div class="details-body">
+        <p>Anonymous samples received by radio host Art Bell in 1996, allegedly from Roswell. Alternating layers of <strong>bismuth (1-4 microns)</strong> and <strong>magnesium-zinc alloy (100-200 microns)</strong>. Analysis revealed the structure functions as an excellent <strong>microscopic waveguide for terahertz-frequency electromagnetic radiation</strong>. Due to the metamaterial properties, the waveguide layers can be one-twentieth the wavelength size.</p>
+        <p>TTSA acquired the samples for $35,000 and signed a CRADA with the U.S. Army to test them. Skeptics identified the Betterton-Kroll process (1922) as a possible mundane origin. The debate continues.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Stanford Analysis — Anomalous Isotopic Ratios</summary>
+      <div class="details-body">
+        <p><strong>Dr. Garry Nolan</strong> at Stanford analyzed the Ubatuba magnesium sample (from a 1957 alleged UFO explosion in Brazil) and found anomalous isotopic ratios that don't match any known terrestrial or natural process. Dr. Eric Davis briefed Congress in May 2025 on recovered materials with similarly anomalous signatures.</p>
+      </div>
+    </details>
+
+    <h3>Theoretical Physics: How Could They Work?</h3>
+
+    <details>
+      <summary>Alcubierre Warp Drive (1994)</summary>
+      <div class="details-body">
+        <p>Mexican physicist <strong>Miguel Alcubierre</strong> showed that general relativity permits a "warp bubble" — contracting space ahead, expanding behind. An object inside experiences <strong>no local acceleration</strong> regardless of apparent velocity, potentially exceeding light speed. The problem: requires "exotic matter" with negative energy density, never observed in nature.</p>
+        <p><strong>Harold "Sonny" White</strong> at NASA JSC argued modifications could reduce energy needs from a Jupiter-mass to ~700 kg of exotic matter. <strong>Erik Lentz</strong> (2021) proposed soliton-based warp solutions using only positive energy — the first such solution, though contested.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Zero-Point Energy and Vacuum Engineering</summary>
+      <div class="details-body">
+        <p>Dr. Hal Puthoff's work proposes that <strong>inertia may emerge from interaction with the quantum vacuum</strong> (the Haisch-Rueda-Puthoff hypothesis, 1994). If correct, inertia could theoretically be manipulated. His "Polarizable Vacuum" model recasts spacetime as a dielectric medium — making warp drives and gravity control intuitive as engineering problems. The <strong>Casimir Effect</strong> (experimentally verified) proves vacuum energy produces measurable physical forces.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>The Field Propulsion Model — Explaining All Five Observables</summary>
+      <div class="details-body">
+        <p>The hypothesized mechanism synthesizes multiple concepts:</p>
+        <ol style="margin:10px 0 10px 20px;">
+          <li>The craft generates an intense electromagnetic field (possibly terahertz — relevant to Art's Parts waveguide)</li>
+          <li>This field modifies the local spacetime metric via vacuum energy interaction</li>
+          <li>The modification creates a warp-like bubble or gravitational gradient</li>
+          <li>The craft "falls" along the gradient rather than being propelled through space</li>
+          <li>Because space itself moves (not the craft), there are <strong>no g-forces, no sonic boom, no thermal signature, no medium interaction</strong></li>
+        </ol>
+        <p>This simultaneously explains all five observables. It remains entirely theoretical — no laboratory has demonstrated any of these mechanisms.</p>
+      </div>
+    </details>
+
+    <h3>Current Scientific Efforts</h3>
+    <div class="card-grid">
+      <div class="card">
+        <span class="card-tag tag-green">Active</span>
+        <h4>Sol Foundation</h4>
+        <p>Founded 2023 by Dr. Garry Nolan and Peter Skafish. Stanford-based think tank researching UAP implications. Legal counsel: former ICIG Charles McCullough. Inaugural symposium at Stanford University.</p>
+      </div>
+      <div class="card">
+        <span class="card-tag tag-green">Active</span>
+        <h4>The Galileo Project</h4>
+        <p>Founded 2021 by Harvard's Avi Loeb. Three observatories monitoring the sky in IR, visible, radio, and audio bands. By 2026: "now capable of discovering UAP." First transparent, systematic, peer-reviewed UAP science.</p>
+      </div>
+      <div class="card">
+        <span class="card-tag tag-green">Active</span>
+        <h4>UAPx</h4>
+        <p>Field research nonprofit. Published in <em>Progress in Aerospace Sciences</em> (2025). Multi-modal sensor data from Catalina Island expeditions. Some of the only unclassified, non-governmental UAP sensor data in existence.</p>
+      </div>
+    </div>
+
+    <div class="verdict info">
+      <div class="verdict-label">The Navy's UFO Patents</div>
+      <p><strong>Salvatore Cezar Pais</strong>, a Navy aerospace engineer, filed patents (2015-2019) for an inertial mass reduction device, room-temperature superconductor, compact fusion reactor, and high-frequency gravitational wave generator — all based on the "Pais Effect" (extreme electromagnetic energy fluxes). Testing at NAWCAD from 2016-2019 <strong>failed to demonstrate the Pais Effect</strong>. But the Navy filed these patents to establish priority — meaning they believe the underlying physics may eventually be validated.</p>
+    </div>
+  </section>
+
+  <!-- =================== SECTION 11: SOURCES =================== -->
+  <section id="sources">
+    <div class="section-label">11 — Sources & Further Reading</div>
+    <h2>Sources</h2>
+    <p class="dim">All claims sourced from public reporting, congressional records, declassified government documents, FOIA releases, and scholarly work. This document presents allegations alongside verified facts — evaluate each claim on its evidence.</p>
+
+    <h3>Congressional & Government</h3>
+    <div class="sources">
+      <a href="https://oversight.house.gov/hearing/unidentified-anomalous-phenomena-exposing-the-truth/" target="_blank">House Oversight: UAP Hearing</a>
+      <a href="https://defensescoop.com/2025/09/09/military-whistleblowers-share-new-evidence-alleged-uap-ufo-hearing/" target="_blank">DefenseScoop: Military Whistleblowers (Sep 2025)</a>
+      <a href="https://defensescoop.com/2025/12/10/uap-ufo-military-intercepts-north-america-fy-2026-ndaa/" target="_blank">DefenseScoop: FY2026 NDAA</a>
+      <a href="https://defensescoop.com/2026/02/20/trump-ufo-uap-government-files-disclosure/" target="_blank">DefenseScoop: Trump Disclosure Directive</a>
+      <a href="https://defensescoop.com/2026/03/18/white-house-registers-new-alien-gov-domains-ufo-uap/" target="_blank">DefenseScoop: alien.gov Domains</a>
+      <a href="https://www.aaro.mil/Portals/136/PDFs/AARO_Historical_Record_Report_Vol_1_2024.pdf" target="_blank">AARO Historical Report Vol. 1</a>
+      <a href="https://www.congress.gov/bill/119th-congress/house-bill/1187/text" target="_blank">H.R.1187 UAP Transparency Act</a>
+      <a href="https://burlison.house.gov/media/press-releases/rep-burlison-introduces-uap-disclosure-act-2025-amendment-ndaa" target="_blank">UAP Disclosure Act 2025</a>
+      <a href="https://www.democrats.senate.gov/newsroom/press-releases/schumer-rounds-introduce-new-legislation-to-declassify-government-records-related-to-unidentified-anomalous-phenomena-and-ufos_modeled-after-jfk-assassination-records-collection-act--as-an-amendment-to-ndaa" target="_blank">Schumer-Rounds UAP Legislation</a>
+    </div>
+
+    <h3>Declassified Documents</h3>
+    <div class="sources">
+      <a href="https://www.cia.gov/readingroom/collection/ufos-fact-or-fiction" target="_blank">CIA FOIA: UFOs Fact or Fiction</a>
+      <a href="https://sgp.fas.org/library/ciaufo.html" target="_blank">CIA's Role in UFO Study 1947-90</a>
+      <a href="https://documents2.theblackvault.com/documents/cia/CIA-RDP96-00788R001900760001-9.pdf" target="_blank">CIA: Mars Exploration Session 1984</a>
+      <a href="https://www.nsa.gov/portals/75/documents/news-features/declassified-documents/ufo/in_camera_affadavit_yeates.pdf" target="_blank">NSA: Yeates Affidavit</a>
+      <a href="https://www.nsa.gov/Helpful-Links/NSA-FOIA/Declassification-Transparency-Initiatives/FOIA-Reports-and-Releases/FOIA-Reports-and-Releases-List/igphoto/2002761377/" target="_blank">NSA: UFO Hypothesis & Survival</a>
+      <a href="https://vault.fbi.gov/hottel_guy" target="_blank">FBI Vault: Guy Hottel Memo</a>
+      <a href="https://vault.fbi.gov/Roswell%20UFO" target="_blank">FBI Vault: Roswell UFO</a>
+      <a href="https://www.documentcloud.org/documents/6185702-Eric-Davis-meeting-with-Adm-Wilson/" target="_blank">Wilson-Davis Memo (DocumentCloud)</a>
+      <a href="https://www.documentcloud.org/documents/20797978-twining-memo/" target="_blank">Twining Memo 1947</a>
+      <a href="https://archive.org/details/ProjectGRUDGE" target="_blank">Project Grudge Report</a>
+      <a href="https://documents.theblackvault.com/documents/ufos/robertsonpanelreport.pdf" target="_blank">Robertson Panel Report</a>
+      <a href="https://www.nationalarchives.gov.uk/explore-the-collection/explore-by-time-period/postwar/ufo-reports/" target="_blank">UK National Archives: UFO Reports</a>
+    </div>
+
+    <h3>AAWSAP/AATIP & DIRDs</h3>
+    <div class="sources">
+      <a href="https://www.theblackvault.com/documentarchive/the-advanced-aerospace-weapon-system-applications-program-aawsap-documentation/" target="_blank">Black Vault: AAWSAP Documentation</a>
+      <a href="https://www.theblackvault.com/documentarchive/the-advanced-aviation-threat-identification-program-aatip-dird-report-research/" target="_blank">Black Vault: AATIP/DIRD Research</a>
+      <a href="https://locationsunknown.org/foia-reading-room/the-deep-end/ufos-aliens/defense-intelligence-reference-documents" target="_blank">DIRDs Full Collection</a>
+      <a href="https://uapedia.ai/wiki/origins-of-aatip-aawsap-programs-dirds/" target="_blank">UAPedia: Origins of AATIP/AAWSAP</a>
+    </div>
+
+    <h3>Vallee & Classification</h3>
+    <div class="sources">
+      <a href="https://en.wikipedia.org/wiki/Jacques_Vall%C3%A9e" target="_blank">Wikipedia: Jacques Vallee</a>
+      <a href="https://en.wikipedia.org/wiki/Interdimensional_UFO_hypothesis" target="_blank">Wikipedia: Interdimensional Hypothesis</a>
+      <a href="https://www.documentjournal.com/2024/05/jacques-vallee-jeffrey-kripal-science-ufo-technology-ai/" target="_blank">Document Journal: Vallee Interview</a>
+      <a href="https://www.mysterywire.com/ufo/trinity-the-best-kept-secret/" target="_blank">Mystery Wire: Trinity Crash</a>
+    </div>
+
+    <h3>Whistleblowers & Key Figures</h3>
+    <div class="sources">
+      <a href="https://en.wikipedia.org/wiki/David_Grusch_UFO_whistleblower_claims" target="_blank">Wikipedia: David Grusch Claims</a>
+      <a href="https://luiselizondo-official.com/" target="_blank">Luis Elizondo Official</a>
+      <a href="https://www.uapedia.ai/wiki/karl-e-nell-the-quiet-colonel-who-put-non-human-intelligence-on-the-record/" target="_blank">UAPedia: Karl Nell</a>
+      <a href="https://www.uapedia.ai/wiki/dr-harold-hal-puthoff-and-the-arc-of-uap-inquiry/" target="_blank">UAPedia: Dr. Hal Puthoff</a>
+      <a href="https://thedebrief.org/intelligence-officials-say-u-s-has-retrieved-non-human-craft/" target="_blank">The Debrief: Non-Human Craft Retrieved</a>
+      <a href="https://www.cbsnews.com/news/tic-tac-ufo-sighting-uap-video-dave-fravor-alex-dietrich-navy-fighter-pilots-house-testimony/" target="_blank">CBS News: Tic Tac Sighting</a>
+      <a href="https://oversight.house.gov/wp-content/uploads/2023/07/Ryan-HOC-Testimony.pdf" target="_blank">Ryan Graves Testimony (PDF)</a>
+      <a href="https://oversight.house.gov/wp-content/uploads/2024/11/Updated-Testimony-Gallaudet.pdf" target="_blank">Tim Gallaudet Testimony (PDF)</a>
+      <a href="https://oversight.house.gov/wp-content/uploads/2025/09/Borland-Written-Testimony.pdf" target="_blank">Dylan Borland Testimony (PDF)</a>
+    </div>
+
+    <h3>Contractors & Cover-Up</h3>
+    <div class="sources">
+      <a href="https://www.newsnationnow.com/space/ufo/defense-contractors-mum-on-whistleblowers-ufo-claims/" target="_blank">NewsNation: Contractors Silent on UFO Claims</a>
+      <a href="https://www.cbsnews.com/news/uap-ufo-briefing-house-inspector-general-intelligence-community/" target="_blank">CBS: Congress Frustrated After Briefing</a>
+      <a href="https://politicalsaucer.substack.com/p/how-mike-rogers-and-mike-turner-killed" target="_blank">How Turner & Rogers Killed Disclosure</a>
+      <a href="https://www.ufonews.co/post/defense-money-trail-leads-to-failed-ufo-bill" target="_blank">Defense Money Trail</a>
+      <a href="https://nyujlpp.org/wp-content/uploads/2025/03/JLPP-27-2-Yang.pdf" target="_blank">NYU JLPP: UAP Disclosure Act Analysis</a>
+      <a href="https://www.twz.com/29092/special-access-programs-and-the-pentagons-ecosystem-of-secrecy" target="_blank">War Zone: SAPs & Pentagon Secrecy</a>
+      <a href="http://www.nicap.org/docs/660809lowmemo.htm" target="_blank">NICAP: Robert Low "Trick" Memo</a>
+    </div>
+
+    <h3>Science & Physics</h3>
+    <div class="sources">
+      <a href="https://arxiv.org/abs/1204.2184" target="_blank">Puthoff: Vacuum (Spacetime Metric) Engineering</a>
+      <a href="https://apps.dtic.mil/sti/pdfs/ADA425545.pdf" target="_blank">Davis: Teleportation Physics Study (AFRL)</a>
+      <a href="https://ntrs.nasa.gov/api/citations/20110015936/downloads/20110015936.pdf" target="_blank">NASA: Warp Field Mechanics 101</a>
+      <a href="https://arxiv.org/abs/2502.06794" target="_blank">arXiv: The New Science of UAP</a>
+      <a href="https://en.wikipedia.org/wiki/Alcubierre_drive" target="_blank">Wikipedia: Alcubierre Drive</a>
+      <a href="https://tothestars.media/blogs/press-and-news/material-of-interest-magnesium-zinc-bismuth" target="_blank">TTSA: Bismuth-Magnesium Material</a>
+      <a href="https://www.twz.com/39012/the-navy-finally-speaks-up-about-its-bizarre-ufo-patent-experiments" target="_blank">War Zone: Navy UFO Patents</a>
+      <a href="https://thesolfoundation.org/launch-announcement/" target="_blank">Sol Foundation Launch</a>
+      <a href="https://galileo.hsites.harvard.edu/" target="_blank">Harvard: The Galileo Project</a>
+      <a href="https://www.altpropulsion.com/uap-observations-metric-engineering/" target="_blank">AltPropulsion: UAP & Metric Engineering</a>
+    </div>
+
+    <h3>Key Databases & Archives</h3>
+    <div class="sources">
+      <a href="https://www.theblackvault.com/" target="_blank">The Black Vault (John Greenewald Jr.)</a>
+      <a href="https://vault.fbi.gov/UFO" target="_blank">FBI Vault: UFO Files</a>
+      <a href="https://www.nsa.gov/Helpful-Links/NSA-FOIA/Frequently-Requested-Information/Unidentified-Flying-Objects-UFOs/" target="_blank">NSA: UFO FOIA</a>
+      <a href="https://www.archives.gov/research/military/air-force/ufos" target="_blank">National Archives: Project Blue Book</a>
+      <a href="https://ia600304.us.archive.org/34/items/pdfy-NRIQie2ooVehep7K/The%20Cometa%20Report%20%5BUFO's%20And%20Defense%20-%20What%20Should%20We%20Prepare%20For%5D.pdf" target="_blank">COMETA Report (Full PDF)</a>
+      <a href="https://archive.org/details/CanadaUFO" target="_blank">8,000 Pages Canadian UFO Docs</a>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <p>Research compiled March 2026. Sources span CIA, DIA, NSA, FBI, UK MoD, French CNES, Canadian DND, Australian NAA, Congressional testimony, FOIA releases, and peer-reviewed publications. This dossier distinguishes between verified facts and unverified allegations. All sources linked above. The truth is in the documents — read them yourself.</p>
+</footer>
+
+<script>
+  // Generate stars
+  const starsEl = document.getElementById('stars');
+  for (let i = 0; i < 150; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 2 + 0.5;
+    s.style.cssText = `width:${size}px;height:${size}px;top:${Math.random()*100}%;left:${Math.random()*100}%;animation-delay:${Math.random()*3}s;animation-duration:${2+Math.random()*4}s;`;
+    starsEl.appendChild(s);
+  }
+
+  // Nav active state
+  function setActive(el) {
+    document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  // Scroll spy
+  const sections = document.querySelectorAll('section');
+  const navLinks = document.querySelectorAll('nav a');
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(s => {
+      if (window.scrollY >= s.offsetTop - 120) current = s.getAttribute('id');
+    });
+    navLinks.forEach(a => {
+      a.classList.remove('active');
+      if (a.getAttribute('href') === '#' + current) a.classList.add('active');
+    });
+  });
+
+  // Tabs
+  function showTab(id) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + id).classList.add('active');
+    event.target.classList.add('active');
+  }
+</script>
+</body>
+</html>
