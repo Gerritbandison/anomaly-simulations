@@ -122,6 +122,7 @@ test('mobile layout remains navigable with readable controls and no horizontal o
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.reload();
   await expect(page.locator('#pB')).toHaveAttribute('aria-pressed', 'false');
+  await page.getByRole('button', { name: /Browse encounters/ }).click();
   const result = await page.evaluate(() => ({
     overflow: document.documentElement.scrollWidth > window.innerWidth,
     buttonHeight: document.getElementById('pB').getBoundingClientRect().height,

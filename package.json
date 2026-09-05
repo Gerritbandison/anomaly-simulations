@@ -6,7 +6,9 @@
   "scripts": {
     "test": "playwright test",
     "test:headed": "playwright test --headed",
-    "serve": "python3 -m http.server 8000 --bind 127.0.0.1"
+    "serve": "python3 -m http.server 8000 --bind 127.0.0.1",
+    "build:design": "node scripts/build-design.mjs",
+    "check:design": "node scripts/build-design.mjs --check"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0"

@@ -1,6 +1,21 @@
-# Anomaly simulations
+# Anomaly Observatory
 
-Six standalone HTML pages containing interactive illustrations and a UFO/UAP research archive. Open any HTML file directly in a browser; no build, server, API key, or network connection is required for the interface. External source links require internet access.
+Start with [index.html](index.html): an illustrated entrance to six collections. All seven pages are standalone HTML. Open them directly in a browser; no build, server, API key, or network connection is required. External source links require internet access.
+
+The complete visual redesign replaces the original canvas artwork with 112 explicitly mapped scene designs: 111 catalog/laboratory demos plus the six-phase earth-section scene. New aircraft silhouettes, landscapes, engine and sail illustrations, orbital compositions, abstract fields and layered geology share an observatory interface. The research archive uses a contrasting cool-paper reading layout.
+
+Catalogs have illustrated thumbnails, previous/next navigation and direct scene links. Timeline libraries include a five-frame visual inspector. All demo stages support annotation visibility and an expanded layout; Escape exits expanded mode. On phones, the catalog collapses behind Browse and scene annotations start hidden for clarity. The illustrations preserve the existing playback controls and numerical outputs; the new artwork does not validate those models.
+
+## Maintain the design
+
+Edit the canonical files under `design/`, then run:
+
+```sh
+npm run build:design
+npm run check:design
+```
+
+The builder embeds the shared visual system into each HTML page. Generated blocks are checked for drift. `DESIGN.md` and `UX-CONTRACT.md` record the palette, interface ownership, offline behavior and accessibility choices. Parameter values affect artistic display scaling only; that scaling has no physical interpretation.
 
 | File | Contents | Upgrades |
 | --- | --- | --- |
@@ -31,6 +46,6 @@ npx playwright install chromium
 npm test
 ```
 
-The suite opens local files directly in Chromium and checks drawing boundaries, actual controls, animation ownership and elapsed-time behavior, replay/reset, hidden-tab suspension, keyboard navigation, search, reduced motion, and narrow viewports. The UAP sweep evaluates every scene at 1,001 timeline positions. Tests exercise canvas exceptions and behavior; they do not validate the physics or historical claims. Firefox, Safari, and a full assistive-technology audit remain outside this verification.
+The 33-test suite opens local files directly in Chromium and checks drawing boundaries, actual controls, animation ownership and elapsed-time behavior, replay/reset, hidden-tab suspension, keyboard navigation, search, reduced motion, and narrow viewports. The UAP sweep evaluates every scene at 1,001 timeline positions. The redesign checks every scene design at multiple positions, confirms animation changes, and exercises the collection links, visual inspector, annotation toggle, expanded mode, mobile catalogs and deep links. Tests exercise canvas exceptions and behavior; they do not validate the physics or historical claims. Firefox, Safari, and a full assistive-technology audit remain outside this verification.
 
 For an optional local HTTP preview, run `npm run serve` and open `http://127.0.0.1:8000/`. The HTML also works without this server.
