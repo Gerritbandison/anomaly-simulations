@@ -29,26 +29,56 @@ canvas{display:block;width:100%;border-radius:5px;border:1px solid #181830}
 .ic .l{font-size:.6rem;color:#445;text-transform:uppercase;letter-spacing:1px}
 .ic .v{font-size:.92rem;color:#bbc;margin-top:1px}
 .db{max-width:920px;margin:8px auto;font-size:.84rem;color:#778;line-height:1.55;background:#0a0a1a;padding:10px 12px;border-radius:4px;border:1px solid #141430}
+
+[hidden]{display:none!important}
+:focus-visible{outline:3px solid #f0cf83;outline-offset:3px}
+a{color:#8bcfff}
+.sb{width:280px;min-width:280px;padding:12px;scrollbar-color:#68758c #0a0a16}
+.sb h2{padding:4px 2px 14px}.sb .ct{color:#a2abc0;font-size:.72rem;padding:16px 2px 6px}
+.bt{color:#b2bdd0;min-height:44px;padding:10px 10px;white-space:normal;line-height:1.3}
+.sb label{display:block;font-size:.8rem;margin-bottom:6px;color:#c7d0df}
+input,select{font:inherit;accent-color:#50e8c0}
+#search{width:100%;min-height:44px;background:#121226;border:1px solid #45455c;color:#e4e8ef;padding:8px;border-radius:4px}
+#results{font-size:.75rem;color:#aab5c8;min-height:2.5em;margin:10px 0}
+.mn{min-width:0}.hd h1{white-space:normal;font-size:1.2rem}.hd .su{color:#aab5c8;line-height:1.4}
+.cc{flex-wrap:wrap;align-items:center;justify-content:flex-start;gap:10px}.b{min-height:44px}.br{color:#d0d8e8}
+select{min-height:44px;background:#17172d;color:#e1e8f3;border:1px solid #50556b;border-radius:4px;padding:6px}
+.timeline{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;margin:10px 0;color:#b9c4d8;font-size:.8rem}
+#seek{width:100%;min-width:0;min-height:44px}
+#playState{font-size:.8rem;color:#b9c4d8}.help{font-size:.78rem;color:#a8b6c9;margin:8px 0;line-height:1.6}
+.evidence{border:1px solid #615638;background:#211d15;color:#e6d5af;padding:12px;margin:0 0 12px;border-radius:5px;font-size:.85rem;line-height:1.55}
+.evidence strong{display:block;margin-bottom:4px}.evidence p+p{margin-top:6px}
+figcaption{font-size:.8rem;color:#b9c4d8;line-height:1.5;margin-top:8px}
+.ic .l{color:#a5b3c9}.ic .v{color:#d9e2ef;overflow-wrap:anywhere}.db{color:#bcc8d8;max-width:none}
+summary{cursor:pointer;min-height:44px;padding:10px 0;color:#d1dbeb;font-size:.9rem}
+.ip{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(max-width:700px){body{display:block;height:auto;min-height:100vh;overflow:auto}.sb{width:100%;min-width:0;max-height:36vh;border-right:0;border-bottom:1px solid #30304a}.mn,.ar{overflow:visible}.ar{padding:14px 12px}.hd{padding:14px 12px}.sb h2{font-size:.83rem}.cc{gap:8px}.b{padding:8px 12px}.timeline{gap:8px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
 </style>
 </head>
 <body>
-<div class="sb" id="sb"></div>
-<div class="mn">
+<nav class="sb" id="sb" aria-label="Choose an illustration"></nav>
+<main class="mn">
 <div class="hd"><h1 id="sT">UAP & Advanced Tech Simulations</h1><div class="su" id="sS">Select a simulation from the sidebar</div></div>
 <div class="ar"><div class="cw">
-<canvas id="C" width="920" height="520"></canvas>
+<section class="evidence" aria-label="Evidence context"><strong id="evidenceLabel"></strong><p id="evidenceText"></p><p id="evidenceSource"></p></section>
+<figure><canvas id="C" width="920" height="520" role="img" aria-labelledby="sT" aria-describedby="canvasDesc" tabindex="0">Illustrated scene. Its description and original narrative appear below.</canvas><figcaption id="canvasDesc"></figcaption></figure>
 <div class="cc">
-<button class="b bp" id="pB" onclick="tog()">▶ Play</button>
+<button class="b bp" id="pB" onclick="tog()" aria-pressed="false">▶ Play</button>
 <button class="b br" onclick="rst()">↺ Reset</button>
+<label for="speed">Speed</label><select id="speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select>
+<span id="playState" role="status" aria-live="polite">Paused</span>
 </div>
-<div class="ip" id="iP"></div>
-<div class="db" id="dB"></div>
+<div class="timeline"><label for="seek">Progress</label><input id="seek" type="range" min="0" max="1000" value="0" step="1" aria-valuetext="0 percent"><output id="progress" for="seek">0%</output></div>
+<p class="help">An illustrative sequence, not measured event time. Focus the illustration: Space to play/pause, arrows to seek, Home/End to jump. Playback pauses when the tab is hidden.</p>
+<details id="legacy"><summary>Original narrative and figures — requires verification</summary><p class="help">The original captions, numbers and narrative below are preserved for review. They may be inaccurate, disputed or outdated; the animation does not substantiate them.</p><div class="ip" id="iP"></div><div class="db" id="dB"></div></details>
 </div></div>
-</div>
+</main>
 
 <script>
 const C=document.getElementById('C'),c=C.getContext('2d'),W=920,H=520;
-let on=false,t=0,cur=null,af=null,fr=0;
+let on=false,t=0,cur=null,af=null,lastTime=null,rate=1;
+const durationMs=8000;
 // ── HELPERS ──
 function bg(a,b){const g=c.createLinearGradient(0,0,0,H);g.addColorStop(0,a);g.addColorStop(1,b);c.fillStyle=g;c.fillRect(0,0,W,H)}
 function st(n,o){c.fillStyle=`rgba(255,255,255,${o||.45})`;for(let i=0;i<n;i++){c.beginPath();c.arc((i*173+31)%W,(i*97+17)%H,.4+(i%3)*.3,0,Math.PI*2);c.fill()}}
@@ -1537,7 +1567,7 @@ d:function(t){
   // Swirling portal
   for(let i=0;i<5;i++){
   c.strokeStyle=`rgba(${100+i*30},50,255,${tp*.15*(1-i/5)})`;c.lineWidth=2;
-  c.beginPath();c.arc(portalX,portalY,pr-i*8,t*4+i*.5,t*4+i*.5+Math.PI*1.5);c.stroke()}
+  c.beginPath();c.arc(portalX,portalY,Math.max(0,pr-i*8),t*4+i*.5,t*4+i*.5+Math.PI*1.5);c.stroke()}
   const pg3=rg(portalX,portalY,pr,'rgba(100,50,200,.15)','rgba(100,50,200,0)');
   c.fillStyle=pg3;c.beginPath();c.arc(portalX,portalY,pr,0,Math.PI*2);c.fill();
   if(tp>.3){tx('"Time Portal"',portalX,portalY+pr+20,`rgba(200,150,255,${Math.min(1,tp)})`,9)}}
@@ -1832,19 +1862,90 @@ d:function(t){
 }}
 ];
 
-// ── BUILD SIDEBAR ──
-(function(){const sb=document.getElementById('sb');sb.innerHTML='<h2>🛸 UAP & Advanced Tech</h2>';let ct='';S.forEach(s=>{if(s.cat!==ct){ct=s.cat;sb.innerHTML+=`<div class="ct">${ct}</div>`}sb.innerHTML+=`<button class="bt" data-id="${s.id}" onclick="ld('${s.id}')">${s.nm}</button>`})})();
-
-function ld(id){const s=S.find(v=>v.id===id);if(!s)return;cur=s;t=0;on=false;fr=0;
-document.getElementById('pB').textContent='▶ Play';
-document.getElementById('sT').textContent=s.nm;document.getElementById('sS').textContent=s.sub;
-document.getElementById('dB').textContent=s.desc;
-document.getElementById('iP').innerHTML=s.info.map(([l,v])=>`<div class="ic"><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
-document.querySelectorAll('.bt').forEach(b=>b.classList.toggle('ac',b.dataset.id===id))}
-function tog(){on=!on;document.getElementById('pB').textContent=on?'⏸ Pause':'▶ Play';if(on)an()}
-function rst(){t=0;on=false;fr=0;document.getElementById('pB').textContent='▶ Play';if(cur)dr()}
-function an(){if(!on)return;t+=.0025;fr++;if(t>1){t=1;on=false;document.getElementById('pB').textContent='▶ Play'}dr();af=requestAnimationFrame(an)}
-function dr(){if(!cur)return;c.clearRect(0,0,W,H);cur.d(t)}
+const sb=document.getElementById('sb');
+sb.innerHTML='<h2>UAP & Advanced Tech</h2><label for="search">Find an illustration</label><input id="search" type="search" placeholder="Search title or category" autocomplete="off"><p id="results" role="status" aria-live="polite"></p><div id="catalog"></div>';
+const catalog=document.getElementById('catalog');
+const groups=new Map();
+S.forEach(s=>{
+  if(!groups.has(s.cat)){
+    const section=document.createElement('section'),heading=document.createElement('h2');
+    heading.className='ct';heading.textContent=s.cat;section.append(heading);catalog.append(section);groups.set(s.cat,section);
+  }
+  const button=document.createElement('button');button.className='bt';button.dataset.id=s.id;button.textContent=s.nm;
+  button.addEventListener('click',()=>ld(s.id));groups.get(s.cat).append(button);
+});
+function filterCatalog(){
+  const query=document.getElementById('search').value.trim().toLowerCase();let count=0;
+  S.forEach(s=>{const button=catalog.querySelector(`[data-id="${s.id}"]`);button.hidden=![s.nm,s.cat,s.sub].join(' ').toLowerCase().includes(query);if(!button.hidden)count++});
+  groups.forEach(section=>{section.hidden=![...section.querySelectorAll('button')].some(button=>!button.hidden)});
+  document.getElementById('results').textContent=count?`${count} of ${S.length} illustrations`:'No matches. Try a title or category.';
+}
+document.getElementById('search').addEventListener('input',filterCatalog);
+filterCatalog();
+const speculative=new Set(['aurora','tr3b','rods','quantum','gravwave','lookingglass','montauk','stargate2']);
+function evidence(s){
+  if(s.id==='scramjet')return {label:'Documented technology · illustrative diagram',text:'NASA documents X-43A scramjet flight testing and its Mach 9.6 flight in 2004. This supports the existence of the technology; it does not validate every figure or caption in this original illustration.',url:'https://www.nasa.gov/reference/x-43a/',source:'NASA: X-43A Hyper-X'};
+  if(speculative.has(s.id))return {label:'Speculative concept or allegation',text:'This scene visualizes a concept or claim. It is not a demonstrated mechanism or evidence that the depicted capability exists. Original narrative and performance figures require verification.'};
+  if(s.cat==='UAP Encounters'||s.id==='havana')return {label:'Reported encounter or interpretation',text:'This scene is an artistic reconstruction of a reported event or interpretation. Distances, motion, mechanisms and performance shown here are not measured evidence. Original narrative and figures require verification.',...(['nimitz','gimbal','gofast'].includes(s.id)?{url:'https://www.defense.gov/News/Releases/release/article/2165713/statement-by-the-department-of-defense-on-the-release-of-historical-navy-videos/',source:'DoD: release of three historical Navy videos (2020)',note:'DoD confirmed the release of these Navy videos. That statement does not establish the extraordinary performance depicted here.'}:{})};
+  return {label:'Technology or program overview · verification pending',text:'This collection also includes publicly described technologies and programs. This entry has not received a source audit: existence, current status, numerical specifications and claimed effects must be checked individually. Treat the original imagery and narrative as illustrative.'};
+}
+function stopPlayback(message='Paused'){
+  on=false;if(af!==null)cancelAnimationFrame(af);af=null;lastTime=null;
+  document.getElementById('playState').textContent=message;syncControls();
+}
+function syncControls(){
+  const play=document.getElementById('pB');play.textContent=on?'⏸ Pause':t>=1?'↻ Replay':'▶ Play';play.setAttribute('aria-pressed',String(on));
+  document.getElementById('seek').value=Math.round(t*1000);
+  document.getElementById('seek').setAttribute('aria-valuetext',`${Math.round(t*100)} percent`);
+  document.getElementById('progress').textContent=`${Math.round(t*100)}%`;
+}
+function ld(id){
+  const s=S.find(v=>v.id===id);if(!s)return;
+  stopPlayback();cur=s;t=0;
+  document.getElementById('sT').textContent=s.nm;
+  document.getElementById('sS').textContent=`${s.cat} · original narrative available below`;
+  document.getElementById('dB').textContent=s.desc;
+  document.getElementById('iP').innerHTML=s.info.map(([l,v])=>`<div class="ic"><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
+  document.getElementById('legacy').open=false;
+  const context=evidence(s);document.getElementById('evidenceLabel').textContent=context.label;
+  document.getElementById('evidenceText').textContent=context.text;
+  const source=document.getElementById('evidenceSource');source.replaceChildren();
+  if(context.url){const link=document.createElement('a');link.href=context.url;link.textContent=context.source;source.append(link);if(context.note)source.append(document.createTextNode(` — ${context.note}`))}
+  document.getElementById('canvasDesc').textContent=`${s.nm}: ${context.label.toLowerCase()}. Artistic illustration; shapes, trajectories and timing are not to scale. Embedded captions are original claims requiring verification.`;
+  catalog.querySelectorAll('.bt').forEach(button=>{const active=button.dataset.id===id;button.classList.toggle('ac',active);button.setAttribute('aria-current',String(active))});
+  dr();syncControls();
+}
+function tog(){
+  if(on){stopPlayback();return}
+  if(document.hidden)return;
+  if(t>=1)t=0;
+  on=true;lastTime=null;document.getElementById('playState').textContent='Playing';dr();syncControls();
+  if(af===null)af=requestAnimationFrame(an);
+}
+function rst(){stopPlayback();t=0;dr();syncControls()}
+function seek(value){
+  stopPlayback();t=Math.max(0,Math.min(1,value));dr();syncControls();
+}
+function an(timestamp){
+  af=null;if(!on)return;
+  if(lastTime!==null)t=Math.min(1,t+Math.max(0,timestamp-lastTime)*rate/durationMs);
+  lastTime=timestamp;dr();syncControls();
+  if(t>=1){stopPlayback('Complete');return}
+  af=requestAnimationFrame(an);
+}
+function dr(){if(!cur)return;c.save();c.resetTransform();c.clearRect(0,0,W,H);cur.d(t);c.restore()}
+document.getElementById('seek').addEventListener('input',event=>seek(Number(event.target.value)/1000));
+document.getElementById('speed').addEventListener('change',event=>{rate=Number(event.target.value);lastTime=null});
+C.addEventListener('keydown',event=>{
+  if(event.altKey||event.ctrlKey||event.metaKey)return;
+  if(event.code==='Space'){event.preventDefault();tog()}
+  else if(event.key==='ArrowRight'){event.preventDefault();seek(t+.05)}
+  else if(event.key==='ArrowLeft'){event.preventDefault();seek(t-.05)}
+  else if(event.key==='Home'){event.preventDefault();seek(0)}
+  else if(event.key==='End'){event.preventDefault();seek(1)}
+});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&on)stopPlayback('Paused while tab is hidden')});
+window.addEventListener('pagehide',()=>stopPlayback());
 ld('nimitz');
 </script>
 </body>

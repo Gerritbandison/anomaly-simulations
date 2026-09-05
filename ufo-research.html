@@ -3,9 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>UFO/UAP Deep Research Dossier — The Complete Record</title>
+<title>UFO/UAP Research Dossier — Documents, Claims & Analysis</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
   :root {
     --bg: #0a0a0f;
@@ -25,7 +24,7 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: 'Space Grotesk', system-ui, sans-serif;
     background: var(--bg);
     color: var(--text);
     line-height: 1.7;
@@ -246,25 +245,64 @@
     nav a { padding: 12px 10px; font-size: 0.72rem; }
     header .stat-bar { gap: 8px; }
   }
+  a { color: var(--accent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+  .skip-link { position: fixed; left: 12px; top: -100px; padding: 12px; background: var(--bg2); z-index: 200; }
+  .skip-link:focus { top: 12px; }
+  section, [tabindex="-1"] { scroll-margin-top: 90px; }
+  .reading-progress { position: fixed; top: 0; left: 0; width: 100%; height: 3px; z-index: 150; accent-color: var(--accent); }
+  .research-tools { padding: 24px 0 0; }
+  .search-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+  .search-row input { flex: 1 1 240px; min-width: 0; }
+  .search-row input, .search-row button { font: inherit; padding: 10px 14px; color: var(--text); background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; }
+  .search-row button { cursor: pointer; }
+  #searchStatus { color: var(--text-dim); margin: 8px 0; }
+  #searchResults { padding-left: 24px; }
+  #searchResults li { margin: 12px 0; }
+  #searchResults p { font-size: .85rem; margin: 2px 0; color: var(--text-dim); }
+  .evidence-note { padding: 14px 18px; background: var(--bg2); border-left: 3px solid var(--accent4); font-size: .88rem; color: #c3c3d8; }
+  .table-scroll { overflow-x: auto; max-width: 100%; }
+  .table-scroll table { min-width: 620px; }
+  .card, .person-card, .incident-card { min-width: 0; overflow-wrap: anywhere; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+    .card:hover { transform: none; }
+  }
+  @media print {
+    :root { --text: #111; --text-dim: #333; --bg: #fff; --bg2: #fff; --bg3: #eee; --accent: #064b68; --accent2: #50346e; --border: #bbb; }
+    .stars, nav, .research-tools, .reading-progress, .skip-link, .tab-bar { display: none; }
+    header { padding: 16px 0; }
+    header h1 { background: none; -webkit-text-fill-color: #111; }
+    strong { color: #111; }
+    .tab-content { display: block !important; }
+    .table-scroll { overflow: visible; }
+    .table-scroll table { min-width: 0; }
+    .card-grid, .card-grid-3, .person-grid { display: block; }
+    .card, .person-card, .incident-card, details { break-inside: avoid; margin-bottom: 12px; }
+    .evidence-note { color: #333; }
+    section { padding: 20px 0; }
+  }
 </style>
 </head>
 <body>
 
-<div class="stars" id="stars"></div>
+<a class="skip-link" href="#main">Skip to research</a>
+<progress class="reading-progress" id="readingProgress" max="100" value="0" aria-label="Reading progress"></progress>
+<div class="stars" id="stars" aria-hidden="true"></div>
 
 <header>
   <h1>UFO / UAP Deep Research Dossier</h1>
-  <p class="subtitle">The complete record: declassified documents, secret programs, whistleblowers, major incidents, the cover-up apparatus, and the science behind the phenomenon. Every claim sourced. Every source linked.</p>
+  <p class="subtitle">An archive of documents, reported encounters, allegations, and speculative explanations. Original compilation: March 2026. Interface and selected evidence notes reviewed September 2026; the historical narrative has not been comprehensively fact-checked.</p>
   <div class="stat-bar">
-    <span class="stat">11 Sections</span>
-    <span class="stat">25+ Key Figures</span>
-    <span class="stat">12 Major Incidents</span>
-    <span class="stat">8 Secret Programs</span>
-    <span class="stat">100+ Sources</span>
+    <span class="stat" data-count="main section">Sections</span>
+    <span class="stat" data-count=".person-card">Figure cards</span>
+    <span class="stat" data-count=".incident-card">Incident summaries</span>
+    <span class="stat" data-count="#programs .card">Program entries</span>
+    <span class="stat" data-count="#sources a[href]">Source links</span>
   </div>
 </header>
 
-<nav>
+<nav aria-label="Dossier sections">
   <div class="container">
     <a href="#timeline" class="active" onclick="setActive(this)">Timeline</a>
     <a href="#vallee" onclick="setActive(this)">Vallee</a>
@@ -280,12 +318,24 @@
   </div>
 </nav>
 
-<main class="container">
+<main class="container" id="main" tabindex="-1">
+  <div class="research-tools" role="search" aria-label="Dossier search">
+    <label for="researchSearch">Search this dossier</label>
+    <div class="search-row">
+      <input id="researchSearch" type="search" placeholder="A person, incident, or phrase" aria-describedby="searchStatus">
+      <button type="button" id="clearSearch">Clear search</button>
+      <button type="button" onclick="window.print()">Print dossier</button>
+    </div>
+    <p id="searchStatus" role="status">Search includes collapsed documents and all analysis tabs.</p>
+    <ol id="searchResults"></ol>
+  </div>
+  <p class="evidence-note"><strong>Reading the evidence:</strong> A released document establishes what was recorded, and testimony establishes what a witness said. Neither alone verifies an extraordinary explanation. Separate measured results, reported observations, and hypotheses. NASA's study emphasizes the need for calibrated observations and better data. <a href="https://science.nasa.gov/uap/faqs/" target="_blank" rel="noopener noreferrer">NASA study scope and limitations</a>.</p>
 
   <!-- =================== SECTION 1: TIMELINE =================== -->
   <section id="timeline">
     <div class="section-label">01 — The Last Year</div>
-    <h2>Key UAP Developments (2024-2026)</h2>
+    <h2>Reported UAP Developments (2023–March 2026)</h2>
+    <p class="evidence-note">Archive timeline: dates and reported developments below reflect the March 2026 compilation. They are not a live news feed and have not all been re-verified.</p>
     <p>The past two years have been the most explosive in UAP disclosure history. Legislation was killed and revived, new whistleblowers emerged, a sitting president ordered disclosure, and the White House registered alien.gov.</p>
 
     <div class="timeline">
@@ -341,6 +391,7 @@
   <section id="vallee">
     <div class="section-label">02 — The Framework</div>
     <h2>Jacques Vallee's Classification & Hypothesis</h2>
+    <p class="evidence-note">Hypothesis and classification: categories organize reported experiences; they do not establish an interdimensional explanation.</p>
     <p>Jacques Vallee — French computer scientist, astronomer, and venture capitalist — developed what many consider the most rigorous UFO classification system ever created. More importantly, he rejected the simple "aliens visiting from another planet" hypothesis and proposed something far stranger.</p>
 
     <h3>The Classification System</h3>
@@ -423,15 +474,16 @@
   <section id="analysis">
     <div class="section-label">03 — Analysis</div>
     <h2>Do Recent Events Follow Vallee's Assessment?</h2>
+    <p class="evidence-note">Interpretive arguments: these archived comparisons rely on testimony and disputed claims. They are not independent tests of the hypothesis.</p>
     <p>When we map the last two years' developments against Vallee's framework, the alignment is striking — but not total.</p>
 
-    <div class="tab-bar">
-      <button class="tab-btn active" onclick="showTab('supports')">Evidence Supporting Vallee</button>
-      <button class="tab-btn" onclick="showTab('contradicts')">Evidence Against Vallee</button>
-      <button class="tab-btn" onclick="showTab('verdict')">Overall Verdict</button>
+    <div class="tab-bar" role="tablist" aria-label="Analysis viewpoints">
+      <button id="control-supports" class="tab-btn active" role="tab" aria-selected="true" aria-controls="tab-supports" onclick="showTab('supports')">Arguments in favor</button>
+      <button id="control-contradicts" class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-contradicts" tabindex="-1" onclick="showTab('contradicts')">Arguments against</button>
+      <button id="control-verdict" class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-verdict" tabindex="-1" onclick="showTab('verdict')">Assessment</button>
     </div>
 
-    <div id="tab-supports" class="tab-content active">
+    <div id="tab-supports" class="tab-content active" role="tabpanel" aria-labelledby="control-supports" tabindex="0">
       <div class="card-grid">
         <div class="card"><span class="card-tag tag-green">Supports</span><h4>Non-Physical Behavior</h4><p>Orbs and craft described by 2025 military whistleblowers display physics-defying maneuvers — instantaneous acceleration, trans-medium travel — consistent with space-time manipulation rather than conventional propulsion.</p></div>
         <div class="card"><span class="card-tag tag-green">Supports</span><h4>Absurd Volume</h4><p>NORAD's surge in UAP incursions near military sites follows Vallee's "too many for a survey" argument. 420+ incursions across 100+ bases in a single year.</p></div>
@@ -441,20 +493,20 @@
       </div>
     </div>
 
-    <div id="tab-contradicts" class="tab-content">
+    <div id="tab-contradicts" class="tab-content" role="tabpanel" aria-labelledby="control-contradicts" tabindex="0">
       <div class="card-grid">
         <div class="card"><span class="card-tag tag-red">Contradicts</span><h4>Physical Crash Retrievals</h4><p>Grusch's claims of physical craft recoveries and "non-human biologics" directly contradict the interdimensional hypothesis. Non-physical phenomena shouldn't leave tangible wreckage.</p></div>
         <div class="card"><span class="card-tag tag-red">Contradicts</span><h4>Reverse Engineering Programs</h4><p>Alleged reverse-engineering at defense contractors implies physical technology amenable to conventional science — the nuts-and-bolts ET scenario Vallee argues against.</p></div>
         <div class="card"><span class="card-tag tag-red">Contradicts</span><h4>Government Treats It Literally</h4><p>NDAA requirements and AARO treat UAPs as physical threats to airspace. The entire response framework assumes conventional physics applies.</p></div>
-        <div class="card"><span class="card-tag tag-red">Contradicts</span><h4>Metamaterials Are Real</h4><p>Dr. Garry Nolan at Stanford has analyzed materials with anomalous isotopic ratios. Art's Parts show manufactured micro-layered structure. Physical artifacts don't fit a purely interdimensional model.</p></div>
+        <div class="card"><span class="card-tag tag-red">Contradicts</span><h4>Metamaterials Are Real</h4><p>Dr. Garry Nolan at Stanford has analyzed materials with anomalous isotopic ratios. Art's Parts show manufactured micro-layered structure. Material structure alone does not establish unusual origin. See the ORNL finding in the materials section before interpreting this claim.</p></div>
       </div>
     </div>
 
-    <div id="tab-verdict" class="tab-content">
+    <div id="tab-verdict" class="tab-content" role="tabpanel" aria-labelledby="control-verdict" tabindex="0">
       <div class="verdict">
         <div class="verdict-label">Assessment</div>
-        <p><strong>Partial alignment.</strong> Behavioral patterns strongly support Vallee — physics-defying maneuvers, historical consistency, consciousness effects, and sheer volume all fit his framework. But crash retrievals and metamaterials represent a serious challenge to a purely interdimensional model.</p>
-        <p style="margin-top:12px;">One reconciliation: Vallee himself notes "interdimensional" doesn't mean "non-physical." Entities operating across dimensions might produce physical artifacts — like a 3D object passing through a 2D plane leaves real traces. The debris could be a byproduct of dimensional intrusion, not proof of interstellar travel.</p>
+        <p><strong>Interpretation, not a demonstrated result.</strong> The two tabs collect arguments about Vallee's framework. Similarity between a report and a hypothesis does not establish its cause. Unverified crash-retrieval allegations cannot independently confirm or falsify that hypothesis.</p>
+        <p style="margin-top:12px;">A useful comparison needs independently checkable observations, explicit assumptions, and predictions that distinguish competing explanations. The material collected here does not establish interdimensional or extraterrestrial origins.</p>
       </div>
     </div>
   </section>
@@ -463,6 +515,7 @@
   <section id="documents">
     <div class="section-label">04 — Declassified</div>
     <h2>CIA, DIA, NSA, FBI & International Documents</h2>
+    <p class="evidence-note">Document summaries: quotations, provenance, and interpretations require checking against the original records. Recording an allegation does not authenticate it.</p>
     <p>Thousands of pages across multiple agencies and nations. Here is what they actually say — document by document.</p>
 
     <h3>The Foundational Documents</h3>
@@ -614,6 +667,7 @@
   <section id="programs">
     <div class="section-label">05 — Black Programs</div>
     <h2>Secret Government UAP Programs</h2>
+    <p class="evidence-note">Mixed evidence: this list includes documented programs and unverified alleged programs. A research proposal or funded paper does not demonstrate a working technology.</p>
     <p>From the Pentagon's $22M study to alleged crash retrieval operations — the programs they didn't want you to know about.</p>
 
     <div class="card-grid">
@@ -652,7 +706,7 @@
     <h3>The 38 Defense Intelligence Reference Documents (DIRDs)</h3>
     <p>Commissioned under AAWSAP, these technical papers from top scientists were delivered to the DIA. 37 of 38 released via FOIA in March 2022. <strong>One remains classified.</strong></p>
 
-    <doc-table class="doc-table">
+    <div class="document-table">
       <table class="doc-table">
         <thead><tr><th>#</th><th>Title</th><th>Author</th></tr></thead>
         <tbody>
@@ -666,7 +720,7 @@
           <tr><td>38</td><td><em>CLASSIFIED</em></td><td><em>Unknown</em></td></tr>
         </tbody>
       </table>
-    </doc-table>
+    </div>
 
     <div class="verdict info">
       <div class="verdict-label">Why It Matters</div>
@@ -678,6 +732,7 @@
   <section id="incidents">
     <div class="section-label">06 — Case Files</div>
     <h2>Major UFO/UAP Incidents</h2>
+    <p class="evidence-note">Reported encounters: witness descriptions and claimed performance are not calibrated measurements. The summaries below preserve disputed historical accounts.</p>
     <p>The encounters that changed everything — from Roswell to the Nimitz Tic Tac to the mysterious drones over military bases.</p>
 
     <div class="incident-card">
@@ -740,6 +795,7 @@
   <section id="whistleblowers">
     <div class="section-label">07 — The Witnesses</div>
     <h2>Whistleblowers & Key Figures</h2>
+    <p class="evidence-note">Claims and biographies: assertions below are attributed to the named individuals or the original reporting, not independently verified findings. Roles may have changed since compilation.</p>
     <p>The people who risked everything to tell the truth — from intelligence officers to Navy pilots to Stanford professors.</p>
 
     <h3>Government Whistleblowers</h3>
@@ -933,6 +989,7 @@
   <section id="skunkworks">
     <div class="section-label">08 — The Contractors</div>
     <h2>Defense Contractors & Reverse Engineering</h2>
+    <p class="evidence-note">Allegations and interpretation: claims about recovered technology and company involvement are disputed. The archive does not establish those allegations as facts.</p>
     <p>Multiple whistleblowers name specific companies as custodians of recovered technology — operating outside Congressional oversight behind corporate firewalls.</p>
 
     <div class="card-grid">
@@ -985,6 +1042,7 @@
   <section id="coverup">
     <div class="section-label">09 — Power & Secrecy</div>
     <h2>The Cover-Up Apparatus</h2>
+    <p class="evidence-note">Editorial interpretation: claims about motives, coordination, and funding require separate evidence. Secrecy and unresolved reports alone do not establish a coordinated cover-up.</p>
     <p>Seven decades of coordinated suppression — from CIA debunking campaigns to criminalizing military witnesses to destroying careers. Here's how they built a machine to hide the truth.</p>
 
     <h3>The Architecture of Denial</h3>
@@ -1024,13 +1082,13 @@
     <h3>The Money Trail</h3>
     <div class="verdict warn">
       <div class="verdict-label">Follow The Money</div>
-      <p>The two Representatives who killed the Schumer Amendment's strongest provisions — Mike Turner (House Intelligence Chair) and Mike Rogers (House Armed Services Chair) — were the largest recipients of defense contractor money in Congress during the 2023-2024 cycle. The companies whose secrecy the amendment threatened are the same companies funding the politicians who stripped it. This is documented in FEC filings.</p>
+      <p>The two Representatives who killed the Schumer Amendment's strongest provisions — Mike Turner (House Intelligence Chair) and Mike Rogers (House Armed Services Chair) — were the largest recipients of defense contractor money in Congress during the 2023-2024 cycle. The companies whose secrecy the amendment threatened are the same companies funding the politicians who stripped it. The original compilation does not provide the underlying FEC dataset, time filters, or ranking calculation needed to verify that funding claim. Political motive is a separate inference.</p>
     </div>
 
-    <h3>The Fundamental Contradiction</h3>
+    <h3>Interpreting the Government Record</h3>
     <div class="verdict danger">
-      <div class="verdict-label">Something Is Lying</div>
-      <p>The U.S. government simultaneously: (a) established AARO, which says there's no evidence of crash retrievals; (b) passed legislation demanding the Pentagon brief Congress on UAP intercepts retroactive to 2004; (c) had military officials testify under oath about recovered craft and non-human biologics; and (d) registered alien.gov domains at the White House. These positions cannot all be true. The contradiction is the evidence.</p>
+      <div class="verdict-label">Different Claims, Different Evidence</div>
+      <p>The U.S. government simultaneously: (a) established AARO, which says there's no evidence of crash retrievals; (b) passed legislation demanding the Pentagon brief Congress on UAP intercepts retroactive to 2004; (c) had military officials testify under oath about recovered craft and non-human biologics; and (d) registered alien.gov domains at the White House. These events can coexist: investigating reports, receiving testimony, and declining to validate an extraordinary explanation are not logically contradictory. None alone verifies a crash-retrieval allegation.</p>
     </div>
   </section>
 
@@ -1038,16 +1096,17 @@
   <section id="science">
     <div class="section-label">10 — The Physics</div>
     <h2>The Science Behind the Phenomenon</h2>
+    <p class="evidence-note">Evidence levels: reported observables, tested materials, and speculative mechanisms are different kinds of evidence. Illustrative equations and patents do not validate a propulsion system.</p>
     <p>From the five observables to warp drive physics to metamaterials analysis — what would it take for these craft to actually work?</p>
 
     <h3>The Five Observables</h3>
-    <p>Compiled by Luis Elizondo from AATIP data — the consistent performance characteristics reported across military UAP encounters:</p>
+    <p>Compiled by Luis Elizondo from AATIP data — a framework of claimed performance characteristics, not a set of independently verified physical capabilities:</p>
 
     <div class="card-grid-3">
       <div class="card"><span class="card-tag tag-blue">1</span><h4>Anti-Gravity Lift</h4><p>No wings, engines, exhaust, or visible propulsion. Objects hover and maneuver with precision using no known means of generating lift.</p></div>
       <div class="card"><span class="card-tag tag-blue">2</span><h4>Instantaneous Acceleration</h4><p>Nimitz Tic Tac: 80,000 feet to sea level in 0.78 seconds = <strong>5,370 g's</strong>. Instantly lethal and beyond any known material's structural limits.</p></div>
       <div class="card"><span class="card-tag tag-blue">3</span><h4>Hypersonic Without Signatures</h4><p>Well above Mach 5 with <strong>no sonic boom, no contrails, no thermal signature</strong>. Conventional hypersonic flight produces massive signatures.</p></div>
-      <div class="card"><span class="card-tag tag-blue">4</span><h4>Trans-Medium Travel</h4><p>Seamless air-to-water-to-space transitions with no performance change. Current physics requires vehicles designed for one medium only.</p></div>
+      <div class="card"><span class="card-tag tag-blue">4</span><h4>Trans-Medium Travel</h4><p>Seamless air-to-water-to-space transitions with no performance change. Such performance claims require independently checkable sensor data; visual continuity alone does not establish them.</p></div>
       <div class="card"><span class="card-tag tag-blue">5</span><h4>Low Observability</h4><p>Resists identification across all sensor types. Radar returns often "nonsensical or jammed." Visual descriptions are difficult to articulate.</p></div>
     </div>
 
@@ -1055,7 +1114,7 @@
     <details>
       <summary>Art's Parts — The Bismuth-Magnesium Metamaterial</summary>
       <div class="details-body">
-        <p>Anonymous samples received by radio host Art Bell in 1996, allegedly from Roswell. Alternating layers of <strong>bismuth (1-4 microns)</strong> and <strong>magnesium-zinc alloy (100-200 microns)</strong>. Analysis revealed the structure functions as an excellent <strong>microscopic waveguide for terahertz-frequency electromagnetic radiation</strong>. Due to the metamaterial properties, the waveguide layers can be one-twentieth the wavelength size.</p>
+        <p>Anonymous samples received by radio host Art Bell in 1996, allegedly from Roswell. Alternating layers of <strong>bismuth (1-4 microns)</strong> and <strong>magnesium-zinc alloy (100-200 microns)</strong>. A terahertz waveguide function was claimed for this material. <strong>ORNL's 2024 analysis of the tested specimen did not support that function and strongly supported terrestrial origin.</strong> This finding applies to the analyzed specimen. <a href="https://www.aaro.mil/Portals/136/PDFs/Information%20Papers/ORNL-Synopsis_Analysis_of_a_Metallic_Specimen.pdf" target="_blank" rel="noopener noreferrer">Read ORNL's methods and findings (PDF)</a>.</p>
         <p>TTSA acquired the samples for $35,000 and signed a CRADA with the U.S. Army to test them. Skeptics identified the Betterton-Kroll process (1922) as a possible mundane origin. The debate continues.</p>
       </div>
     </details>
@@ -1095,7 +1154,7 @@
           <li>The craft "falls" along the gradient rather than being propelled through space</li>
           <li>Because space itself moves (not the craft), there are <strong>no g-forces, no sonic boom, no thermal signature, no medium interaction</strong></li>
         </ol>
-        <p>This simultaneously explains all five observables. It remains entirely theoretical — no laboratory has demonstrated any of these mechanisms.</p>
+        <p>This is a speculative narrative, not a demonstrated explanation of the reported observations. The proposed chain does not establish achievable engineering or remove the need for independently tested predictions.</p>
       </div>
     </details>
 
@@ -1120,7 +1179,7 @@
 
     <div class="verdict info">
       <div class="verdict-label">The Navy's UFO Patents</div>
-      <p><strong>Salvatore Cezar Pais</strong>, a Navy aerospace engineer, filed patents (2015-2019) for an inertial mass reduction device, room-temperature superconductor, compact fusion reactor, and high-frequency gravitational wave generator — all based on the "Pais Effect" (extreme electromagnetic energy fluxes). Testing at NAWCAD from 2016-2019 <strong>failed to demonstrate the Pais Effect</strong>. But the Navy filed these patents to establish priority — meaning they believe the underlying physics may eventually be validated.</p>
+      <p><strong>Salvatore Cezar Pais</strong>, a Navy aerospace engineer, filed patents (2015-2019) for an inertial mass reduction device, room-temperature superconductor, compact fusion reactor, and high-frequency gravitational wave generator — all based on the "Pais Effect" (extreme electromagnetic energy fluxes). Testing at NAWCAD from 2016-2019 <strong>failed to demonstrate the Pais Effect</strong>. Patent filings alone do not establish either technical feasibility or institutional endorsement of the underlying physics.</p>
     </div>
   </section>
 
@@ -1128,7 +1187,8 @@
   <section id="sources">
     <div class="section-label">11 — Sources & Further Reading</div>
     <h2>Sources</h2>
-    <p class="dim">All claims sourced from public reporting, congressional records, declassified government documents, FOIA releases, and scholarly work. This document presents allegations alongside verified facts — evaluate each claim on its evidence.</p>
+    <p class="evidence-note">Source directory: linked material ranges from primary records to commentary. Inclusion is not an endorsement; most links and claim-to-source mappings remain unaudited.</p>
+    <p class="dim">The original compilation links public reporting, congressional records, government documents, and scholarly work. Most citations are grouped by topic rather than mapped to individual claims; use the original records to verify each assertion.</p>
 
     <h3>Congressional & Government</h3>
     <div class="sources">
@@ -1227,47 +1287,200 @@
 </main>
 
 <footer>
-  <p>Research compiled March 2026. Sources span CIA, DIA, NSA, FBI, UK MoD, French CNES, Canadian DND, Australian NAA, Congressional testimony, FOIA releases, and peer-reviewed publications. This dossier distinguishes between verified facts and unverified allegations. All sources linked above. The truth is in the documents — read them yourself.</p>
+  <p>Original research compiled March 2026. Usability and selected evidence notes updated September 2026. This archive includes unverified allegations and editorial analysis; it is not a comprehensive factual or source audit.</p>
 </footer>
 
 <script>
-  // Generate stars
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const starsEl = document.getElementById('stars');
-  for (let i = 0; i < 150; i++) {
-    const s = document.createElement('div');
-    s.className = 'star';
-    const size = Math.random() * 2 + 0.5;
-    s.style.cssText = `width:${size}px;height:${size}px;top:${Math.random()*100}%;left:${Math.random()*100}%;animation-delay:${Math.random()*3}s;animation-duration:${2+Math.random()*4}s;`;
-    starsEl.appendChild(s);
+  function updateStars() {
+    starsEl.replaceChildren();
+    if (reducedMotion.matches) return;
+    const stars = document.createDocumentFragment();
+    for (let i = 0; i < 80; i++) {
+      const star = document.createElement('div');
+      star.className = 'star';
+      const size = Math.random() * 2 + 0.5;
+      star.style.cssText = `width:${size}px;height:${size}px;top:${Math.random()*100}%;left:${Math.random()*100}%;animation-delay:${Math.random()*3}s;`;
+      stars.appendChild(star);
+    }
+    starsEl.appendChild(stars);
   }
-
-  // Nav active state
-  function setActive(el) {
-    document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
-    el.classList.add('active');
-  }
-
-  // Scroll spy
-  const sections = document.querySelectorAll('section');
-  const navLinks = document.querySelectorAll('nav a');
-  window.addEventListener('scroll', () => {
-    let current = '';
-    sections.forEach(s => {
-      if (window.scrollY >= s.offsetTop - 120) current = s.getAttribute('id');
-    });
-    navLinks.forEach(a => {
-      a.classList.remove('active');
-      if (a.getAttribute('href') === '#' + current) a.classList.add('active');
+  updateStars();
+  reducedMotion.addEventListener('change', updateStars);
+  document.addEventListener('visibilitychange', () => {
+    starsEl.querySelectorAll('.star').forEach(star => {
+      star.style.animationPlayState = document.hidden ? 'paused' : 'running';
     });
   });
 
-  // Tabs
-  function showTab(id) {
-    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('tab-' + id).classList.add('active');
-    event.target.classList.add('active');
+  const sections = [...document.querySelectorAll('main section')];
+  const navLinks = [...document.querySelectorAll('nav a')];
+  function setActive(el) {
+    navLinks.forEach(link => {
+      const active = link === el;
+      link.classList.toggle('active', active);
+      if (active) link.setAttribute('aria-current', 'location');
+      else link.removeAttribute('aria-current');
+    });
   }
+  let scrollQueued = false;
+  function updateReadingPosition() {
+    scrollQueued = false;
+    let current = sections[0];
+    for (const section of sections) {
+      if (section.getBoundingClientRect().top <= 120) current = section;
+    }
+    setActive(navLinks.find(link => link.hash === '#' + current.id));
+    const available = document.documentElement.scrollHeight - innerHeight;
+    document.getElementById('readingProgress').value = available > 0
+      ? Math.max(0, Math.min(100, scrollY / available * 100)) : 100;
+  }
+  function scheduleReadingUpdate() {
+    if (!scrollQueued) {
+      scrollQueued = true;
+      requestAnimationFrame(updateReadingPosition);
+    }
+  }
+  window.addEventListener('scroll', scheduleReadingUpdate, { passive: true });
+  window.addEventListener('resize', scheduleReadingUpdate);
+  document.addEventListener('toggle', scheduleReadingUpdate, true);
+
+  const tabButtons = [...document.querySelectorAll('[role="tab"]')];
+  function showTab(id) {
+    const selected = document.getElementById('tab-' + id);
+    if (!selected || !selected.classList.contains('tab-content')) return;
+    document.querySelectorAll('.tab-content').forEach(panel => {
+      panel.classList.toggle('active', panel === selected);
+    });
+    tabButtons.forEach(button => {
+      const active = button.getAttribute('aria-controls') === selected.id;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-selected', String(active));
+      button.tabIndex = active ? 0 : -1;
+    });
+    scheduleReadingUpdate();
+  }
+  tabButtons.forEach((button, index) => {
+    button.addEventListener('keydown', event => {
+      let next;
+      if (event.key === 'ArrowRight') next = (index + 1) % tabButtons.length;
+      else if (event.key === 'ArrowLeft') next = (index + tabButtons.length - 1) % tabButtons.length;
+      else if (event.key === 'Home') next = 0;
+      else if (event.key === 'End') next = tabButtons.length - 1;
+      else return;
+      event.preventDefault();
+      showTab(tabButtons[next].getAttribute('aria-controls').slice(4));
+      tabButtons[next].focus();
+    });
+  });
+
+  document.querySelectorAll('table').forEach(table => {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'table-scroll';
+    wrapper.tabIndex = 0;
+    wrapper.setAttribute('role', 'region');
+    wrapper.setAttribute('aria-label', table.classList.contains('vallee-table')
+      ? 'Vallee classification table, scroll horizontally' : 'Research documents table, scroll horizontally');
+    table.before(wrapper);
+    wrapper.appendChild(table);
+    table.querySelectorAll('thead th').forEach(th => th.scope = 'col');
+  });
+  document.querySelectorAll('a[target="_blank"]').forEach(link => link.rel = 'noopener noreferrer');
+  document.querySelectorAll('[data-count]').forEach(stat => {
+    stat.textContent = document.querySelectorAll(stat.dataset.count).length + ' ' + stat.textContent;
+  });
+
+  const normalize = value => value.replace(/\s+/g, ' ').trim().toLocaleLowerCase();
+  const searchInput = document.getElementById('researchSearch');
+  const searchResults = document.getElementById('searchResults');
+  const searchStatus = document.getElementById('searchStatus');
+  const entries = sections.map(section => ({
+    section,
+    title: section.querySelector('h2').textContent,
+    text: normalize(section.textContent),
+    targets: [...section.querySelectorAll('h2,h3,h4,p,li,summary,td,.tl-title,.tl-body,.name')]
+  }));
+  let targetIndex = 0;
+  entries.forEach(entry => entry.targets.forEach(target => {
+    if (!target.id) target.id = 'passage-' + (++targetIndex);
+  }));
+  function revealTarget(target, focus = true) {
+    const panel = target.closest('.tab-content');
+    if (panel) showTab(panel.id.slice(4));
+    let ancestor = target.parentElement;
+    while (ancestor) {
+      if (ancestor.tagName === 'DETAILS') ancestor.open = true;
+      ancestor = ancestor.parentElement;
+    }
+    if (target.tagName === 'DETAILS') target.open = true;
+    if (focus) {
+      if (!target.hasAttribute('tabindex')) target.tabIndex = -1;
+      target.focus({ preventScroll: true });
+    }
+    target.scrollIntoView({ block: 'start', behavior: 'instant' });
+    scheduleReadingUpdate();
+  }
+  function searchDossier() {
+    const query = normalize(searchInput.value);
+    searchResults.replaceChildren();
+    if (!query) {
+      searchStatus.textContent = 'Search includes collapsed documents and all analysis tabs.';
+      return;
+    }
+    const matches = entries.filter(entry => entry.text.includes(query));
+    searchStatus.textContent = matches.length
+      ? `${matches.length} section${matches.length === 1 ? '' : 's'} match. Choose a result to reveal the passage.`
+      : 'No sections match. Try a shorter phrase or a different spelling.';
+    matches.forEach(entry => {
+      const target = entry.targets.find(candidate => normalize(candidate.textContent).includes(query)) || entry.section;
+      const item = document.createElement('li');
+      const link = document.createElement('a');
+      link.href = '#' + target.id;
+      link.textContent = entry.title;
+      link.addEventListener('click', event => {
+        event.preventDefault();
+        revealTarget(target);
+        if (location.hash !== link.hash) location.hash = link.hash;
+      });
+      const snippet = document.createElement('p');
+      const passage = target.textContent.replace(/\s+/g, ' ').trim();
+      const position = normalize(passage).indexOf(query);
+      const begin = Math.max(0, position - 70);
+      snippet.textContent = (begin ? '…' : '') + passage.slice(begin, begin + 220) + (passage.length > begin + 220 ? '…' : '');
+      item.append(link, snippet);
+      searchResults.appendChild(item);
+    });
+    scheduleReadingUpdate();
+  }
+  searchInput.addEventListener('input', searchDossier);
+  document.getElementById('clearSearch').addEventListener('click', () => {
+    searchInput.value = '';
+    searchDossier();
+    searchInput.focus();
+  });
+  function followHash() {
+    let id;
+    try { id = decodeURIComponent(location.hash.slice(1)); } catch { return; }
+    const target = id && document.getElementById(id);
+    if (target) revealTarget(target);
+  }
+  window.addEventListener('hashchange', followHash);
+  followHash();
+  scheduleReadingUpdate();
+
+  let printDetails = null;
+  window.addEventListener('beforeprint', () => {
+    if (printDetails) return;
+    printDetails = [...document.querySelectorAll('details')].map(detail => [detail, detail.open]);
+    printDetails.forEach(([detail]) => detail.open = true);
+  });
+  window.addEventListener('afterprint', () => {
+    if (!printDetails) return;
+    printDetails.forEach(([detail, open]) => detail.open = open);
+    printDetails = null;
+    scheduleReadingUpdate();
+  });
 </script>
 </body>
 </html>

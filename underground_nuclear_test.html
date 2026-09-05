@@ -42,6 +42,17 @@
   .legend-swatch { width: 14px; height: 14px; border-radius: 3px; }
 
   .depth-label { font-size: 0.85rem; color: #999; text-align: center; margin-top: 8px; }
+  button:focus-visible,input:focus-visible{outline:3px solid #f0e68c;outline-offset:3px}
+  .btn{min-height:44px}
+  .timeline-dot{border:0;background:transparent;font:inherit;padding:6px 2px;min-width:44px;min-height:64px;flex:1}
+  .timeline::before{top:18px}
+  .timeline-dot .label{color:#bbb}
+  .seek-controls{display:flex;align-items:center;gap:12px;max-width:700px;margin:12px auto}
+  .seek-controls input{flex:1;min-width:0;accent-color:#e74c3c}
+  .seek-controls output{min-width:4ch;font-variant-numeric:tabular-nums}
+  .playback-status{text-align:center;font-size:.85rem;color:#bbb;min-height:1.5em}
+  @media(max-width:600px){.container{padding:12px}h1{font-size:1.45rem}.timeline{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0}.timeline::before{display:none}.timeline-dot{border:1px solid #444;border-radius:6px}.timeline-dot .label{max-width:none}.phase-indicator{min-height:110px}.controls{gap:8px}.btn{padding:10px 14px}.legend{gap:10px}.depth-label{line-height:1.5}}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
@@ -50,17 +61,17 @@
   <h1>Underground Nuclear Test</h1>
   <p class="subtitle">Cross-section visualization of a typical Nevada Test Site detonation</p>
 
-  <div class="timeline" id="timeline"></div>
+  <nav class="timeline" id="timeline" aria-label="Animation phases"></nav>
 
-  <div class="phase-indicator">
+  <div class="phase-indicator" aria-live="polite" aria-atomic="true">
     <div class="phase-title" id="phaseTitle">Phase 1: Preparation</div>
     <div class="phase-desc" id="phaseDesc">A vertical shaft is drilled 600–5,000 ft into the desert floor. The device and diagnostic instruments are lowered to the bottom.</div>
   </div>
 
   <div class="canvas-wrap">
-    <canvas id="canvas" width="860" height="580"></canvas>
+    <canvas id="canvas" width="860" height="580" role="img" aria-label="Schematic underground cross-section" aria-describedby="phaseTitle phaseDesc">A cross-section of the desert surface and underground layers. The phase description above explains the scene.</canvas>
   </div>
-  <p class="depth-label">Cross-section view — not to scale</p>
+  <p class="depth-label">Schematic cross-section — not to scale. Playback timing is illustrative.</p>
 
   <div class="controls">
     <button class="btn btn-play" id="playBtn" onclick="togglePlay()">▶ Play Animation</button>
@@ -69,6 +80,9 @@
     <button class="btn btn-speed" data-speed="2" onclick="setSpeed(2, this)">2×</button>
     <button class="btn btn-speed" data-speed="0.5" onclick="setSpeed(0.5, this)">0.5×</button>
   </div>
+
+  <div class="seek-controls"><label for="seek">Progress</label><input id="seek" type="range" min="0" max="100" step="0.1" value="0" oninput="seekAnimation(this.value)"><output id="progressOutput" for="seek">0%</output></div>
+  <p class="playback-status" id="playbackStatus" role="status">Ready</p>
 
   <div class="legend">
     <div class="legend-item"><div class="legend-swatch" style="background:#c2956b"></div> Desert soil</div>
@@ -109,6 +123,9 @@ let animProgress = 0;
 let playing = false;
 let speed = 1;
 let animFrame = null;
+let lastTimestamp = null;
+const PHASE_DURATION_MS = 1000 / (0.004 * 60);
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 let particles = [];
 let shakeOffset = { x: 0, y: 0 };
 let shakeIntensity = 0;
@@ -117,11 +134,22 @@ function initTimeline() {
   const tl = document.getElementById('timeline');
   tl.innerHTML = '';
   phases.forEach((p, i) => {
-    const div = document.createElement('div');
-    div.className = 'timeline-dot';
-    div.innerHTML = `<div class="dot ${i === 0 ? 'active' : ''}" id="dot${i}">${i + 1}</div><div class="label">${p.name}</div>`;
-    div.onclick = () => jumpToPhase(i);
-    tl.appendChild(div);
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'timeline-dot';
+    button.id = `phase${i}`;
+    button.setAttribute('aria-label', `Phase ${i + 1}: ${p.name}`);
+    button.setAttribute('aria-controls', 'canvas');
+    button.innerHTML = `<span class="dot" id="dot${i}" aria-hidden="true">${i + 1}</span><span class="label">${p.name}</span>`;
+    button.onclick = () => jumpToPhase(i);
+    button.onkeydown = event => {
+      const keys = {ArrowRight:(i+1)%phases.length,ArrowDown:(i+1)%phases.length,ArrowLeft:(i+phases.length-1)%phases.length,ArrowUp:(i+phases.length-1)%phases.length,Home:0,End:phases.length-1};
+      if (!(event.key in keys)) return;
+      event.preventDefault();
+      jumpToPhase(keys[event.key]);
+      document.getElementById(`phase${keys[event.key]}`).focus();
+    };
+    tl.appendChild(button);
   });
 }
 
@@ -129,43 +157,90 @@ function updatePhaseUI() {
   document.getElementById('phaseTitle').textContent = `Phase ${currentPhase + 1}: ${phases[currentPhase].name}`;
   document.getElementById('phaseDesc').textContent = phases[currentPhase].desc;
   phases.forEach((_, i) => {
-    const dot = document.getElementById(`dot${i}`);
-    dot.className = 'dot' + (i === currentPhase ? ' active' : i < currentPhase ? ' completed' : '');
+    document.getElementById(`dot${i}`).className = 'dot' + (i === currentPhase ? ' active' : i < currentPhase ? ' completed' : '');
+    const button = document.getElementById(`phase${i}`);
+    if (i === currentPhase) button.setAttribute('aria-current', 'step');
+    else button.removeAttribute('aria-current');
   });
 }
 
+function updatePlaybackUI() {
+  const progress = (currentPhase + animProgress) / phases.length * 100;
+  const complete = currentPhase === phases.length - 1 && animProgress >= 1;
+  const button = document.getElementById('playBtn');
+  button.textContent = playing ? '⏸ Pause' : complete ? '↺ Replay' : '▶ Play Animation';
+  button.setAttribute('aria-pressed', String(playing));
+  document.getElementById('seek').value = progress;
+  document.getElementById('seek').setAttribute('aria-valuetext', `${Math.round(progress)}%, phase ${currentPhase + 1}: ${phases[currentPhase].name}`);
+  document.getElementById('progressOutput').textContent = `${Math.round(progress)}%`;
+  document.querySelectorAll('.btn-speed').forEach(b => {
+    b.classList.toggle('active', Number(b.dataset.speed) === speed);
+    b.setAttribute('aria-pressed', String(Number(b.dataset.speed) === speed));
+    b.setAttribute('aria-label', `Playback speed ${b.dataset.speed} times`);
+  });
+}
+
+function stopPlayback() {
+  playing = false;
+  if (animFrame !== null) cancelAnimationFrame(animFrame);
+  animFrame = null;
+  lastTimestamp = null;
+  shakeIntensity = 0;
+  shakeOffset = {x:0,y:0};
+  updatePlaybackUI();
+}
+
 function jumpToPhase(i) {
+  if (!Number.isInteger(i) || i < 0 || i >= phases.length) return;
+  stopPlayback();
   currentPhase = i;
   animProgress = 0;
   particles = [];
-  shakeIntensity = 0;
-  updatePhaseUI();
-  if (!playing) drawFrame();
-}
-
-function togglePlay() {
-  playing = !playing;
-  document.getElementById('playBtn').textContent = playing ? '⏸ Pause' : '▶ Play Animation';
-  if (playing) animate();
-  else cancelAnimationFrame(animFrame);
-}
-
-function resetAnimation() {
-  playing = false;
-  document.getElementById('playBtn').textContent = '▶ Play Animation';
-  cancelAnimationFrame(animFrame);
-  currentPhase = 0;
-  animProgress = 0;
-  particles = [];
-  shakeIntensity = 0;
+  document.getElementById('playbackStatus').textContent = 'Paused for phase inspection';
   updatePhaseUI();
   drawFrame();
 }
 
-function setSpeed(s, btn) {
+function togglePlay() {
+  if (playing) { stopPlayback(); drawFrame(); document.getElementById('playbackStatus').textContent = 'Paused'; return; }
+  if (document.hidden) return;
+  if (currentPhase === phases.length - 1 && animProgress >= 1) {
+    currentPhase = 0; animProgress = 0; updatePhaseUI();
+  }
+  playing = true;
+  lastTimestamp = null;
+  document.getElementById('playbackStatus').textContent = 'Playing';
+  drawFrame();
+  if (animFrame === null) animFrame = requestAnimationFrame(animate);
+}
+
+function resetAnimation() {
+  stopPlayback();
+  currentPhase = 0;
+  animProgress = 0;
+  particles = [];
+  document.getElementById('playbackStatus').textContent = 'Ready';
+  updatePhaseUI();
+  drawFrame();
+}
+
+function seekAnimation(value) {
+  const next = Number(value);
+  if (!Number.isFinite(next)) return;
+  stopPlayback();
+  const position = Math.max(0, Math.min(100, next)) / 100 * phases.length;
+  currentPhase = Math.min(phases.length - 1, Math.floor(position));
+  animProgress = position - currentPhase;
+  document.getElementById('playbackStatus').textContent = position === phases.length ? 'Complete — replay available' : 'Paused for inspection';
+  updatePhaseUI();
+  drawFrame();
+}
+
+function setSpeed(s) {
+  if (![0.5, 1, 2].includes(s)) return;
   speed = s;
-  document.querySelectorAll('.btn-speed').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
+  lastTimestamp = null;
+  updatePlaybackUI();
 }
 
 // Drawing helpers
@@ -515,6 +590,7 @@ function drawLabels() {
 }
 
 function drawFrame() {
+  shakeIntensity = 0;
   ctx.save();
   ctx.translate(shakeOffset.x, shakeOffset.y);
 
@@ -601,37 +677,45 @@ function drawFrame() {
   ctx.restore();
 
   // Shake
-  if (shakeIntensity > 0) {
+  if (playing && !reducedMotion.matches && shakeIntensity > 0) {
     shakeOffset.x = (Math.random() - 0.5) * shakeIntensity;
     shakeOffset.y = (Math.random() - 0.5) * shakeIntensity;
   } else {
     shakeOffset.x = 0;
     shakeOffset.y = 0;
   }
+  updatePlaybackUI();
 }
 
-function animate() {
+function animate(timestamp) {
+  animFrame = null;
   if (!playing) return;
-
-  animProgress += 0.004 * speed;
-
-  if (animProgress >= 1) {
-    animProgress = 0;
-    if (currentPhase < phases.length - 1) {
-      currentPhase++;
-      updatePhaseUI();
-    } else {
-      animProgress = 1;
-      playing = false;
-      document.getElementById('playBtn').textContent = '▶ Play Animation';
-      drawFrame();
-      return;
-    }
+  if (document.hidden) { stopPlayback(); return; }
+  if (lastTimestamp !== null) {
+    animProgress += Math.max(0, Math.min(100, timestamp - lastTimestamp)) * speed / PHASE_DURATION_MS;
   }
-
+  lastTimestamp = timestamp;
+  while (animProgress >= 1 && currentPhase < phases.length - 1) {
+    animProgress -= 1;
+    currentPhase++;
+    updatePhaseUI();
+  }
+  if (currentPhase === phases.length - 1 && animProgress >= 1) {
+    animProgress = 1;
+    stopPlayback();
+    document.getElementById('playbackStatus').textContent = 'Complete — replay available';
+  }
   drawFrame();
-  animFrame = requestAnimationFrame(animate);
+  if (playing) animFrame = requestAnimationFrame(animate);
 }
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && playing) {
+    stopPlayback(); drawFrame();
+    document.getElementById('playbackStatus').textContent = 'Paused while this tab is hidden';
+  }
+});
+window.addEventListener('pagehide', stopPlayback);
 
 // Init
 initTimeline();

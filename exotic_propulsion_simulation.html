@@ -53,13 +53,21 @@
 
   .run-btn { padding: 8px 20px; border: none; border-radius: 20px; background: linear-gradient(135deg, #4040aa, #6030a0); color: #fff; cursor: pointer; font-size: 0.85em; transition: all 0.3s; }
   .run-btn:hover { box-shadow: 0 0 20px rgba(100,60,200,0.5); transform: scale(1.03); }
+  button:focus-visible, input:focus-visible { outline: 3px solid #ffd18c; outline-offset: 3px; }
+  .model-note { color: #e8c792; line-height: 1.5; font-size: .83rem; margin: 8px 0 14px; }
+  .playback-status { color: #b8b8d8; font-size: .85rem; }
+  .sim-grid > *, .card { min-width: 0; }
+  .metric .value { overflow-wrap: anywhere; }
+  .ctrl-group label, .metric .label { color: #a9a9ce; }
+  [hidden] { display: none !important; }
+  @media(max-width: 500px) { .sim-container { padding: 12px; } .card { padding: 12px; } .nav-bar { position: static; } .nav-btn { min-height: 40px; } }
 </style>
 </head>
 <body>
 
 <div class="header">
   <h1>Exotic Propulsion Simulation Laboratory</h1>
-  <p>10 Theoretical Drive Systems — Interactive Physics Models</p>
+  <p>10 Drive Concepts — Interactive, Unvalidated Illustrations</p>
 </div>
 
 <div class="nav-bar" id="navBar"></div>
@@ -103,11 +111,11 @@ const METHODS = [
       const maxG = maxAccel / 9.81;
 
       let t = 0;
-      function draw() {
+      function draw(frameScale = 0) {
         ctx.fillStyle = 'rgba(8,8,26,0.15)';
         ctx.fillRect(0,0,W,H);
 
-        t += 0.02;
+        t += 0.02 * frameScale;
 
         // Draw vacuum energy field
         for (let i = 0; i < 60; i++) {
@@ -181,11 +189,11 @@ const METHODS = [
           }
         }
 
-        requestAnimationFrame(draw);
+
       }
 
-      draw();
       return {
+        draw,
         metrics: [
           { label: "Mass Reduction", value: (eta * 100).toFixed(4) + "%" },
           { label: "Effective Mass", value: effectiveMass.toFixed(1) + " kg" },
@@ -228,10 +236,10 @@ const METHODS = [
       const strainNorm = Math.log10(strain + 1e-40) / -10;
 
       let t = 0;
-      function draw() {
+      function draw(frameScale = 0) {
         ctx.fillStyle = 'rgba(8,8,26,0.12)';
         ctx.fillRect(0,0,W,H);
-        t += 0.03;
+        t += 0.03 * frameScale;
 
         // Gravitational wave rings
         const numWaves = 12;
@@ -292,10 +300,10 @@ const METHODS = [
           ctx.stroke();
         }
 
-        requestAnimationFrame(draw);
+
       }
-      draw();
       return {
+        draw,
         metrics: [
           { label: "GW Power Output", value: Pgw.toExponential(2) + " W" },
           { label: "Strain Amplitude", value: strain.toExponential(2) },
@@ -351,10 +359,10 @@ const METHODS = [
         particles.push({ angle, r, speed: 0.5 + Math.random() * 2, vr: (Math.random() - 0.5) * 2, layer: Math.floor(Math.random() * 3) });
       }
 
-      function draw() {
+      function draw(frameScale = 0) {
         ctx.fillStyle = 'rgba(8,8,26,0.15)';
         ctx.fillRect(0,0,W,H);
-        t += 0.02;
+        t += 0.02 * frameScale;
 
         // Magnetic confinement field lines
         for (let i = 0; i < 8; i++) {
@@ -380,7 +388,7 @@ const METHODS = [
           { r: 25, color: [255, 255, 200], dir: 1 }
         ];
         layers.forEach((layer, li) => {
-          const comprR = layer.r * (1 - beta * 0.3);
+          const comprR = layer.r * Math.max(0.15, 1 - Math.min(beta, 2) * 0.3);
           for (let i = 0; i < 30; i++) {
             const a = (i / 30) * Math.PI * 2 + t * layer.dir * (1 + li * 0.5);
             const wobble = Math.sin(a * 5 + t * 3) * 3;
@@ -414,7 +422,7 @@ const METHODS = [
         }
 
         // Core glow
-        const coreR = 15 + beta * 20;
+        const coreR = 15 + Math.min(beta, 4) * 20;
         const cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, coreR);
         cg.addColorStop(0, `rgba(255,255,240,${0.3 + Math.min(0.7, Pfusion/1e12)})`);
         cg.addColorStop(0.5, `rgba(255,180,60,${0.2 + beta * 0.3})`);
@@ -424,16 +432,16 @@ const METHODS = [
         ctx.fillStyle = cg;
         ctx.fill();
 
-        requestAnimationFrame(draw);
+
       }
-      draw();
       return {
+        draw,
         metrics: [
           { label: "Fusion Power", value: Pfusion.toExponential(2) + " W" },
           { label: "Plasma Beta", value: beta.toFixed(4) },
           { label: "Plasma Energy", value: Wplasma.toExponential(2) + " J" },
           { label: "Lawson Parameter", value: lawson.toExponential(2) + " keV·s/m³" },
-          { label: "Breakeven", value: Pfusion > Wplasma / 0.1 ? "YES ✓" : "NO ✗" }
+          { label: "Toy 0.1 s threshold", value: Pfusion > Wplasma / 0.1 ? "Above" : "Below" }
         ]
       };
     }
@@ -476,10 +484,10 @@ const METHODS = [
         stars.push({ x: Math.random() * W, y: Math.random() * H, s: Math.random() * 1.5 + 0.5 });
       }
 
-      function draw() {
+      function draw(frameScale = 0) {
         ctx.fillStyle = 'rgba(8,8,26,0.2)';
         ctx.fillRect(0,0,W,H);
-        t += 0.02;
+        t += 0.02 * frameScale;
 
         // Starfield with warp distortion
         stars.forEach(star => {
@@ -569,10 +577,10 @@ const METHODS = [
         ctx.fill();
         ctx.restore();
 
-        requestAnimationFrame(draw);
+
       }
-      draw();
       return {
+        draw,
         metrics: [
           { label: "Bubble Velocity", value: (p.warp).toFixed(2) + " c" },
           { label: "Energy Required", value: E_optimized.toExponential(2) + " J" },
@@ -622,14 +630,14 @@ const METHODS = [
         });
       }
 
-      function draw() {
+      function draw(frameScale = 0) {
         ctx.fillStyle = 'rgba(8,8,26,0.15)';
         ctx.fillRect(0,0,W,H);
-        t += 0.03;
+        t += 0.03 * frameScale;
 
         // Virtual particle-antiparticle pairs (vacuum fluctuations)
         vacuumParticles.forEach(vp => {
-          vp.life++;
+          vp.life += frameScale;
           if (vp.life > vp.maxLife) {
             vp.x = Math.random() * W;
             vp.y = Math.random() * H;
@@ -703,13 +711,13 @@ const METHODS = [
           ctx.fillText('F_thrust', cx, topY - arrowLen - 10);
         }
 
-        requestAnimationFrame(draw);
+
       }
-      draw();
       return {
+        draw,
         metrics: [
           { label: "Thrust", value: thrustMicroN.toFixed(4) + " μN" },
-          { label: "Specific Impulse", value: specImpulse.toExponential(2) + " s" },
+          { label: "Specific Impulse", value: "Not defined (no mass flow)" },
           { label: "Thrust/Power", value: (thrustMicroN / p.power * 1000).toFixed(4) + " μN/kW" },
           { label: "Cavity Energy", value: (p.power * p.Q / (p.freq * 1e9 * 2 * Math.PI)).toExponential(2) + " J" }
         ]
@@ -756,10 +764,10 @@ const METHODS = [
         plasmaParticles.push({ a, r, va: (Math.random() - 0.5) * 0.1, vr: Math.random() * 0.5, life: Math.random() * 100 });
       }
 
-      function draw() {
+      function draw(frameScale = 0) {
         ctx.fillStyle = 'rgba(8,8,26,0.12)';
         ctx.fillRect(0,0,W,H);
-        t += 0.02;
+        t += 0.02 * frameScale;
 
         // Magnetic field lines (B-field)
         ctx.strokeStyle = 'rgba(60,60,150,0.15)';
@@ -779,16 +787,16 @@ const METHODS = [
         }
 
         // Plasma sheath particles
-        const plasmaSpeed = p.J * p.B / 1e6;
+        const plasmaSpeed = Math.min(10, p.J * p.B / 1e6);
         plasmaParticles.forEach(pp => {
-          pp.a += pp.va * plasmaSpeed * 0.01;
-          pp.life++;
+          pp.a += pp.va * plasmaSpeed * 0.01 * frameScale;
+          pp.life += frameScale;
           if (pp.life > 120) {
             pp.a = Math.random() * Math.PI * 2;
             pp.r = 45 + Math.random() * 10;
             pp.life = 0;
           }
-          pp.r += pp.vr * plasmaSpeed * 0.1;
+          pp.r += pp.vr * plasmaSpeed * 0.1 * frameScale;
           if (pp.r > 110) pp.r = 50;
 
           const px = cx + Math.cos(pp.a) * pp.r;
@@ -844,16 +852,16 @@ const METHODS = [
           ctx.stroke();
         }
 
-        requestAnimationFrame(draw);
+
       }
-      draw();
       return {
+        draw,
         metrics: [
           { label: "Thrust Force", value: force.toExponential(2) + " N" },
           { label: "Acceleration", value: (accel / 9.81).toFixed(1) + " g" },
           { label: "Power Required", value: (power / 1e6).toFixed(1) + " MW" },
           { label: "Exhaust Velocity", value: (vExhaust / 1000).toFixed(1) + " km/s" },
-          { label: "Efficiency", value: ((force * vExhaust / (2 * power)) * 100).toFixed(1) + "%" }
+          { label: "Toy power ratio (unvalidated)", value: ((force * vExhaust / (2 * power)) * 100).toFixed(1) + "%" }
         ]
       };
     }
@@ -876,7 +884,7 @@ const METHODS = [
       { name: "Drive Frequency (kHz)", key: "freq", min: 10, max: 200, init: 40, log: false },
       { name: "Peak Power (W)", key: "power", min: 10, max: 10000, init: 500, log: true },
       { name: "PZT Mass (kg)", key: "mass", min: 0.01, max: 1, init: 0.1, log: true },
-      { name: "Stack Layers", key: "layers", min: 1, max: 50, init: 10, log: false }
+      { name: "Stack Layers", key: "layers", integer: true, min: 1, max: 50, init: 10, log: false }
     ],
     simulate: function(p, canvas) {
       const ctx = canvas.getContext('2d');
@@ -891,10 +899,10 @@ const METHODS = [
       const F_microN = F_net * 1e6;
 
       let t = 0;
-      function draw() {
+      function draw(frameScale = 0) {
         ctx.fillStyle = 'rgba(8,8,26,0.18)';
         ctx.fillRect(0,0,W,H);
-        t += 0.04;
+        t += 0.04 * frameScale;
 
         // PZT stack visualization
         const stackW = 40, layerH = 6;
@@ -926,7 +934,7 @@ const METHODS = [
         ctx.lineWidth = 1.5;
         for (let x = cx - 120; x < cx + 120; x++) {
           const dx = x - cx;
-          const wave = Math.sin(dx * 0.05 + t * p.freq * 0.01) * 15 * (dm / 1e-20);
+          const wave = Math.sin(dx * 0.05 + t * p.freq * 0.01) * 15 * Math.min(2, Math.log10(1 + dm / 1e-20) / 10);
           const envelope = Math.exp(-dx * dx / 5000);
           const py = cy - stackH/2 - 30 + wave * envelope;
           if (x === cx - 120) ctx.moveTo(x, py); else ctx.lineTo(x, py);
@@ -970,10 +978,10 @@ const METHODS = [
           ctx.fillText(F_microN.toFixed(3) + ' μN', cx, stackTop - 15 - aLen);
         }
 
-        requestAnimationFrame(draw);
+
       }
-      draw();
       return {
+        draw,
         metrics: [
           { label: "Net Thrust", value: F_microN.toFixed(4) + " μN" },
           { label: "Mass Fluctuation", value: dm.toExponential(2) + " kg" },
@@ -1023,10 +1031,10 @@ const METHODS = [
         ions.push({ x: cx + (Math.random() - 0.5) * 80, y: cy + (Math.random() - 0.5) * 60, vy: -Math.random() * 2 });
       }
 
-      function draw() {
+      function draw(frameScale = 0) {
         ctx.fillStyle = 'rgba(8,8,26,0.15)';
         ctx.fillRect(0,0,W,H);
-        t += 0.03;
+        t += 0.03 * frameScale;
 
         const plateGap = 50 + p.d;
         const topPlateY = cy - plateGap / 2;
@@ -1064,8 +1072,8 @@ const METHODS = [
 
         // Ion wind particles
         ions.forEach(ion => {
-          ion.y += ion.vy * fieldIntensity;
-          ion.x += Math.sin(t * 5 + ion.x * 0.1) * 0.3;
+          ion.y += ion.vy * fieldIntensity * frameScale;
+          ion.x += Math.sin(t * 5 + ion.x * 0.1) * 0.3 * frameScale;
           if (ion.y < topPlateY) {
             ion.y = botPlateY - 5;
             ion.x = cx + (Math.random() - 0.5) * 80;
@@ -1103,10 +1111,10 @@ const METHODS = [
           ctx.fillText('F=' + F_total.toExponential(1) + 'N', cx + 78, cy - aLen/2);
         }
 
-        requestAnimationFrame(draw);
+
       }
-      draw();
       return {
+        draw,
         metrics: [
           { label: "EHD Force", value: F_ehd.toExponential(2) + " N" },
           { label: "Ion Wind", value: F_ion.toExponential(2) + " N" },
@@ -1152,10 +1160,10 @@ const METHODS = [
       const liftForce = eta * 9.81 * 1000; // for 1000kg
 
       let t = 0;
-      function draw() {
+      function draw(frameScale = 0) {
         ctx.fillStyle = 'rgba(8,8,26,0.15)';
         ctx.fillRect(0,0,W,H);
-        t += 0.02;
+        t += 0.02 * frameScale;
 
         // Gravity field lines (being deflected)
         for (let i = 0; i < 15; i++) {
@@ -1246,10 +1254,10 @@ const METHODS = [
         ctx.fillText('YBCO Disc @ ' + p.temp + 'K', cx - 70, cy + 40);
         ctx.fillText(p.rpm + ' RPM', cx - 70, cy + 50);
 
-        requestAnimationFrame(draw);
+
       }
-      draw();
       return {
+        draw,
         metrics: [
           { label: "Gravity Reduction", value: dgPercent.toFixed(4) + "%" },
           { label: "Shield Efficiency", value: (eta * 100).toFixed(4) + "%" },
@@ -1286,7 +1294,7 @@ const METHODS = [
       const W = canvas.width, H = canvas.height;
       const cx = W/2, cy = H/2;
 
-      const n_eff = Math.sqrt(Math.abs(p.eps * p.mu)) * Math.sign(p.eps * p.mu);
+      const n_eff = Math.sqrt(Math.abs(p.eps * p.mu)) * (p.eps < 0 && p.mu < 0 ? -1 : 1);
       const isNegative = p.eps < 0 && p.mu < 0;
       const isSingleNeg = (p.eps < 0) !== (p.mu < 0);
       const cloakStrength = isNegative ? Math.min(1, Math.abs(n_eff + 1) < 0.5 ? 1 - Math.abs(n_eff + 1) * 2 : 0) : 0;
@@ -1297,10 +1305,10 @@ const METHODS = [
         rays.push({ x: -10, y: 30 + i * (H - 60) / 20, angle: 0 });
       }
 
-      function draw() {
+      function draw(frameScale = 0) {
         ctx.fillStyle = 'rgba(8,8,26,0.15)';
         ctx.fillRect(0,0,W,H);
-        t += 0.02;
+        t += 0.02 * frameScale;
 
         // Incoming EM rays being bent by metamaterial
         rays.forEach((ray, ri) => {
@@ -1386,7 +1394,7 @@ const METHODS = [
         ctx.fillStyle = nColor;
         ctx.font = '11px monospace';
         ctx.textAlign = 'center';
-        ctx.fillText('n_eff = ' + n_eff.toFixed(3), cx, H - 20);
+        ctx.fillText('n_eff = ' + (isSingleNeg ? n_eff.toFixed(3) + 'i' : n_eff.toFixed(3)), cx, H - 20);
 
         // Status
         const status = isNegative ? 'NEGATIVE INDEX (Left-handed)' : (isSingleNeg ? 'SINGLE-NEGATIVE (Opaque)' : 'POSITIVE INDEX (Normal)');
@@ -1394,15 +1402,15 @@ const METHODS = [
         ctx.font = '9px monospace';
         ctx.fillText(status, cx, H - 8);
 
-        requestAnimationFrame(draw);
+
       }
-      draw();
       return {
+        draw,
         metrics: [
-          { label: "Refractive Index", value: n_eff.toFixed(4) },
-          { label: "Phase Velocity", value: (1 / Math.abs(n_eff || 0.001)).toFixed(2) + " c" },
+          { label: "Index (lossless illustration)", value: n_eff.toFixed(4) + (isSingleNeg ? "i" : "") },
+          { label: "Phase Velocity", value: isSingleNeg || n_eff === 0 ? "Not defined here" : (1 / Math.abs(n_eff)).toFixed(2) + " c" },
           { label: "Regime", value: isNegative ? "Negative Index" : (isSingleNeg ? "Evanescent" : "Normal") },
-          { label: "Cloak Strength", value: (cloakStrength * 100).toFixed(1) + "%" },
+          { label: "Visual cloak cue", value: (cloakStrength * 100).toFixed(1) + "%" },
           { label: "Panel Power", value: p.power + " MW" }
         ]
       };
@@ -1410,122 +1418,135 @@ const METHODS = [
   }
 ];
 
-// Build nav
 const navBar = document.getElementById('navBar');
-METHODS.forEach((m, idx) => {
-  const btn = document.createElement('div');
-  btn.className = 'nav-btn' + (idx === 0 ? ' active' : '');
-  btn.textContent = m.short;
-  btn.onclick = () => selectMethod(idx);
-  navBar.appendChild(btn);
-});
-
+navBar.setAttribute('role', 'tablist');
+navBar.setAttribute('aria-label', 'Drive concepts');
 const container = document.getElementById('simContainer');
+const panels = [];
+let activeIndex = 0, animationId = null, lastTimestamp = null, elapsed = 0;
+let playing = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+let currentResult = null;
 
-// Build panels
-METHODS.forEach((m, idx) => {
-  const panel = document.createElement('div');
-  panel.className = 'sim-panel' + (idx === 0 ? ' active' : '');
-  panel.id = 'panel-' + m.id;
+function cancelFrame() {
+  if (animationId !== null) cancelAnimationFrame(animationId);
+  animationId = null;
+  lastTimestamp = null;
+}
+function updatePlayback() {
+  const state = panels[activeIndex];
+  state.play.textContent = playing ? '⏸ Pause' : '▶ Play';
+  state.play.setAttribute('aria-pressed', String(playing));
+  const status = document.hidden && playing ? 'Suspended while hidden' : playing ? 'Playing' : 'Paused';
+  if (state.status.textContent !== status) state.status.textContent = status;
+  state.timer.textContent = `· ${elapsed.toFixed(1)} s illustration time`;
+}
+function scheduleFrame() {
+  if (playing && !document.hidden && animationId === null) animationId = requestAnimationFrame(tick);
+}
+function tick(timestamp) {
+  animationId = null;
+  if (!playing || document.hidden) return;
+  const delta = lastTimestamp === null ? 0 : Math.min(0.1, Math.max(0, (timestamp - lastTimestamp) / 1000));
+  lastTimestamp = timestamp;
+  elapsed += delta;
+  currentResult.draw(delta * 60);
+  updatePlayback();
+  scheduleFrame();
+}
+function refresh() {
+  cancelFrame();
+  elapsed = 0;
+  const state = panels[activeIndex];
+  state.canvas.getContext('2d').clearRect(0, 0, state.canvas.width, state.canvas.height);
+  currentResult = METHODS[activeIndex].simulate({...state.values}, state.canvas);
+  state.metrics.replaceChildren();
+  currentResult.metrics.forEach(metric => {
+    const card = document.createElement('div');
+    card.className = 'metric';
+    const label = document.createElement('div');
+    label.className = 'label'; label.textContent = metric.label;
+    const value = document.createElement('div');
+    value.className = 'value'; value.textContent = metric.value;
+    card.append(label, value); state.metrics.append(card);
+  });
+  currentResult.draw(0);
+  updatePlayback(); scheduleFrame();
+}
 
-  let patentHtml = m.patent ? `<span class="patent-tag">${m.patent}</span><br>` : '';
-
+METHODS.forEach((method, index) => {
+  const tab = document.createElement('button');
+  tab.type = 'button'; tab.className = 'nav-btn'; tab.textContent = method.short;
+  tab.id = 'tab-' + method.id;
+  tab.setAttribute('role', 'tab'); tab.setAttribute('aria-controls', 'panel-' + method.id);
+  tab.onclick = () => selectMethod(index);
+  tab.onkeydown = event => {
+    let next;
+    if (event.key === 'ArrowRight') next = (index + 1) % METHODS.length;
+    if (event.key === 'ArrowLeft') next = (index - 1 + METHODS.length) % METHODS.length;
+    if (event.key === 'Home') next = 0;
+    if (event.key === 'End') next = METHODS.length - 1;
+    if (next !== undefined) { event.preventDefault(); selectMethod(next); panels[next].tab.focus(); }
+  };
+  navBar.append(tab);
+  const panel = document.createElement('section');
+  panel.className = 'sim-panel'; panel.id = 'panel-' + method.id;
+  panel.setAttribute('role', 'tabpanel'); panel.setAttribute('aria-labelledby', tab.id);
   panel.innerHTML = `
     <div class="info-banner">
-      ${patentHtml}
-      <h2>${m.name}</h2>
-      <div class="subtitle">${m.subtitle}</div>
-      <p>${m.desc}</p>
+      ${method.patent ? `<span class="patent-tag">${method.patent}</span>` : ''}
+      <h2>${method.name}</h2><div class="subtitle">${method.subtitle}</div>
+      <p class="model-note">Conceptual illustration — unvalidated formulas and assumed scaling. A patent or displayed number does not establish that a drive works.</p>
+      <details><summary>Original concept narrative (claims, not validation)</summary><p>${method.desc}</p></details>
     </div>
-    <div class="eq">${m.equations.join('\n')}</div>
-    <div class="controls" id="controls-${m.id}"></div>
-    <div class="sim-grid">
-      <div class="card">
-        <h3>Simulation</h3>
-        <canvas id="canvas-${m.id}" width="500" height="350"></canvas>
-      </div>
-      <div>
-        <div class="card">
-          <h3>Computed Metrics</h3>
-          <div class="metric-row" id="metrics-${m.id}"></div>
-        </div>
-      </div>
-    </div>
-  `;
-  container.appendChild(panel);
-
-  // Build controls
-  const controlsDiv = document.getElementById('controls-' + m.id);
-  const paramValues = {};
-  m.params.forEach(param => {
-    paramValues[param.key] = param.init;
-    const group = document.createElement('div');
-    group.className = 'ctrl-group';
-    const label = document.createElement('label');
-    label.textContent = param.name;
-    const input = document.createElement('input');
-    input.type = 'range';
-    input.min = 0;
-    input.max = 1000;
-    input.value = param.log
-      ? ((Math.log10(param.init) - Math.log10(param.min)) / (Math.log10(param.max) - Math.log10(param.min))) * 1000
-      : ((param.init - param.min) / (param.max - param.min)) * 1000;
-
-    const valSpan = document.createElement('div');
-    valSpan.className = 'val';
-    valSpan.textContent = formatVal(param.init);
-
+    <details><summary>Illustrative equations — not validated performance models</summary><div class="eq">${method.equations.join('\n')}</div></details>
+    <div class="controls" id="controls-${method.id}"></div>
+    <div class="controls playback"><button type="button" class="run-btn play-btn">▶ Play</button><button type="button" class="run-btn replay-btn">↺ Replay</button><button type="button" class="run-btn reset-btn">Reset parameters</button><span class="playback-status" role="status"></span><span class="elapsed playback-status" aria-live="off"></span></div>
+    <div class="sim-grid"><div class="card"><h3>Concept animation</h3>
+      <canvas id="canvas-${method.id}" width="500" height="350" role="img" aria-label="${method.short}: conceptual animation, not to scale">Concept animation; the adjacent text describes this illustration.</canvas>
+      <p>Time and visual amplitudes are scaled for display. Parameter changes restart the illustration and refresh its numbers.</p></div>
+      <div class="card"><h3>Illustrative outputs</h3><p class="model-note">These outputs come from unvalidated toy formulas, not measurements or engineering predictions. Display limits can flatten responses; not every input appears in every formula.</p><div class="metric-row" id="metrics-${method.id}"></div></div></div>`;
+  container.append(panel);
+  const state = {tab, panel, values: {}, inputs: [], canvas: panel.querySelector('canvas'), metrics: panel.querySelector('.metric-row'), play: panel.querySelector('.play-btn'), status: panel.querySelector('.playback-status'), timer: panel.querySelector('.elapsed')};
+  panels.push(state);
+  method.params.forEach(param => {
+    const group = document.createElement('div'); group.className = 'ctrl-group';
+    const label = document.createElement('label'); label.textContent = param.name;
+    const input = document.createElement('input'); input.type = 'range'; input.id = `${method.id}-${param.key}`;
+    label.htmlFor = input.id;
+    input.min = param.min; input.max = param.max; input.step = param.integer ? 1 : 'any';
+    if (param.log) { input.min = Math.log10(param.min); input.max = Math.log10(param.max); }
+    const output = document.createElement('output'); output.className = 'val'; output.htmlFor = input.id;
+    function setValue(value) {
+      state.values[param.key] = value;
+      input.value = param.log ? Math.log10(value) : value;
+      output.textContent = formatVal(value);
+      input.setAttribute('aria-valuetext', `${formatVal(value)} ${param.name}${param.log ? ' (logarithmic scale)' : ''}`);
+    }
     input.oninput = () => {
-      const frac = input.value / 1000;
-      let val;
-      if (param.log) {
-        val = Math.pow(10, Math.log10(param.min) + frac * (Math.log10(param.max) - Math.log10(param.min)));
-      } else {
-        val = param.min + frac * (param.max - param.min);
-      }
-      paramValues[param.key] = val;
-      valSpan.textContent = formatVal(val);
+      const value = param.log ? 10 ** Number(input.value) : Number(input.value);
+      setValue(param.integer ? Math.round(value) : value);
+      if (activeIndex === index) refresh();
     };
-
-    group.appendChild(label);
-    group.appendChild(input);
-    group.appendChild(valSpan);
-    controlsDiv.appendChild(group);
+    setValue(param.init); state.inputs.push(() => setValue(param.init));
+    group.append(label, input, output); panel.querySelector('.controls').append(group);
   });
-
-  const runBtn = document.createElement('button');
-  runBtn.className = 'run-btn';
-  runBtn.textContent = '▶ Run Simulation';
-  runBtn.onclick = () => {
-    const canvas = document.getElementById('canvas-' + m.id);
-    const result = m.simulate(paramValues, canvas);
-    const metricsDiv = document.getElementById('metrics-' + m.id);
-    metricsDiv.innerHTML = '';
-    result.metrics.forEach(met => {
-      const md = document.createElement('div');
-      md.className = 'metric';
-      md.innerHTML = `<div class="label">${met.label}</div><div class="value">${met.value}</div>`;
-      metricsDiv.appendChild(md);
-    });
-  };
-  controlsDiv.appendChild(runBtn);
+  state.play.onclick = () => { playing = !playing; cancelFrame(); updatePlayback(); scheduleFrame(); };
+  panel.querySelector('.replay-btn').onclick = () => { playing = true; refresh(); };
+  panel.querySelector('.reset-btn').onclick = () => { state.inputs.forEach(reset => reset()); playing = false; refresh(); };
 });
-
-// Auto-run first
-setTimeout(() => {
-  document.querySelector('.run-btn').click();
-}, 100);
-
-function selectMethod(idx) {
-  document.querySelectorAll('.nav-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
-  document.querySelectorAll('.sim-panel').forEach((p, i) => p.classList.toggle('active', i === idx));
-  // Auto-run when switching
-  setTimeout(() => {
-    const panel = document.querySelectorAll('.sim-panel')[idx];
-    const btn = panel.querySelector('.run-btn');
-    if (btn) btn.click();
-  }, 50);
+function selectMethod(index) {
+  cancelFrame(); activeIndex = index;
+  panels.forEach((state, i) => {
+    state.tab.classList.toggle('active', i === index); state.tab.tabIndex = i === index ? 0 : -1;
+    state.tab.setAttribute('aria-selected', String(i === index));
+    state.panel.classList.toggle('active', i === index); state.panel.hidden = i !== index;
+  });
+  refresh();
 }
+document.addEventListener('visibilitychange', () => { cancelFrame(); updatePlayback(); scheduleFrame(); });
+window.addEventListener('pagehide', cancelFrame);
+window.addEventListener('pageshow', scheduleFrame);
+selectMethod(0);
 
 function formatVal(v) {
   if (Math.abs(v) >= 1e6) return v.toExponential(2);

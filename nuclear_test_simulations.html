@@ -45,25 +45,45 @@ canvas{display:block;width:100%;border-radius:6px;border:1px solid #2a2a3a}
 .legend-row{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin:10px 0;font-size:0.78rem;color:#888}
 .legend-row .li{display:flex;align-items:center;gap:4px}
 .legend-row .sw{width:12px;height:12px;border-radius:2px}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid #f0e68c;outline-offset:3px}
+.btn,.sim-btn{min-height:44px}
+.main{min-width:0}
+.sidebar .cat-label,.info-card .label,.sim-btn .yr{color:#aaa}
+.playback{max-width:900px;margin:12px auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.playback input{flex:1;min-width:100px;accent-color:#e74c3c}
+.playback select{background:#202038;color:#eee;padding:8px;border:1px solid #666;border-radius:4px;min-height:44px}
+.playback output{min-width:4ch;font-variant-numeric:tabular-nums}
+.schematic-note,.playback-status{max-width:900px;margin:8px auto;text-align:center;color:#aaa;font-size:.8rem;line-height:1.5}
+.skip-link{position:fixed;left:12px;top:-100px;z-index:10;background:#fff;color:#111;padding:12px}
+.skip-link:focus{top:12px}
+@media(max-width:700px){body{display:block;height:auto;overflow:auto}.sidebar{width:100%;min-width:0;max-height:220px;border-bottom:1px solid #444}.main{overflow:visible}.sim-area{overflow:visible;padding:16px 12px}.header{padding:16px 12px}.header h1{font-size:1.2rem}.info-panel{gap:8px}.info-card{padding:10px}.info-card .value{font-size:1rem}.playback{gap:8px}.playback label[for="speedSelect"]{margin-left:auto}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
 
-<div class="sidebar" id="sidebar"></div>
+<a class="skip-link" href="#simTitle">Skip to simulation</a>
+<nav class="sidebar" id="sidebar" aria-label="Simulation library"></nav>
 
 <div class="main">
   <div class="header">
-    <h1 id="simTitle">Select a Simulation</h1>
+    <h1 id="simTitle" tabindex="-1">Select a Simulation</h1>
     <div class="sub" id="simSub"></div>
   </div>
   <div class="sim-area">
     <div class="sim-canvas-wrap">
-      <canvas id="C" width="900" height="520"></canvas>
+      <canvas id="C" width="900" height="520" role="img" aria-label="Selected historical simulation" aria-describedby="simSub descBox">An illustrated scene. Read the description below for context.</canvas>
     </div>
     <div class="controls">
       <button class="btn btn-play" id="playBtn" onclick="togglePlay()">▶ Play</button>
       <button class="btn btn-reset" onclick="resetSim()">↺ Reset</button>
     </div>
+    <div class="playback">
+      <label for="seek">Progress</label><input id="seek" type="range" min="0" max="100" step="0.1" value="0" oninput="seekSim(this.value)"><output id="progressOutput" for="seek">0%</output>
+      <label for="speedSelect">Speed</label><select id="speedSelect" onchange="setSpeed(this.value)"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select>
+    </div>
+    <p class="schematic-note">Schematic illustrations, not to scale. Progress and playback speed are presentation controls, not physical time.</p>
+    <p class="playback-status" id="playbackStatus" role="status">Ready</p>
     <div class="info-panel" id="infoPanel"></div>
     <div class="desc-box" id="descBox"></div>
     <div class="legend-row" id="legendRow"></div>
@@ -72,7 +92,8 @@ canvas{display:block;width:100%;border-radius:6px;border:1px solid #2a2a3a}
 
 <script>
 const C=document.getElementById('C'),ctx=C.getContext('2d'),W=900,H=520;
-let playing=false,t=0,anim=null,curSim=null,speed=1;
+let playing=false,t=0,anim=null,curSim=null,speed=1,lastTimestamp=null;
+const DURATION_MS=1000/(0.003*60);
 
 // ─── SIMULATION DATA ───
 const sims=[
@@ -228,8 +249,10 @@ const sims=[
 
 function loadSim(id){
   const s=sims.find(x=>x.id===id);if(!s)return;
-  curSim=s;t=0;playing=false;
-  document.getElementById('playBtn').textContent='▶ Play';
+  stopPlayback();
+  curSim=s;t=0;
+  C.setAttribute('aria-label',s.name+' — schematic illustration');
+  document.getElementById('playbackStatus').textContent='Ready';
   document.getElementById('simTitle').textContent=s.name+(s.yr?' ('+s.yr+')':'');
   document.getElementById('simSub').textContent=s.sub;
   document.getElementById('descBox').textContent=s.desc;
@@ -237,15 +260,61 @@ function loadSim(id){
   const ip=document.getElementById('infoPanel');
   ip.innerHTML=s.info.map(([l,v])=>`<div class="info-card"><div class="label">${l}</div><div class="value">${v}</div></div>`).join('');
 
-  document.querySelectorAll('.sim-btn').forEach(b=>{b.classList.toggle('active',b.dataset.id===id)});
+  document.querySelectorAll('.sim-btn').forEach(b=>{const active=b.dataset.id===id;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active))});
   drawFrame();
 }
 
-function togglePlay(){playing=!playing;document.getElementById('playBtn').textContent=playing?'⏸ Pause':'▶ Play';if(playing)animate()}
-function resetSim(){t=0;playing=false;document.getElementById('playBtn').textContent='▶ Play';if(curSim)drawFrame()}
-
-function animate(){if(!playing)return;t+=0.003;if(t>1){t=1;playing=false;document.getElementById('playBtn').textContent='▶ Play'}drawFrame();anim=requestAnimationFrame(animate)}
-function drawFrame(){if(!curSim)return;ctx.clearRect(0,0,W,H);curSim.draw(t)}
+function updatePlaybackUI(){
+  const percent=Math.round(t*100);
+  document.getElementById('seek').value=t*100;
+  document.getElementById('seek').setAttribute('aria-valuetext',percent+'% of illustration');
+  document.getElementById('progressOutput').textContent=percent+'%';
+  const button=document.getElementById('playBtn');
+  button.textContent=playing?'⏸ Pause':t>=1?'↺ Replay':'▶ Play';
+  button.setAttribute('aria-pressed',String(playing));
+}
+function stopPlayback(){
+  playing=false;
+  if(anim!==null)cancelAnimationFrame(anim);
+  anim=null;lastTimestamp=null;
+  updatePlaybackUI();
+}
+function togglePlay(){
+  if(playing){stopPlayback();document.getElementById('playbackStatus').textContent='Paused';return}
+  if(document.hidden)return;
+  if(t>=1)t=0;
+  playing=true;lastTimestamp=null;
+  document.getElementById('playbackStatus').textContent='Playing';
+  drawFrame();
+  if(anim===null)anim=requestAnimationFrame(animate);
+}
+function resetSim(){stopPlayback();t=0;document.getElementById('playbackStatus').textContent='Ready';drawFrame()}
+function seekSim(value){
+  const next=Number(value);if(!Number.isFinite(next))return;
+  stopPlayback();t=Math.max(0,Math.min(1,next/100));
+  document.getElementById('playbackStatus').textContent=t>=1?'Complete — replay available':'Paused for inspection';
+  drawFrame();
+}
+function setSpeed(value){const next=Number(value);if([0.5,1,2].includes(next)){speed=next;lastTimestamp=null}}
+function animate(timestamp){
+  anim=null;if(!playing)return;
+  if(document.hidden){stopPlayback();return}
+  if(lastTimestamp!==null)t=Math.min(1,t+Math.max(0,Math.min(100,timestamp-lastTimestamp))*speed/DURATION_MS);
+  lastTimestamp=timestamp;
+  if(t>=1){stopPlayback();document.getElementById('playbackStatus').textContent='Complete — replay available'}
+  drawFrame();
+  if(playing)anim=requestAnimationFrame(animate);
+}
+function drawFrame(){
+  if(!curSim)return;
+  ctx.clearRect(0,0,W,H);
+  ctx.save();try{curSim.draw(t)}finally{ctx.restore()}
+  updatePlaybackUI();
+}
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden&&playing){stopPlayback();document.getElementById('playbackStatus').textContent='Paused while this tab is hidden'}
+});
+window.addEventListener('pagehide',stopPlayback);
 
 // ─── HELPERS ───
 function sky(topColor,botColor,surfY){const g=ctx.createLinearGradient(0,0,0,surfY||H);g.addColorStop(0,topColor);g.addColorStop(1,botColor);ctx.fillStyle=g;ctx.fillRect(0,0,W,surfY||H)}
@@ -1162,7 +1231,7 @@ function drawYieldCompare(t){
   text('NUCLEAR YIELD COMPARISON — Relative Fireball Sizes',450,35,'#f0e68c',14);
 
   const weapons=[
-    {name:'Davy Crockett',yield:0.02,color:'#4a9',note:'Tactical'},
+    {name:'Davy Crockett',yield:0.02,color:'#44aa99',note:'Tactical'},
     {name:'Hiroshima',yield:15,color:'#e74c3c',note:'15 KT'},
     {name:'Castle Bravo',yield:15000,color:'#e67e22',note:'15 MT'},
     {name:'Tsar Bomba',yield:50000,color:'#f1c40f',note:'50 MT'}
