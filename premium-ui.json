@@ -1,0 +1,33 @@
+{
+  "profile": "product-admin",
+  "sourceRoots": [
+    "design",
+    "exotic_propulsion_simulation.html",
+    "exotic_propulsion_simulations.html",
+    "nuclear_test_simulations.html",
+    "underground_nuclear_test.html",
+    "uap_classified_tech_simulations.html",
+    "ufo-research.html",
+    "index.html"
+  ],
+  "locale": "en-US",
+  "canonicalMap": "UX-CONTRACT.md",
+  "requiredCapabilities": [
+    "Select/Listbox",
+    "Scrollbar"
+  ],
+  "ownership": {
+    "Select/Listbox": "native"
+  },
+  "requiredCommands": [
+    "browser",
+    "design"
+  ],
+  "commands": {
+    "browser": "npm test",
+    "design": "npm run check:design"
+  },
+  "evidence": {
+    "failurePaths": "tests/redesign.spec.mjs"
+  }
+}
