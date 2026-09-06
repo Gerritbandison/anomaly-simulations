@@ -7,7 +7,7 @@
     'uap_classified_tech_simulations.html':{group:'uap',title:'Encounters & advanced technology',short:'Encounters',intro:'Reported encounters, aircraft silhouettes and emerging technologies.',first:'nimitz'},
     'exotic_propulsion_simulations.html':{group:'propulsion',title:'The propulsion collection',short:'Propulsion',intro:'From electric engines to speculative journeys between stars.',first:'nerva'},
     'nuclear_test_simulations.html':{group:'nuclear',title:'Nuclear history & phenomena',short:'Nuclear history',intro:'Historical events and physical phenomena, illustrated with context.',first:'trinity'},
-    'exotic_propulsion_simulation.html':{group:'lab',title:'The concept laboratory',short:'Concept laboratory',intro:'Change a parameter. Explore the illustration. Question the assumptions.',first:'pais-ief'},
+    'exotic_propulsion_simulation.html':{group:'lab',title:'The physics laboratory',short:'Physics laboratory',intro:'Ten established principles. Stated equations, measured units, and independent comparisons.',first:'momentum'},
     'underground_nuclear_test.html':{group:'earth',title:'Below the surface',short:'Earth section',intro:'An illustrated journey through six subsurface phases.',first:'sequence'},
     'ufo-research.html':{group:'archive',title:'The research archive',short:'Research archive',intro:'Documents, testimony and competing interpretations.'}
   };
@@ -21,7 +21,7 @@
     nav.append(el('span','obs-topnote','An illustrated collection'));header.append(brand,nav);return header;
   }
   function thumbnail(key,progress=.55,width=210){const canvas=document.createElement('canvas');canvas.width=width;canvas.height=Math.round(width*.6);art.render(canvas,key,progress,{thumbnail:true});const img=document.createElement('img');img.src=canvas.toDataURL('image/png');img.alt='';img.width=width;img.height=canvas.height;img.loading='lazy';return img;}
-  function footer(){const f=el('footer','obs-footer');f.append(el('span','','Illustrations, not validated physical models.'));const link=el('a','','Explore the collections ↗');link.href='index.html';f.append(link);return f;}
+  function footer(){const f=el('footer','obs-footer');f.append(el('span','',document.body.dataset.collection==='lab'?'Idealized physics models. Read the assumptions.':'Illustrations and evidence guides; source scope matters.'));const link=el('a','','Explore the collections ↗');link.href='index.html';f.append(link);return f;}
   function shell(sidebar=null){
     const skip=el('a','obs-skip','Skip to demonstration');skip.href='#obs-main';
     const main=el('main','obs-main');main.id='obs-main';main.tabIndex=-1;
@@ -105,7 +105,7 @@
       panel.replaceChildren(layout,output,banner,equations);ui.main.append(panel);
     });
     ui.main.append(footer());
-    const original=selectMethod;selectMethod=index=>{if(index<0||index>=METHODS.length)return;original(index);h.querySelector('h1').textContent=METHODS[index].short;setHash(METHODS[index].id);document.title=METHODS[index].short+' · Concept laboratory';};
+    const original=selectMethod;selectMethod=index=>{if(index<0||index>=METHODS.length)return;original(index);h.querySelector('h1').textContent=METHODS[index].short;setHash(METHODS[index].id);document.title=METHODS[index].short+' · Physics laboratory';};
     const id=getHash(),index=METHODS.findIndex(m=>m.id===id);selectMethod(index>=0?index:0);
     window.addEventListener('hashchange',()=>{const i=METHODS.findIndex(m=>m.id===getHash());if(i>=0&&i!==activeIndex)selectMethod(i);});
   }
@@ -122,15 +122,15 @@
     document.body.classList.add('obs-archive');
     const header=document.querySelector('header'),heading=header.querySelector('h1'),intro=header.querySelector('.subtitle'),stats=header.querySelector('.stat-bar'),left=el('div');
     left.append(el('span','obs-kicker','Field notes / documents / ideas'),heading,intro,stats);heading.textContent='A record of the unexplained.';
-    const visual=el('div','obs-archive-art');const image=thumbnail('uap/rendlesham',.5,1000);image.alt='Illustrated lights above a forest, an artistic interpretation';visual.append(image);header.replaceChildren(left,visual);document.body.prepend(topbar());
+    const visual=el('div','obs-archive-art');const image=thumbnail('uap/nimitz',.5,1000);image.alt='Illustrated lights above a forest, an artistic interpretation';visual.append(image);header.replaceChildren(left,visual);document.body.prepend(topbar());
     document.title='Research archive · Anomaly Observatory';
   }
   function home(){
     document.body.classList.add('obs-home');const hero=el('section','obs-hero'),left=el('div'),right=el('div','obs-hero-image');left.append(el('span','obs-kicker','An illustrated observatory'),el('h1','','Stay curious. Look closer.'),el('p','','Explore extraordinary reports, ambitious machines and the ideas that stretch our understanding. A collection of interactive illustrations, built for the curious.'));
     const link=el('a','obs-cta','Explore the collections  ↗');link.href='#collections';left.append(link);right.append(thumbnail('uap/nimitz',.62,1200));hero.append(left,right);
     const section=el('section','obs-collections');section.id='collections';const head=el('div','obs-collection-heading');head.append(el('h2','','Choose a field of inquiry'),el('span','','Six collections · one observatory'));section.append(head);const grid=el('div','obs-collection-grid');
-    const coverKeys={uap:'uap/sr71',propulsion:'propulsion/hall',nuclear:'nuclear/ivymike',lab:'lab/alcubierre',earth:'earth/sequence',archive:'uap/rendlesham'};
-    const counts={uap:'55 illustrations',propulsion:'24 illustrations',nuclear:'22 illustrations',lab:'10 interactive concepts',earth:'6 phases',archive:'11 research sections'};
+    const coverKeys={uap:'uap/sr71',propulsion:'propulsion/hall',nuclear:'nuclear/trinity',lab:'lab/snell',earth:'earth/sequence',archive:'uap/nimitz'};
+    const counts={uap:'9 evidence-led exhibits',propulsion:'8 engineering exhibits',nuclear:'5 historical exhibits',lab:'10 physics experiments',earth:'6 phases',archive:'11 research sections'};
     Object.entries(pages).forEach(([file,cfg])=>{const card=el('a','obs-collection-card');card.href=file;const image=thumbnail(coverKeys[cfg.group],.55,560);const copy=el('div','obs-collection-copy');copy.append(el('span','obs-kicker',counts[cfg.group]),el('h3','',cfg.short+' ↗'),el('p','',cfg.intro));card.append(image,copy);grid.append(card)});
     section.append(grid);const f=el('footer','','Anomaly Observatory / Artistic illustrations and archived research. Speculative concepts are not demonstrated technologies.');document.body.replaceChildren(topbar(),hero,section,f);document.title='Anomaly Observatory · Look closer';
   }

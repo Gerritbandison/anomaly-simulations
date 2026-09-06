@@ -14,3 +14,12 @@ The user requested a complete creative redesign. README.md describes the evidenc
 | Scene controls | Observatory stage | DESIGN.md | Annotations and immersive toggle, explicit keyboard buttons | Redesign browser tests |
 
 All content is local and read-only. No accounts, remote data, destructive actions, billing, forms or CRUD. No high-risk domain action is introduced. Search is transient local exploration; scene hash is shareable. Empty search offers clearing and never changes selected scene. New design uses accessible native controls, 44px primary touch targets, semantic selected states, reduced motion, and no automatic page-scroll animations. Previous/next navigation resets the sequence and preserves the existing controllers' playback behavior. Immersive mode is an in-document layout, not a modal, and Escape returns to the normal stage. New art is an illustrative reinterpretation; no newly computed physical claims.
+
+## Museum contracts
+- Public membership comes from `design/curation.js`; absent legacy IDs are not silently represented as current exhibits.
+- Evidence filtering intersects with text search and recomputes counts on initial load, input and clearing.
+- Every retained lesson has a question, three subject-specific steps, assumptions and scoped sources. Principle experiments are clearly separated from case reconstruction or vehicle claims.
+- A/B model states are independent; Copy A to B copies all parameters; Reset restores both defaults. Units, equations, assumptions and sources remain visible.
+- Invalid model inputs are rejected by the shared engine; the interface displays a text error without fabricating a result.
+- Lab tabs retain native accessible tab behavior. Every generated label/control ID is namespaced by exhibit and scenario; hidden tabs cannot steal label association.
+- Numerical models are read-only classroom calculations, not weapon or vehicle design tools. No arbitrary parameter-driven art scaling remains.

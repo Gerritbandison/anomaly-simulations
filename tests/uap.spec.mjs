@@ -24,24 +24,19 @@ test('every illustration renders immediately and across its full timeline', asyn
     }
     return { count: S.length, starts, failures };
   });
-  expect(result.count).toBeGreaterThan(30);
+  expect(result.count).toBe(9);
   expect(result.failures).toEqual([]);
   expect(result.starts.every(alpha => alpha > 0)).toBe(true);
   expect(errors).toEqual([]);
 });
 
-test('initial scene is painted, accessible, and has bounded evidence claims', async ({ page }) => {
-  expect(await page.evaluate(() => c.getImageData(0, 0, 1, 1).data[3])).toBe(255);
-  await expect(page.locator('#C')).toHaveAccessibleName('USS Nimitz Tic Tac');
-  await expect(page.locator('#evidenceLabel')).toContainText('Reported');
-  await expect(page.locator('#evidenceSource a')).toHaveAttribute('href', /defense.gov/);
-  await expect(page.locator('#legacy')).not.toHaveAttribute('open', '');
-  await page.getByRole('button', { name: 'Scramjet Engine', exact: true }).click();
-  await expect(page.locator('#evidenceLabel')).toContainText('Documented technology');
-  await expect(page.locator('#evidenceSource a')).toHaveAttribute('href', 'https://www.nasa.gov/reference/x-43a/');
-  await page.getByRole('button', { name: 'TR-3B (Alleged)', exact: true }).click();
-  await expect(page.locator('#evidenceLabel')).toContainText('Speculative');
-  await expect(page.locator('#evidenceSource')).toBeEmpty();
+test('initial scene is painted with scoped evidence and documented-platform lessons',async({page})=>{
+ expect(await page.evaluate(()=>c.getImageData(0,0,1,1).data[3])).toBe(255);
+ await expect(page.locator('#C')).toHaveAccessibleName('USS Nimitz Tic Tac');
+ await expect(page.locator('.museum-lesson')).toHaveAttribute('data-exhibit','uap/nimitz');
+ await page.getByRole('button',{name:/SR-71 Blackbird/}).click();
+ await expect(page.locator('.museum-lesson-head .museum-badge')).toHaveAttribute('data-status','demonstrated');
+ await expect(page.locator('.museum-lesson-head h2')).not.toBeEmpty();
 });
 
 test('single animation owner, elapsed-time playback, replay, reset, seek and hidden-tab pause', async ({ page }) => {
@@ -92,12 +87,12 @@ test('single animation owner, elapsed-time playback, replay, reset, seek and hid
 test('search, controls and keyboard interactions work without changing selection accidentally', async ({ page }) => {
   const search = page.getByRole('searchbox', { name: 'Find an illustration' });
   await search.fill('no-such-illustration');
-  await expect(page.locator('#results')).toContainText('No matches');
+  await expect(page.locator('#results')).toContainText('No exhibits match');
   await expect(page.locator('#sT')).toHaveText('USS Nimitz Tic Tac');
   await search.fill('stealth');
   expect(await page.locator('#catalog button:visible').count()).toBeGreaterThan(1);
   await search.fill('gimbal');
-  await page.getByRole('button', { name: 'Gimbal UAP', exact: true }).click();
+  await page.getByRole('button', { name: /Gimbal UAP/ }).click();
   await expect(page.locator('[data-id="gimbal"]')).toHaveAttribute('aria-current', 'true');
   await page.locator('#C').focus();
   await page.keyboard.press('ArrowRight');
@@ -134,7 +129,7 @@ test('mobile layout remains navigable with readable controls and no horizontal o
   expect(result.buttonHeight).toBeGreaterThanOrEqual(44);
   expect(result.searchHeight).toBeGreaterThanOrEqual(44);
   expect(result.navHeight).toBeLessThan(result.height * .4);
-  await page.getByRole('searchbox').fill('looking glass');
-  await page.getByRole('button', { name: 'Project Looking Glass (Alleged)', exact: true }).click();
-  await expect(page.locator('#sT')).toContainText('Looking Glass');
+  await page.getByRole('searchbox').fill('sr-71');
+  await page.getByRole('button', { name: /SR-71 Blackbird/ }).click();
+  await expect(page.locator('#sT')).toContainText('SR-71');
 });
