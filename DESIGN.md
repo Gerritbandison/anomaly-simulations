@@ -54,7 +54,7 @@ Depth comes from layered terrain, atmospheric haze, overlapping geometry, soft s
 22px observation stages, 14px panels, 8px controls, fine borders. Subject geometry varies intentionally: aircraft silhouettes, chamber sections, wavefronts, orbital paths, earth strata, sails and sensor scenes.
 
 ## Components
-Canonical source is `design/observatory.css`, `design/scene-renderer.js`, and `design/observatory.js`. `scripts/build-design.mjs` embeds these into each standalone HTML, so file downloads remain offline-capable. Generated blocks must not be edited manually. Scene manifests explicitly cover every existing demo; there is no generic unknown-scene fallback. Previous simulation controls retain their state/timing contracts. New controls: annotation visibility, immersive stage, previous/next, scene links, and a visual sequence inspector.
+Canonical source is `design/observatory.css`, `design/scene-renderer.js`, and `design/observatory.js`. `scripts/build-design.mjs` embeds these into each standalone HTML, so file downloads remain offline-capable. Generated blocks must not be edited manually. Scene manifests explicitly cover every active demo; there is no generic unknown-scene fallback. Previous simulation controls retain their state/timing contracts. New controls: annotation visibility, immersive stage, previous/next, scene links, and a visual sequence inspector.
 
 ## Do's and Don'ts
 - Show an illustration label and readable descriptions; never fake sensor measurements.
@@ -62,3 +62,8 @@ Canonical source is `design/observatory.css`, `design/scene-renderer.js`, and `d
 - Use native buttons, range controls and selects, visible focus and operable scrollbars.
 - Preserve source caveats and original metadata. Do not add weapon construction or optimization detail.
 - Inspect all scene contact sheets, desktop and 320px views, and run browser regressions.
+
+## Museum learning layer
+The user approved a substantive science-museum upgrade and explicitly allowed pruning redundant or poor-fit demos. The active catalog is 33 exhibits: 23 retained illustrations/historical exhibits and 10 established-principle experiments. `design/curation.js` is authoritative for membership. The primary content hierarchy is question → explanation → experiment when appropriate → assumptions → scoped sources. Evidence badges describe the status of a claim, not a decorative quality score. A/B comparisons use independent inputs and matched graph axes where applicable. The original toy drive UI is retired; arbitrary display scaling is removed.
+
+Learning styles live in `design/museum.css`, composed with the existing stylesheet by the standalone builder. Teaching records live in `design/exhibits-uap.js` and `design/exhibits-science.js`; numerical models, their steps and renderers live in `design/experiments.js`. Source scope is visible beside each link. `design/museum.js` owns the directory, lesson steps, evidence filters and comparison controls. Keep scenario status readable in text, including total internal reflection and sampling ambiguity.

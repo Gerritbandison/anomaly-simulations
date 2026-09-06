@@ -1,51 +1,56 @@
-# Anomaly Observatory
+# Anomaly Observatory — interactive science museum
 
-Start with [index.html](index.html): an illustrated entrance to six collections. All seven pages are standalone HTML. Open them directly in a browser; no build, server, API key, or network connection is required. External source links require internet access.
+Open [index.html](index.html) to explore a curated collection of **33 exhibits**. All seven pages work as standalone local HTML without a build, server, account, API key or network connection. Only external reference links require internet access.
 
-The complete visual redesign replaces the original canvas artwork with 112 explicitly mapped scene designs: 111 catalog/laboratory demos plus the six-phase earth-section scene. New aircraft silhouettes, landscapes, engine and sail illustrations, orbital compositions, abstract fields and layered geology share an observatory interface. The research archive uses a contrasting cool-paper reading layout.
+The collection now prioritizes learning and evidence over breadth:
 
-Catalogs have illustrated thumbnails, previous/next navigation and direct scene links. Timeline libraries include a five-frame visual inspector. All demo stages support annotation visibility and an expanded layout; Escape exits expanded mode. On phones, the catalog collapses behind Browse and scene annotations start hidden for clarity. The illustrations preserve the existing playback controls and numerical outputs; the new artwork does not validate those models.
-
-## Maintain the design
-
-Edit the canonical files under `design/`, then run:
-
-```sh
-npm run build:design
-npm run check:design
-```
-
-The builder embeds the shared visual system into each HTML page. Generated blocks are checked for drift. `DESIGN.md` and `UX-CONTRACT.md` record the palette, interface ownership, offline behavior and accessibility choices. Parameter values affect artistic display scaling only; that scaling has no physical interpretation.
-
-| File | Contents | Upgrades |
+| Collection | Active exhibits | Focus |
 | --- | --- | --- |
-| [exotic_propulsion_simulation.html](exotic_propulsion_simulation.html) | 10 parameterized drive concepts | One active animation, live parameter/metric updates, pause/reset, keyboard tabs, reduced-motion support, model limitations |
-| [exotic_propulsion_simulations.html](exotic_propulsion_simulations.html) | 24 propulsion illustrations | Search, seeking, playback speed, replay, repeatable timeline redraws, mobile layout |
-| [nuclear_test_simulations.html](nuclear_test_simulations.html) | 22 historical/conceptual illustrations | Reliable playback, seeking, speed, responsive layout, gradient crash fix |
-| [underground_nuclear_test.html](underground_nuclear_test.html) | Six-phase schematic | Keyboard phase navigation, seeking, speed, replay, reset cleanup, mobile layout |
-| [uap_classified_tech_simulations.html](uap_classified_tech_simulations.html) | 55 encounter/technology illustrations | Initial canvas painting, playback fixes, search, seeking, speed, evidence context, mobile layout, scene crash fix |
-| [ufo-research.html](ufo-research.html) | 11-section research archive | Full-text section search including hidden content, keyboard tabs, deep links, reading progress, printable expanded content, mobile tables, selected evidence corrections |
+| Encounters and technology | 9 | Nimitz/Gimbal/Go Fast evidence; SR-71, F-117, B-2, radar cross section, imaging and GPS |
+| Propulsion | 8 | NERVA, ion/Hall/VASIMR, solar sails, Alcubierre, Kilopower and RTGs |
+| Nuclear history | 5 | Trinity, Castle Bravo, Baker, Nevada and fallout records; historical and observational only |
+| Earth section | 1, with six phases | Schematic geological sequence and its limitations |
+| Physics laboratory | 10 | Quantitative, idealized experiments with known equations |
 
-Playback pauses when its tab is hidden. The libraries start paused; the parameter lab respects the browser's reduced-motion setting. Animation time is illustrative and is not a physical timescale. On the UAP canvas, Space toggles playback, arrows seek, and Home/End jump to the boundaries. Native sliders support keyboard adjustment; tab and phase controls expose their selection to assistive technology.
+Redundant scenes and unsupported-story demonstrations are removed from the active catalogs. Older records and render functions remain in the source/history for provenance; `design/curation.js` controls the public allowlist. The old speculative drive-performance UI and arbitrary parameter-to-art scaling are retired.
 
-## Evidence and scope
+## What to explore
 
-These pages are educational illustrations, not validated scientific models, engineering tools, or evidence that speculative capabilities exist. The parameter laboratory retains unvalidated equations and illustrative metrics, now labeled accordingly. Historical narratives, embedded canvas captions, quotations, specifications, and most source mappings have **not** received a comprehensive factual audit.
+Every active exhibit has a distinct learning question, takeaway, three teaching steps, evidence status with a reason, specific limitations and scoped primary references. Clicking a teaching step in a timeline exhibit seeks its illustrative sequence. Those animation positions are not physical timestamps.
 
-The research archive was originally compiled in March 2026. The September 2026 update improves its interface, distinguishes reporting from interpretation, and corrects selected overstatements. In particular, the tested metal specimen's claimed waveguide behavior is qualified using [ORNL's published analysis](https://www.aaro.mil/Portals/136/PDFs/Information%20Papers/ORNL-Synopsis_Analysis_of_a_Metallic_Specimen.pdf). [NASA's UAP study scope](https://science.nasa.gov/uap/faqs/) supplies context for observational limitations. These references do not validate the remainder of the archive.
+The home directory and catalogs combine text search with evidence categories. Existence of a program, evidence for a physical principle and validation of a particular vehicle are separate claims. Compare-exhibit panels make those boundaries visible side by side.
 
-All six original files were reviewed. Changes preserve their standalone structure and original illustrations. Nuclear and military changes concern playback, rendering, accessibility, and evidence presentation; no weapon design or operational capability was added.
+The ten experiment models are:
 
-## Browser verification
+- Momentum flux: mass flow, exhaust velocity, thrust and exhaust kinetic power.
+- Inverse-square light dilution, expressed relative to a reference distance.
+- Geometric parallax from a translating camera and stationary target.
+- Ideal circular-aperture diffraction limit.
+- Two-body circular Earth-orbit period and speed.
+- Sine sampling, Nyquist folding and alias ambiguity.
+- Acoustic Doppler shift for a moving source and stationary listener.
+- Vacuum electromagnetic wavelength and period.
+- Positive-index Snell refraction and total internal reflection.
+- An ideal mass–spring oscillator.
+
+Each experiment exposes real units, a displayed equation, model limits and primary-source references. Scenario A and B are independent. Copy A to B establishes a common baseline; Reset restores defaults. Drawings use calculated quantities. Numerical tests cover dimensional references, boundaries, aliasing, TIR and monotonic relationships. These are educational models, not engineering-grade solvers or predictions of speculative drive performance. Nuclear exhibits have no weapon-design, yield, blast or fallout-optimization model.
+
+The research dossier remains a labeled historical archive, with an evidence-reading guide. It has not received a comprehensive factual audit. Scoped references in curated exhibits do not validate every inherited description or canvas caption.
+
+## Development
 
 Requires Node.js 22 or newer:
 
 ```sh
 npm ci
 npx playwright install chromium
+npm run build:design
+npm run check:design
 npm test
 ```
 
-The 33-test suite opens local files directly in Chromium and checks drawing boundaries, actual controls, animation ownership and elapsed-time behavior, replay/reset, hidden-tab suspension, keyboard navigation, search, reduced motion, and narrow viewports. The UAP sweep evaluates every scene at 1,001 timeline positions. The redesign checks every scene design at multiple positions, confirms animation changes, and exercises the collection links, visual inspector, annotation toggle, expanded mode, mobile catalogs and deep links. Tests exercise canvas exceptions and behavior; they do not validate the physics or historical claims. Firefox, Safari, and a full assistive-technology audit remain outside this verification.
+Canonical files under `design/` own the interface, curation, teaching content and models. The build embeds them into the seven HTML files, preserving offline use. Do not manually edit generated design blocks. `DESIGN.md` and `UX-CONTRACT.md` document the design and behavior contracts.
 
-For an optional local HTTP preview, run `npm run serve` and open `http://127.0.0.1:8000/`. The HTML also works without this server.
+The browser suite checks numerical references, all active exhibits, scenario independence, filter intersections, source/assumption coverage, navigation and hash recovery, labels/IDs, original playback reliability, offline use, and 320px layouts. Verification uses Chromium; cross-browser and full assistive-technology audits remain outside the tested scope.
+
+For optional local HTTP preview: `npm run serve`, then open `http://127.0.0.1:8000/`.
