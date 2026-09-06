@@ -13,12 +13,12 @@ test('every original demo maps to an explicit new scene and renders without erro
  const result=await page.evaluate(()=>{
   const c=document.createElement('canvas');c.width=320;c.height=192;const failures=[],unchanged=[];
   for(const [key,config]of Object.entries(ObservatoryArt.manifest)){
-    try{ObservatoryArt.render(c,key,.1);const first=c.toDataURL();for(const t of [0,.05,.25,.5,.75,.95,1])ObservatoryArt.render(c,key,t);ObservatoryArt.render(c,key,.7);if(first===c.toDataURL())unchanged.push(key);if(!config.caption||!config.variant)failures.push(key+' missing direction');}
+    try{ObservatoryArt.render(c,key,.1);const first=c.toDataURL();for(const t of [0,.05,.25,.5,.75,.95,1])ObservatoryArt.render(c,key,t);ObservatoryArt.render(c,key,.7);if(config.type!=='experiment'&&first===c.toDataURL())unchanged.push(key);if(!config.caption||!config.variant)failures.push(key+' missing direction');}
     catch(e){failures.push(key+': '+e.message)}
   }
   return {count:Object.keys(ObservatoryArt.manifest).length,failures,unchanged};
  });
- expect(result.count).toBe(112);expect(result.failures).toEqual([]);expect(result.unchanged).toEqual([]);
+ expect(result.count).toBe(33);expect(result.failures).toEqual([]);expect(result.unchanged).toEqual([]);
 });
 test('visual sequence, annotations, expanded mode, and next demo work together',async({page})=>{
  await page.goto(url('uap_classified_tech_simulations.html'));
@@ -45,9 +45,10 @@ test('new scene controls and mobile catalogs fit every page at 320px',async({pag
   expect(errors,file).toEqual([]);page.off('pageerror',onerror);
  }
 });
-test('parameter laboratory has real reset controls and no orphaned text',async({page})=>{
- await page.goto(url('exotic_propulsion_simulation.html'));await page.locator('.sim-panel.active .play-btn').click();
- await expect(page.locator('.sim-panel.active .obs-lab-controls .reset-btn')).toBeVisible();
- expect(await page.locator('.sim-panel.active .obs-lab-controls').innerText()).not.toContain('null');
- await page.locator('.sim-panel.active .reset-btn').click();await expect(page.locator('.sim-panel.active .play-btn')).toHaveAttribute('aria-pressed','false');
+test('physics laboratory presents sourced experiments instead of toy drive controls',async({page})=>{
+ await page.goto(url('exotic_propulsion_simulation.html'));
+ await expect(page.locator('.sim-panel.active .museum-experiment')).toBeVisible();
+ await expect(page.locator('.sim-panel.active .obs-lab-layout')).toBeHidden();
+ await expect(page.locator('.sim-panel.active .museum-equation')).not.toBeEmpty();
+ await page.locator('.sim-panel.active').getByRole('button',{name:'Reset experiment'}).click();
 });
